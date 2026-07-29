@@ -71,14 +71,14 @@ utils.scale_probability_as_odds = function(prob, scale)
     return (scale * prob) / (scale * prob - prob + 1)
 end
 
-utils.get_rigor_effect = function(rigor_formula_coefficients, tier)
+utils.get_parallel_effect = function(parallel_formula_coefficients, tier)
     -- See data.lua for formula explanation
-    return rigor_formula_coefficients[3]
-        + rigor_formula_coefficients[2] * tier
-        + rigor_formula_coefficients[1] * tier * tier
+    return parallel_formula_coefficients[3]
+        + parallel_formula_coefficients[2] * tier
+        + parallel_formula_coefficients[1] * tier * tier
 end
 
-utils.is_recipe_in_rigor_mod_data = function(mod_data, recipe_name)
+utils.is_recipe_in_parallel_mod_data = function(mod_data, recipe_name)
     return mod_data.explicit_recipe_results[recipe_name]
             or mod_data.explicit_recipe_result_indices[recipe_name]
             or mod_data.extra_count_fraction_recipe_results[recipe_name]

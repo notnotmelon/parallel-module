@@ -1,11 +1,11 @@
-local utils = require("__rigor-module__.utils")
-local data_utils = require("__rigor-module__.data-utils")
+local utils = require("__parallel-module__.utils")
+local data_utils = require("__parallel-module__.data-utils")
 
 if mods["Krastorio2"] then
-    require("__rigor-module__.compat.Krastorio2-updates")
+    require("__parallel-module__.compat.Krastorio2-updates")
 end
 
-local mod_data = data.raw["mod-data"].rigor_module_mod_data.data
+local mod_data = data.raw["mod-data"].parallel_module_mod_data.data
 local crushing_categories = {}
 for category, _ in pairs(data.raw["recipe-category"]) do
     if category:find("crushing", 1, true) then
@@ -30,7 +30,7 @@ for _, chunk in pairs(data.raw["asteroid-chunk"]) do
 end
 
 for name, recipe in pairs(data.raw.recipe) do
-    if utils.is_recipe_in_rigor_mod_data(mod_data, name)
+    if utils.is_recipe_in_parallel_mod_data(mod_data, name)
         or not recipe.ingredients or #recipe.ingredients == 0
         or not recipe.results or #recipe.results == 0
         or not recipe.categories or #recipe.categories == 0 then
@@ -61,7 +61,7 @@ for name, recipe in pairs(data.raw.recipe) do
         if result.type == "item" then
             if asteroid_chunks[result.name] then
                 if has_asteroid_chunk_result then
-                    -- Disallow rigor for asteroid reprocessing (and similar)
+                    -- Disallow parallel for asteroid reprocessing (and similar)
                     table.insert(mod_data.disallowed_recipes, name)
                     goto continue
                 end
@@ -69,9 +69,9 @@ for name, recipe in pairs(data.raw.recipe) do
                 has_asteroid_chunk_result = true
             end
 
-            if data_utils.is_result_valid_rigor_target(result) and ingredients[result.name] then
+            if data_utils.is_result_valid_parallel_target(result) and ingredients[result.name] then
                 if result_idx then
-                    -- Disallow rigor for crushing recipes with multiple probabilistic catalysts
+                    -- Disallow parallel for crushing recipes with multiple probabilistic catalysts
                     table.insert(mod_data.disallowed_recipes, name)
                     goto continue
                 end

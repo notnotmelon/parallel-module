@@ -1,6 +1,6 @@
-local control_helpers = require("__rigor-module__.control-helpers")
-local rigor_module_mod_data = prototypes.mod_data.rigor_module_mod_data.data
-local rigor_crafting_machine_types = rigor_module_mod_data.crafting_machine_types
+local control_helpers = require("__parallel-module__.control-helpers")
+local parallel_module_mod_data = prototypes.mod_data.parallel_module_mod_data.data
+local parallel_crafting_machine_types = parallel_module_mod_data.crafting_machine_types
 
 
 script.on_init(function()
@@ -18,11 +18,11 @@ script.on_event(defines.events.on_tick, control_helpers.handle_on_tick)
 -- script.on_nth_tick(15, control_helpers.handle_on_tick)
 
 script.on_event(defines.events.on_entity_settings_pasted, function(event)
-    control_helpers.update_machine_for_rigor(event.destination, true)
+    control_helpers.update_machine_for_parallel(event.destination, true)
 end)
 
 local function handle_entity_built(machine)
-    if not control_helpers.update_machine_for_rigor(machine, true) then
+    if not control_helpers.update_machine_for_parallel(machine, true) then
         return
     end
 
@@ -55,7 +55,7 @@ script.on_event(defines.events.script_raised_revive, function(event)
 end, { { filter = "crafting-machine" } })
 
 script.on_event("item-request-proxy-created", function(event)
-    if not event.proxy_target or not event.proxy_target.valid or not utils.table_contains_value(rigor_crafting_machine_types, event.proxy_target.type) then
+    if not event.proxy_target or not event.proxy_target.valid or not utils.table_contains_value(parallel_crafting_machine_types, event.proxy_target.type) then
         return
     end
 
@@ -63,17 +63,17 @@ script.on_event("item-request-proxy-created", function(event)
 end)
 
 script.on_event("item-request-proxy-removed", function(event)
-    control_helpers.update_machine_for_rigor(event.proxy_target, true)
+    control_helpers.update_machine_for_parallel(event.proxy_target, true)
 end)
 
 script.on_event("item-request-proxy-updated", function(event)
-    control_helpers.update_machine_for_rigor(event.proxy_target, true)
+    control_helpers.update_machine_for_parallel(event.proxy_target, true)
 end)
 
-if next(prototypes.mod_data.spoilable_rigor_modules.data) then
+if next(prototypes.mod_data.spoilable_parallel_modules.data) then
     script.on_event("item-spoiled", function(event)
         if event.entity and event.entity.valid and event.entity.unit_number then
-            storage.machines_waiting_for_rigor_module[event.entity.unit_number] = event.entity
+            storage.machines_waiting_for_parallel_module[event.entity.unit_number] = event.entity
         end
     end)
 end
@@ -115,8 +115,8 @@ end)
 local function on_click(event)
     local entity = storage.player_to_machine_with_open_gui[event.player_index]
     if entity and entity.valid then
-        control_helpers.update_machine_for_rigor(entity, true) -- Delay might be required here
-        -- storage.machines_waiting_for_rigor_module[entity.unit_number] = entity -- Delay version
+        control_helpers.update_machine_for_parallel(entity, true) -- Delay might be required here
+        -- storage.machines_waiting_for_parallel_module[entity.unit_number] = entity -- Delay version
     end
 end
 
@@ -156,12 +156,12 @@ script.on_event(defines.events.on_player_unbanned, function(event)
     control_helpers.handle_player_joined(event.player_index, event.player_name)
 end)
 
-remote.add_interface("rigor-module", {
-    get_total_machine_rigor = control_helpers.get_total_machine_rigor_optimized,
+remote.add_interface("parallel-module", {
+    get_total_machine_parallel = control_helpers.get_total_machine_parallel_optimized,
     is_player_holding_cut_paste_tool = control_helpers.is_player_holding_cut_paste_tool
 })
 if script.active_mods["funit"] then
-    remote.add_interface("__funit__rigor-module", {
+    remote.add_interface("__funit__parallel-module", {
         update_all_entities = control_helpers.update_all_entities,
         sanitize_bp_entities = control_helpers.sanitize_bp_entities
     })

@@ -1,7 +1,7 @@
 local pairs = pairs
 local table = table
 
-utils = require("__rigor-module__.utils")
+utils = require("__parallel-module__.utils")
 
 TOOLTIP_ID = 2453693297
 
@@ -15,39 +15,39 @@ local inventories_to_copy = {
     defines.inventory.crafter_trash,
 }
 
-local rigor_module_mod_data = prototypes.mod_data.rigor_module_mod_data.data
-local rigor_crafting_machine_types = rigor_module_mod_data.crafting_machine_types
-local round_rigor_to_nearest = rigor_module_mod_data.round_rigor_to_nearest
-local max_total_rigor = rigor_module_mod_data.max_total_rigor
-local entity_to_base_rigor = rigor_module_mod_data.entity_to_base_rigor
-local rigor_module_mod_recipe_table_inverse =  prototypes.mod_data.rigor_module_mod_recipe_table_inverse.data
-local rigor_module_mod_crafting_machine_table =  prototypes.mod_data.rigor_module_mod_crafting_machine_table.data
-local rigor_module_mod_crafting_machine_table_inverse = prototypes.mod_data.rigor_module_mod_crafting_machine_table_inverse.data
-local is_rigor_disabled = settings.startup["rigor-module-disable-rigor-effect"].value
+local parallel_module_mod_data = prototypes.mod_data.parallel_module_mod_data.data
+local parallel_crafting_machine_types = parallel_module_mod_data.crafting_machine_types
+local round_parallel_to_nearest = parallel_module_mod_data.round_parallel_to_nearest
+local max_total_parallel = parallel_module_mod_data.max_total_parallel
+local entity_to_base_parallel = parallel_module_mod_data.entity_to_base_parallel
+local parallel_module_mod_recipe_table_inverse =  prototypes.mod_data.parallel_module_mod_recipe_table_inverse.data
+local parallel_module_mod_crafting_machine_table =  prototypes.mod_data.parallel_module_mod_crafting_machine_table.data
+local parallel_module_mod_crafting_machine_table_inverse = prototypes.mod_data.parallel_module_mod_crafting_machine_table_inverse.data
+local is_parallel_disabled = settings.startup["parallel-module-disable-parallel-effect"].value
 
-local rigor_module_mod_recipe_table = {}
-for base_recipe, recipes in pairs(prototypes.mod_data.rigor_module_mod_recipe_table.data) do
-    rigor_module_mod_recipe_table[base_recipe] = {}
-    for rigor, recipe in pairs(recipes) do
-        rigor_module_mod_recipe_table[base_recipe][tonumber(rigor)] = recipe
+local parallel_module_mod_recipe_table = {}
+for base_recipe, recipes in pairs(prototypes.mod_data.parallel_module_mod_recipe_table.data) do
+    parallel_module_mod_recipe_table[base_recipe] = {}
+    for parallel, recipe in pairs(recipes) do
+        parallel_module_mod_recipe_table[base_recipe][tonumber(parallel)] = recipe
     end
 end
 
 -- Call the prototypes_check in advance and cache the results to stop calling prototypes every tick
-local is_rigor_module = {}
-local module_name_to_quality_to_rigor = {}
+local is_parallel_module = {}
+local module_name_to_quality_to_parallel = {}
 for module_name, module in pairs(prototypes.get_item_filtered{{filter = "type", type = "module"}}) do
-    if module.category == "rigor" then 
-        is_rigor_module[module_name] = true
-        module_name_to_quality_to_rigor[module_name] = prototypes.mod_data.rigor_module_mod_rigor_value_cache.data[tostring(module.tier)]
+    if module.category == "parallel" then 
+        is_parallel_module[module_name] = true
+        module_name_to_quality_to_parallel[module_name] = prototypes.mod_data.parallel_module_mod_parallel_value_cache.data[tostring(module.tier)]
     end
 end
 
-local machine_accepts_rigor_modules = {}
-for _, type in pairs(rigor_crafting_machine_types) do
+local machine_accepts_parallel_modules = {}
+for _, type in pairs(parallel_crafting_machine_types) do
     for entity_name, entity in pairs(prototypes.get_entity_filtered{{filter = "type", type = type}}) do
-        if entity.allowed_module_categories and entity.allowed_module_categories["rigor"] then
-            machine_accepts_rigor_modules[entity_name] = true
+        if entity.allowed_module_categories and entity.allowed_module_categories["parallel"] then
+            machine_accepts_parallel_modules[entity_name] = true
         end
     end
 end
@@ -64,7 +64,7 @@ end
 local function cached_round(x)
     local s = storage.cached_round[x]
     if s == nil then
-        s = utils.round(x, round_rigor_to_nearest)
+        s = utils.round(x, round_parallel_to_nearest)
         storage.cached_round[x] = s
     end
     return s
@@ -73,11 +73,11 @@ end
 local Public = {}
 
 function Public.ensure_storage_cache_is_setup()
-    storage.machines_waiting_for_rigor_module = storage.machines_waiting_for_rigor_module or {}
+    storage.machines_waiting_for_parallel_module = storage.machines_waiting_for_parallel_module or {}
     storage.player_to_machine_with_open_gui = storage.player_to_machine_with_open_gui or {}
     storage.player_to_selected_machine = storage.player_to_selected_machine or {}
     storage.players_holding_cut_paste_tool = storage.players_holding_cut_paste_tool or {}
-    storage.machine_to_latest_recipe_and_rigor = storage.machine_to_latest_recipe_and_rigor or {}
+    storage.machine_to_latest_recipe_and_parallel = storage.machine_to_latest_recipe_and_parallel or {}
     if not storage.cached_to_string then storage.cached_to_string = {} end
     if not storage.cached_round then storage.cached_round = {} end
     -- TODO: reenable after fixing monotonic growth
@@ -92,7 +92,7 @@ function Public.update_all_entities()
             end
 
             local name = entity.name
-            entity = Public.update_machine_for_rigor(entity, true)
+            entity = Public.update_machine_for_parallel(entity, true)
             if entity and name ~= entity.name then
                 log(string.format("Migrated entity %s from prototype %s", entity, name))
             end
@@ -101,23 +101,23 @@ function Public.update_all_entities()
     end
 end
 
-function Public.get_rigor_recipe(base_recipe_name, rigor)
-    if not base_recipe_name or rigor == 0 then
+function Public.get_parallel_recipe(base_recipe_name, parallel)
+    if not base_recipe_name or parallel == 0 then
         return base_recipe_name
     end
 
-    local rigor_recipes = rigor_module_mod_recipe_table[base_recipe_name]
-    if not rigor_recipes then
+    local parallel_recipes = parallel_module_mod_recipe_table[base_recipe_name]
+    if not parallel_recipes then
         return base_recipe_name
     end
 
-    return rigor_recipes[rigor] or base_recipe_name
+    return parallel_recipes[parallel] or base_recipe_name
 end
 
 function Public.get_crafting_machines_including_ghosts(surface, position, area)
     local result = {}
     local filters = {
-        type = rigor_crafting_machine_types
+        type = parallel_crafting_machine_types
     }
     if position ~= nil then
         filters["position"] = position
@@ -128,7 +128,7 @@ function Public.get_crafting_machines_including_ghosts(surface, position, area)
         table.insert(result, machine)
     end
 
-    filters["ghost_type"] = rigor_crafting_machine_types
+    filters["ghost_type"] = parallel_crafting_machine_types
     filters["type"] = nil
     for _, machine in pairs(surface.find_entities_filtered(filters)) do
         table.insert(result, machine)
@@ -137,25 +137,25 @@ function Public.get_crafting_machines_including_ghosts(surface, position, area)
 end
 
 -- Ignores ghost modules
-function Public.get_total_rigor_from_module_inventory(module_inventory)
-    local total_rigor = 0.0
-    if is_rigor_disabled or not module_inventory then
-        return total_rigor
+function Public.get_total_parallel_from_module_inventory(module_inventory)
+    local total_parallel = 0.0
+    if is_parallel_disabled or not module_inventory then
+        return total_parallel
     end
 
     local contents = module_inventory.get_contents()
     for _, module in pairs(contents) do
-        if module == nil or not is_rigor_module[module.name] then
+        if module == nil or not is_parallel_module[module.name] then
             goto continue
         end
 
-        total_rigor = total_rigor + module.count * module_name_to_quality_to_rigor[module.name][module.quality]
+        total_parallel = total_parallel + module.count * module_name_to_quality_to_parallel[module.name][module.quality]
         ::continue::
     end
-    return total_rigor
+    return total_parallel
 end
 
-function Public.get_total_machine_rigor_optimized(machine, is_ghost)
+function Public.get_total_machine_parallel_optimized(machine, is_ghost)
     if machine == nil or not machine.valid then
         return nil, nil, nil
     end
@@ -167,18 +167,18 @@ function Public.get_total_machine_rigor_optimized(machine, is_ghost)
     --     } 
     -- end
     -- local machine_info = storage.entity_info[machine.unit_number]
-    local machine_base_rigor = entity_to_base_rigor[machine.name]
-    local module_rigor
-    if machine_accepts_rigor_modules[machine.name] then
-        module_rigor = is_ghost and 0 or Public.get_total_rigor_from_module_inventory(machine.get_module_inventory())
-    elseif machine_base_rigor then
-        module_rigor = 0
+    local machine_base_parallel = entity_to_base_parallel[machine.name]
+    local module_parallel
+    if machine_accepts_parallel_modules[machine.name] then
+        module_parallel = is_ghost and 0 or Public.get_total_parallel_from_module_inventory(machine.get_module_inventory())
+    elseif machine_base_parallel then
+        module_parallel = 0
     else
         return nil, nil, nil
     end
 
-    local rigor = math.min(max_total_rigor, module_rigor + (machine_base_rigor or 0))
-    return rigor, cached_round(rigor), module_rigor > 0 
+    local parallel = math.min(max_total_parallel, module_parallel + (machine_base_parallel or 0))
+    return parallel, cached_round(parallel), module_parallel > 0 
 end
 
 function Public.prepare_inventory(inventory)
@@ -442,8 +442,8 @@ function Public.return_ingredients_or_get_progress(machine, target_entity_name, 
     return 0, 0
 end
 
-function Public.get_latest_recipe_and_rigor(unit_number)
-    local latest = storage.machine_to_latest_recipe_and_rigor[unit_number]
+function Public.get_latest_recipe_and_parallel(unit_number)
+    local latest = storage.machine_to_latest_recipe_and_parallel[unit_number]
     if not latest then
         return nil, nil, nil
     end
@@ -451,26 +451,26 @@ function Public.get_latest_recipe_and_rigor(unit_number)
     return latest[1], latest[2], latest[3]
 end
 
-function Public.update_machine_for_rigor(machine, just_built)
+function Public.update_machine_for_parallel(machine, just_built)
     if not machine or not machine.valid then
         return
     end
 
     local is_ghost = machine.type == "entity-ghost"
     local type = (is_ghost and machine.ghost_type) or machine.type
-    if not utils.table_contains_value(rigor_crafting_machine_types, type) then
+    if not utils.table_contains_value(parallel_crafting_machine_types, type) then
         return
     end
 
-    local current_machine_rigor, rounded_machine_rigor, has_rigor_modules = Public.get_total_machine_rigor_optimized(machine, is_ghost)
-    -- Machine does not support rigor modules
-    if current_machine_rigor == nil then
+    local current_machine_parallel, rounded_machine_parallel, has_parallel_modules = Public.get_total_machine_parallel_optimized(machine, is_ghost)
+    -- Machine does not support parallel modules
+    if current_machine_parallel == nil then
         return
     end
 
-    -- Machine has no rigor and is not dirty
-    local latest_recipe, latest_rigor, latest_set_recipe = Public.get_latest_recipe_and_rigor(machine.unit_number)
-    if not just_built and (not latest_rigor or latest_rigor == 0) and current_machine_rigor == 0 then
+    -- Machine has no parallel and is not dirty
+    local latest_recipe, latest_parallel, latest_set_recipe = Public.get_latest_recipe_and_parallel(machine.unit_number)
+    if not just_built and (not latest_parallel or latest_parallel == 0) and current_machine_parallel == 0 then
         return machine
     end
 
@@ -489,33 +489,33 @@ function Public.update_machine_for_rigor(machine, just_built)
     local machine_control_behavior = machine.get_control_behavior()
 
     local is_set_recipe = not is_furnace and machine_control_behavior and machine_control_behavior.circuit_set_recipe
-    if is_set_recipe and current_machine_rigor > 0 then
-        local has_base_rigor_but_no_connections = not has_rigor_modules and recipe and not machine_control_behavior.get_circuit_network(defines.wire_connector_id.circuit_red) and not machine_control_behavior.get_circuit_network(defines.wire_connector_id.circuit_green)
-        if has_rigor_modules or has_base_rigor_but_no_connections then
+    if is_set_recipe and current_machine_parallel > 0 then
+        local has_base_parallel_but_no_connections = not has_parallel_modules and recipe and not machine_control_behavior.get_circuit_network(defines.wire_connector_id.circuit_red) and not machine_control_behavior.get_circuit_network(defines.wire_connector_id.circuit_green)
+        if has_parallel_modules or has_base_parallel_but_no_connections then
             is_set_recipe = false
             machine_control_behavior.circuit_set_recipe = false
         else
-            current_machine_rigor = 0
+            current_machine_parallel = 0
         end
         if not latest_set_recipe or not is_set_recipe then
             for _, player_to_machine_map in pairs{storage.player_to_selected_machine, storage.player_to_machine_with_open_gui} do
                 for player_idx, selected_machine in pairs(player_to_machine_map) do
                     if machine == selected_machine then
                         local player = game.get_player(player_idx)
-                        if player and player.valid and settings.get_player_settings(player_idx)["rigor-module-show-set-recipe-messages"].value then
-                            if has_rigor_modules then
+                        if player and player.valid and settings.get_player_settings(player_idx)["parallel-module-show-set-recipe-messages"].value then
+                            if has_parallel_modules then
                                 player.print({
-                                    "mod-tooltip-name.rigor-module-circuit-set-recipe-warning",
+                                    "mod-tooltip-name.parallel-module-circuit-set-recipe-warning",
                                     {"gui-control-behavior-modes.set-recipe"}
                                 }, {
                                     skip = defines.print_skip.if_visible,
                                     game_state = false
                                 })
-                            elseif not has_base_rigor_but_no_connections then
+                            elseif not has_base_parallel_but_no_connections then
                                 player.print({
-                                    "mod-tooltip-name.rigor-module-entity-circuit-set-recipe-warning",
+                                    "mod-tooltip-name.parallel-module-entity-circuit-set-recipe-warning",
                                     {"gui-control-behavior-modes.set-recipe"},
-                                    {"module-category-name.rigor"}
+                                    {"module-category-name.parallel"}
                                 }, {
                                     skip = defines.print_skip.if_visible,
                                     game_state = false
@@ -528,24 +528,24 @@ function Public.update_machine_for_rigor(machine, just_built)
         end
     end
 
-    local was_changed = latest_recipe ~= recipe_name or latest_rigor ~= current_machine_rigor
+    local was_changed = latest_recipe ~= recipe_name or latest_parallel ~= current_machine_parallel
     local new_machine = nil
     -- If no change, don't update
     if was_changed or just_built then
         local base_recipe_name = nil
         if recipe_name then
-            _, base_recipe_name = next(rigor_module_mod_recipe_table_inverse[recipe_name] or {})
+            _, base_recipe_name = next(parallel_module_mod_recipe_table_inverse[recipe_name] or {})
         end
         local was_crafting = was_changed and machine.is_crafting()
-        local base_machine_name = rigor_module_mod_crafting_machine_table_inverse[name] or name
-        local rigor_machine_name = base_machine_name and rigor_module_mod_crafting_machine_table[base_machine_name]
-        local target_entity_name = (current_machine_rigor > 0 and rigor_machine_name) or base_machine_name
+        local base_machine_name = parallel_module_mod_crafting_machine_table_inverse[name] or name
+        local parallel_machine_name = base_machine_name and parallel_module_mod_crafting_machine_table[base_machine_name]
+        local target_entity_name = (current_machine_parallel > 0 and parallel_machine_name) or base_machine_name
         local crafting_progress, bonus_progress = Public.return_ingredients_or_get_progress(machine, target_entity_name, recipe, quality)
         new_machine = Public.fast_replace_entity(
             machine,
             target_entity_name,
             is_ghost,
-            Public.get_rigor_recipe(base_recipe_name, rounded_machine_rigor),
+            Public.get_parallel_recipe(base_recipe_name, rounded_machine_parallel),
             quality,
             (recipe and recipe.name) or nil
         )
@@ -559,9 +559,9 @@ function Public.update_machine_for_rigor(machine, just_built)
                 machine.bonus_progress = bonus_progress
             end
         end
-        Public.update_machine_info(machine, recipe_name, current_machine_rigor, is_set_recipe)
-    elseif current_machine_rigor > 0 then
-        Public.update_machine_info(machine, recipe_name, current_machine_rigor, is_set_recipe)
+        Public.update_machine_info(machine, recipe_name, current_machine_parallel, is_set_recipe)
+    elseif current_machine_parallel > 0 then
+        Public.update_machine_info(machine, recipe_name, current_machine_parallel, is_set_recipe)
     end
 
     if new_machine then
@@ -573,62 +573,62 @@ function Public.update_machine_for_rigor(machine, just_built)
     return machine
 end
 
-function Public.update_machine_info(machine, recipe_name, current_machine_rigor, is_set_recipe)
+function Public.update_machine_info(machine, recipe_name, current_machine_parallel, is_set_recipe)
     if not machine or not machine.valid then
         return
     end
 
-    if not is_set_recipe and current_machine_rigor == 0 then
-        storage.machine_to_latest_recipe_and_rigor[machine.unit_number] = nil
+    if not is_set_recipe and current_machine_parallel == 0 then
+        storage.machine_to_latest_recipe_and_parallel[machine.unit_number] = nil
         machine.clear_tooltip_field(TOOLTIP_ID)
         return
     end
-    local old_values = storage.machine_to_latest_recipe_and_rigor[machine.unit_number]
-    local old_rigor = (old_values and old_values[2]) or nil
+    local old_values = storage.machine_to_latest_recipe_and_parallel[machine.unit_number]
+    local old_parallel = (old_values and old_values[2]) or nil
     
    
-    local tooltip_machine_rigor = current_machine_rigor
-    if old_rigor ~= tooltip_machine_rigor then
+    local tooltip_machine_parallel = current_machine_parallel
+    if old_parallel ~= tooltip_machine_parallel then
         machine.set_tooltip_field({
             id = TOOLTIP_ID,
-            name = { "mod-tooltip-name.rigor-module-rigor" },
+            name = { "mod-tooltip-name.parallel-module-parallel" },
             value = {
-                tooltip_machine_rigor == max_total_rigor and "mod-tooltip-value.rigor-module-value-max" or "mod-tooltip-value.rigor-module-value",
-                cached_tostring(tooltip_machine_rigor)
+                tooltip_machine_parallel == max_total_parallel and "mod-tooltip-value.parallel-module-value-max" or "mod-tooltip-value.parallel-module-value",
+                cached_tostring(tooltip_machine_parallel)
             },
             order = 90
         })
     end
     
-    storage.machine_to_latest_recipe_and_rigor[machine.unit_number] = { recipe_name, current_machine_rigor, is_set_recipe }
+    storage.machine_to_latest_recipe_and_parallel[machine.unit_number] = { recipe_name, current_machine_parallel, is_set_recipe }
 end
 
 function Public.update_opened_machine_for_player(player_index)
-    Public.update_machine_for_rigor(storage.player_to_machine_with_open_gui[player_index])
+    Public.update_machine_for_parallel(storage.player_to_machine_with_open_gui[player_index])
 end
 
 function Public.update_selected_machine_for_player(player_index)
-    Public.update_machine_for_rigor(storage.player_to_selected_machine[player_index])
+    Public.update_machine_for_parallel(storage.player_to_selected_machine[player_index])
 end
 
 function Public.handle_on_tick()
     if next(storage.player_to_machine_with_open_gui) then
         for _, opened_machine in pairs(storage.player_to_machine_with_open_gui) do
-            Public.update_machine_for_rigor(opened_machine)
+            Public.update_machine_for_parallel(opened_machine)
         end
     end
-    if next(storage.machines_waiting_for_rigor_module) then
-        for _, machine in pairs(storage.machines_waiting_for_rigor_module) do
-            Public.update_machine_for_rigor(machine, true)
+    if next(storage.machines_waiting_for_parallel_module) then
+        for _, machine in pairs(storage.machines_waiting_for_parallel_module) do
+            Public.update_machine_for_parallel(machine, true)
         end
-        storage.machines_waiting_for_rigor_module = {}
+        storage.machines_waiting_for_parallel_module = {}
     end
 end
 
 function Public.handle_undo_redo_action(surface, action)
     if action.type == "upgraded-entity" or action.type == "upgraded-modules" or action.type == "copy-entity-settings" then
         for _, machine in pairs(Public.get_crafting_machines_including_ghosts(surface, action.target.position)) do
-            Public.update_machine_for_rigor(machine, true)
+            Public.update_machine_for_parallel(machine, true)
         end
     end
 end
@@ -650,7 +650,7 @@ function Public.handle_bplib_overlaps(event)
     end
 
     for _, entity in pairs(event.overlaps) do
-        storage.machines_waiting_for_rigor_module[entity.unit_number] = entity
+        storage.machines_waiting_for_parallel_module[entity.unit_number] = entity
     end
 end
 
@@ -669,21 +669,21 @@ end
 function Public.sanitize_bp_entities(bp_entities)
     local was_modified = false
     for _, bp_entity in pairs(bp_entities) do
-        local base_entity_name = rigor_module_mod_crafting_machine_table_inverse[bp_entity.name]
-        local current_rigor_to_base_recipe_name = bp_entity.recipe and rigor_module_mod_recipe_table_inverse[bp_entity.recipe]
-        if not base_entity_name and not current_rigor_to_base_recipe_name then
+        local base_entity_name = parallel_module_mod_crafting_machine_table_inverse[bp_entity.name]
+        local current_parallel_to_base_recipe_name = bp_entity.recipe and parallel_module_mod_recipe_table_inverse[bp_entity.recipe]
+        if not base_entity_name and not current_parallel_to_base_recipe_name then
             goto continue
         end
 
-        -- Set blueprint entity to non-rigor version, if applicable
+        -- Set blueprint entity to non-parallel version, if applicable
         if base_entity_name and bp_entity.name ~= base_entity_name then
             was_modified = true
             bp_entity.name = base_entity_name
         end
 
-        -- Set blueprint entity's recipe to non-rigor version, if applicable
-        if current_rigor_to_base_recipe_name then
-            local _, base_recipe_name = next(current_rigor_to_base_recipe_name)
+        -- Set blueprint entity's recipe to non-parallel version, if applicable
+        if current_parallel_to_base_recipe_name then
+            local _, base_recipe_name = next(current_parallel_to_base_recipe_name)
             if base_recipe_name and bp_entity.recipe ~= base_recipe_name then
                 was_modified = true
                 bp_entity.recipe = base_recipe_name
@@ -745,12 +745,12 @@ function Public.handle_entity_gui_opened(player_index, entity)
     end
 
     local entity_name = entity.name == "entity-ghost" and entity.ghost_name or entity.name
-    if machine_accepts_rigor_modules[entity_name] or entity_to_base_rigor[entity_name] then
+    if machine_accepts_parallel_modules[entity_name] or entity_to_base_parallel[entity_name] then
         storage.player_to_machine_with_open_gui[player_index] = entity
     end
     
     -- TODO: Enable if `on_tick` is disabled
-    -- Public.update_machine_for_rigor(entity)
+    -- Public.update_machine_for_parallel(entity)
 end
 
 function Public.handle_entity_gui_closed(player_index, entity)
@@ -759,14 +759,14 @@ function Public.handle_entity_gui_closed(player_index, entity)
     end
 
     -- TODO: Enable if `on_tick` is disabled
-    -- Public.update_machine_for_rigor(entity)
+    -- Public.update_machine_for_parallel(entity)
     storage.player_to_machine_with_open_gui[player_index] = nil
 end
 
 function Public.handle_player_selection_changed(player_index, last_entity)
     local player = game.get_player(player_index)
     local entity = player and player.valid and player.selected or nil
-    if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or not utils.table_contains_value(rigor_crafting_machine_types, (entity.type == "entity-ghost" and entity.ghost_type) or entity.type) then
+    if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or not utils.table_contains_value(parallel_crafting_machine_types, (entity.type == "entity-ghost" and entity.ghost_type) or entity.type) then
         storage.player_to_selected_machine[player_index] = nil
     else
         storage.player_to_selected_machine[player_index] = entity

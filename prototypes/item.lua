@@ -1,20 +1,20 @@
 local item_sounds = require("__base__.prototypes.item_sounds")
 
--- Add module effect in data-final-fixes to prevent other mods from incorrectly classifying rigor modules as efficiency modules
+-- Add module effect in data-final-fixes to prevent other mods from incorrectly classifying parallel modules as efficiency modules
 data:extend({
   -- {
   --   type = "module-category",
-  --   name = "rigor"
+  --   name = "parallel"
   -- },
   {
     type = "module",
-    name = "rigor-module",
-    icon = "__rigor-module__/graphics/icons/rigor-module.png",
+    name = "parallel-module",
+    icon = "__parallel-module__/graphics/icons/parallel-module.png",
     icon_size = 64,
     subgroup = "module",
-    category = "rigor",
+    category = "parallel",
     tier = 1,
-    order = "d[rigor]-a[rigor-module-1]",
+    order = "d[parallel]-a[parallel-module-1]",
     inventory_move_sound = item_sounds.module_inventory_move,
     pick_sound = item_sounds.module_inventory_pickup,
     drop_sound = item_sounds.module_inventory_move,
@@ -24,13 +24,13 @@ data:extend({
   },
   {
     type = "module",
-    name = "rigor-module-2",
-    icon = "__rigor-module__/graphics/icons/rigor-module-2.png",
+    name = "parallel-module-2",
+    icon = "__parallel-module__/graphics/icons/parallel-module-2.png",
     icon_size = 64,
     subgroup = "module",
-    category = "rigor",
+    category = "parallel",
     tier = 2,
-    order = "d[rigor]-b[rigor-module-2]",
+    order = "d[parallel]-b[parallel-module-2]",
     inventory_move_sound = item_sounds.module_inventory_move,
     pick_sound = item_sounds.module_inventory_pickup,
     drop_sound = item_sounds.module_inventory_move,
@@ -40,13 +40,13 @@ data:extend({
   },
   {
     type = "module",
-    name = "rigor-module-3",
-    icon = "__rigor-module__/graphics/icons/rigor-module-3.png",
+    name = "parallel-module-3",
+    icon = "__parallel-module__/graphics/icons/parallel-module-3.png",
     icon_size = 64,
     subgroup = "module",
-    category = "rigor",
+    category = "parallel",
     tier = 3,
-    order = "d[rigor]-c[rigor-module-3]",
+    order = "d[parallel]-c[parallel-module-3]",
     inventory_move_sound = item_sounds.module_inventory_move,
     pick_sound = item_sounds.module_inventory_pickup,
     drop_sound = item_sounds.module_inventory_move,
@@ -56,25 +56,25 @@ data:extend({
   },
   {
     type = "tips-and-tricks-item-category",
-    name = "rigor-module-mod",
-    order = "jj-[rigor]"
+    name = "parallel-module-mod",
+    order = "jj-[parallel]"
   },
   {
     type = "tips-and-tricks-item",
-    name = "rigor-module-mod-tip-1",
-    category = "rigor-module-mod",
+    name = "parallel-module-mod-tip-1",
+    category = "parallel-module-mod",
     order = "a",
     is_title = true,
-    trigger = { type = "research", technology = "rigor-module" }
+    trigger = { type = "research", technology = "parallel-module" }
   },
   {
     type = "tips-and-tricks-item",
-    name = "rigor-module-mod-tip-2",
-    category = "rigor-module-mod",
+    name = "parallel-module-mod-tip-2",
+    category = "parallel-module-mod",
     order = "b",
-    dependencies = { "rigor-module-mod-tip-1" },
+    dependencies = { "parallel-module-mod-tip-1" },
     indent = 1,
-    tag = "[item=rigor-module][item=rigor-module-3]",
+    tag = "[item=parallel-module][item=parallel-module-3]",
     trigger = { type = "dependencies-met" },
     skip_trigger = {
       type = "sequence",
@@ -90,9 +90,9 @@ data:extend({
     },
     simulation = {
       init = [[
-        local utils = require("__rigor-module__.utils")
+        local utils = require("__parallel-module__.utils")
 
-        player = game.simulation.create_test_player{name = "Rigor Manager"}
+        player = game.simulation.create_test_player{name = "Parallel Manager"}
         player.teleport({-7.5, 0})
         game.simulation.camera_player = player
         game.simulation.camera_position = {0, 0.5}
@@ -110,11 +110,11 @@ data:extend({
         show_probabilities = function()
 
           local intitial_probabilities = { 0.001, 0.01, 0.05, 0.1, 0.25 }
-          local rigor_levels = { 0, 0.5, 1, 2, 5, 10, 20 }
+          local parallel_levels = { 0, 0.5, 1, 2, 5, 10, 20 }
 
           local frame = game.players[1].gui.screen.add{
             type = "frame",
-            caption = {"tips-and-tricks-simulation.rigor-module-mod-tip-2"},
+            caption = {"tips-and-tricks-simulation.parallel-module-mod-tip-2"},
             direction = "vertical"
           }
           frame.auto_center = true
@@ -123,36 +123,36 @@ data:extend({
             style = "inside_shallow_frame_with_padding",
             direction = "vertical"
           }
-          local rigor_table = inner.add{
+          local parallel_table = inner.add{
             type = "table",
-            column_count = table_size(rigor_levels),
+            column_count = table_size(parallel_levels),
             style = "bordered_table"
           }
-          rigor_table.add{
+          parallel_table.add{
             type = "label",
             caption = {"tips-and-tricks-simulation.initial-probability"},
             style = "bold_label"
           }
 
-          for _, rigor in pairs (rigor_levels) do
-            if rigor ~= 0 then
-              rigor_table.add{
+          for _, parallel in pairs (parallel_levels) do
+            if parallel ~= 0 then
+              parallel_table.add{
                 type = "label",
-                caption = {"tips-and-tricks-simulation.with-rigor", rigor * 100},
+                caption = {"tips-and-tricks-simulation.with-parallel", parallel * 100},
                 style = "bold_label"
               }
             end
           end
 
           for _, probability in pairs (intitial_probabilities) do
-            -- rigor_table.add{
+            -- parallel_table.add{
             --   type = "label",
-            --   caption = {"tips-and-tricks-simulation.rigor-probability", string.format("%.2f", probability * 100)}
+            --   caption = {"tips-and-tricks-simulation.parallel-probability", string.format("%.2f", probability * 100)}
             -- }
-            for _, rigor in pairs(rigor_levels) do
-            rigor_table.add{
+            for _, parallel in pairs(parallel_levels) do
+            parallel_table.add{
               type = "label",
-              caption = {"tips-and-tricks-simulation.rigor-probability", string.format("%.2f", utils.scale_probability_as_odds(probability, 1 + rigor) * 100)}
+              caption = {"tips-and-tricks-simulation.parallel-probability", string.format("%.2f", utils.scale_probability_as_odds(probability, 1 + parallel) * 100)}
             }
             end
           end

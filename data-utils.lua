@@ -1,10 +1,10 @@
-local utils = require("__rigor-module__.utils")
+local utils = require("__parallel-module__.utils")
 
 local Public = {}
 
-local rigor_module_mod_data = data.raw["mod-data"].rigor_module_mod_data.data
+local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
 
-Public.maximum_probability_valid_for_rigor = rigor_module_mod_data.maximum_probability_valid_for_rigor
+Public.maximum_probability_valid_for_parallel = parallel_module_mod_data.maximum_probability_valid_for_parallel
 
 function Public.get_recipe_result_combined_probability(result)
     if result.shared_probability then
@@ -14,13 +14,13 @@ function Public.get_recipe_result_combined_probability(result)
     return result.independent_probability
 end
 
-function Public.is_result_valid_rigor_target(result)
+function Public.is_result_valid_parallel_target(result)
     if result.si_modified then
         return false
     end
 
-    return (result.independent_probability and result.independent_probability < Public.maximum_probability_valid_for_rigor)
-        or (result.shared_probability and result.shared_probability.max - result.shared_probability.min < Public.maximum_probability_valid_for_rigor)
+    return (result.independent_probability and result.independent_probability < Public.maximum_probability_valid_for_parallel)
+        or (result.shared_probability and result.shared_probability.max - result.shared_probability.min < Public.maximum_probability_valid_for_parallel)
 end
 
 function Public.lowest_probability_ingredient_idx(recipe)
@@ -29,9 +29,9 @@ function Public.lowest_probability_ingredient_idx(recipe)
         return idx
     end
 
-    local lowest_probability = Public.maximum_probability_valid_for_rigor
+    local lowest_probability = Public.maximum_probability_valid_for_parallel
     for i, result in pairs(recipe.results) do
-        if not Public.is_result_valid_rigor_target(result) then
+        if not Public.is_result_valid_parallel_target(result) then
             goto continue
         end
 
@@ -202,7 +202,7 @@ function Public.Strategy.standardize(recipe)
     end
 end
 
---- Scale up rigor result with standard formula.
+--- Scale up parallel result with standard formula.
 --- Scale down other results to reach no net change.
 function Public.Strategy.simple_zero_sum_scale(recipe, idx, scale)
     -- TODO: improve scaling
@@ -227,7 +227,7 @@ function Public.Strategy.simple_zero_sum_scale(recipe, idx, scale)
     end
 end
 
---- Scale up rigor result with standard formula.
+--- Scale up parallel result with standard formula.
 --- Leave other results unchanged.
 function Public.Strategy.simple_positive_sum_scale(recipe, idx, scale)
     local _, max_max = Public.get_limits(recipe)

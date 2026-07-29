@@ -1,9 +1,9 @@
 local categories = data.raw.recipe["speed-module"].categories
 
-local rigor_module_3_ingredients = {
+local parallel_module_3_ingredients = {
   {
     amount = 4,
-    name = "rigor-module-2",
+    name = "parallel-module-2",
     type = "item"
   },
   {
@@ -18,7 +18,7 @@ local rigor_module_3_ingredients = {
   }
 }
 if mods["space-age"] then
-  table.insert(rigor_module_3_ingredients, {
+  table.insert(parallel_module_3_ingredients, {
     amount = 1,
     name = "uranium-235",
     type = "item"
@@ -27,7 +27,7 @@ end
 
 data:extend({
   {
-    name = "rigor-module",
+    name = "parallel-module",
     type = "recipe",
     categories = categories,
     enabled = false,
@@ -47,13 +47,13 @@ data:extend({
     results = {
       {
         amount = 1,
-        name = "rigor-module",
+        name = "parallel-module",
         type = "item"
       }
     }
   },
   {
-    name = "rigor-module-2",
+    name = "parallel-module-2",
     type = "recipe",
     categories = categories,
     enabled = false,
@@ -61,7 +61,7 @@ data:extend({
     ingredients = {
       {
         amount = 4,
-        name = "rigor-module",
+        name = "parallel-module",
         type = "item"
       },
       {
@@ -78,22 +78,22 @@ data:extend({
     results = {
       {
         amount = 1,
-        name = "rigor-module-2",
+        name = "parallel-module-2",
         type = "item"
       }
     }
   },
   {
-    name = "rigor-module-3",
+    name = "parallel-module-3",
     type = "recipe",
     categories = categories,
     enabled = false,
     energy_required = 60,
-    ingredients = rigor_module_3_ingredients,
+    ingredients = parallel_module_3_ingredients,
     results = {
       {
         amount = 1,
-        name = "rigor-module-3",
+        name = "parallel-module-3",
         type = "item"
       }
     }

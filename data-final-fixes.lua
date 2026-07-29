@@ -2,35 +2,35 @@
 --- SETUP
 -------------------------------------------------------------------------------
 
-local utils = require("__rigor-module__.utils")
-local data_utils = require("__rigor-module__.data-utils")
+local utils = require("__parallel-module__.utils")
+local data_utils = require("__parallel-module__.data-utils")
 local spoilable_items = require("__item-request-proxy-events__.spoilable-items")
 
-local EFFECT_NAME = "rigor"
+local EFFECT_NAME = "parallel"
 local types_with_allowed_module_categories = { "assembling-machine", "furnace", "beacon", "lab", "mining-drill", "recipe" }
 if data.raw["agricultural-tower"] then
     table.insert(types_with_allowed_module_categories, "agricultural-tower")
 end
-local rigor_module_mod_data = data.raw["mod-data"].rigor_module_mod_data.data
+local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
 
-local explicitly_allowed_recycling_recipes = rigor_module_mod_data.allowed_recycling_recipes
-local explicitly_disallowed_categories = rigor_module_mod_data.disallowed_crafting_categories
-local explicitly_disallowed_recipes = rigor_module_mod_data.disallowed_recipes
-local recipe_to_result_to_alter = rigor_module_mod_data.explicit_recipe_results
-local recipe_to_result_to_alter_idx = rigor_module_mod_data.explicit_recipe_result_indices
-local explicit_recipes_without_results = rigor_module_mod_data.explicit_recipes_without_results
-local explicit_entities = rigor_module_mod_data.explicit_entities
-local entity_to_base_rigor = rigor_module_mod_data.entity_to_base_rigor
-local extra_count_fraction_recipe_results = rigor_module_mod_data.extra_count_fraction_recipe_results
-local additional_default_categories = rigor_module_mod_data.additional_default_categories
-local crafting_machine_types = rigor_module_mod_data.crafting_machine_types
-local module_value_increment = rigor_module_mod_data.round_rigor_to_nearest / 100.0
-local max_total_rigor = rigor_module_mod_data.max_total_rigor / 100.0
+local explicitly_allowed_recycling_recipes = parallel_module_mod_data.allowed_recycling_recipes
+local explicitly_disallowed_categories = parallel_module_mod_data.disallowed_crafting_categories
+local explicitly_disallowed_recipes = parallel_module_mod_data.disallowed_recipes
+local recipe_to_result_to_alter = parallel_module_mod_data.explicit_recipe_results
+local recipe_to_result_to_alter_idx = parallel_module_mod_data.explicit_recipe_result_indices
+local explicit_recipes_without_results = parallel_module_mod_data.explicit_recipes_without_results
+local explicit_entities = parallel_module_mod_data.explicit_entities
+local entity_to_base_parallel = parallel_module_mod_data.entity_to_base_parallel
+local extra_count_fraction_recipe_results = parallel_module_mod_data.extra_count_fraction_recipe_results
+local additional_default_categories = parallel_module_mod_data.additional_default_categories
+local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
+local module_value_increment = parallel_module_mod_data.round_parallel_to_nearest / 100.0
+local max_total_parallel = parallel_module_mod_data.max_total_parallel / 100.0
 
 local crafting_category_to_max_module_slots = {}
-local crafting_category_to_max_rigor_without_modules = {}
+local crafting_category_to_max_parallel_without_modules = {}
 local crafting_machine_to_max_module_slots = {}
-local crafting_category_to_should_enable_rigor_effect = {}
+local crafting_category_to_should_enable_parallel_effect = {}
 local crafting_categories_in_furnaces = {}
 local new_recipes = {}
 local base_recipe_to_affected_result = {}
@@ -40,26 +40,26 @@ local altered_to_original_crafting_category = {}
 local original_to_altered_crafting_category = {}
 local new_machines = {}
 
-local base_recipe_to_altered_recipes = data.raw["mod-data"].rigor_module_mod_recipe_table.data
-local altered_recipe_to_base_recipe_rigor_pair = data.raw["mod-data"].rigor_module_mod_recipe_table_inverse.data
-local base_machine_to_altered_machine = data.raw["mod-data"].rigor_module_mod_crafting_machine_table.data
-local altered_machine_to_base_machine = data.raw["mod-data"].rigor_module_mod_crafting_machine_table_inverse.data
-local rigor_value_cache = data.raw["mod-data"].rigor_module_mod_rigor_value_cache.data
+local base_recipe_to_altered_recipes = data.raw["mod-data"].parallel_module_mod_recipe_table.data
+local altered_recipe_to_base_recipe_parallel_pair = data.raw["mod-data"].parallel_module_mod_recipe_table_inverse.data
+local base_machine_to_altered_machine = data.raw["mod-data"].parallel_module_mod_crafting_machine_table.data
+local altered_machine_to_base_machine = data.raw["mod-data"].parallel_module_mod_crafting_machine_table_inverse.data
+local parallel_value_cache = data.raw["mod-data"].parallel_module_mod_parallel_value_cache.data
 local crafting_machine_to_fixed_base_recipe = data.raw["mod-data"].crafting_machine_to_fixed_base_recipe.data
 
-local compatibility_mode = settings.startup["rigor-module-compatibility-mode"].value
-local compatibiltiy_mode_include_vanilla = compatibility_mode and settings.startup["rigor-module-compatibility-mode-include-vanilla"].value
+local compatibility_mode = settings.startup["parallel-module-compatibility-mode"].value
+local compatibiltiy_mode_include_vanilla = compatibility_mode and settings.startup["parallel-module-compatibility-mode-include-vanilla"].value
 
-local compatibility_mode_category_whitelist = rigor_module_mod_data.compatibility_mode_category_whitelist
-local compatibility_mode_recipe_whitelist = rigor_module_mod_data.compatibility_mode_recipe_whitelist
+local compatibility_mode_category_whitelist = parallel_module_mod_data.compatibility_mode_category_whitelist
+local compatibility_mode_recipe_whitelist = parallel_module_mod_data.compatibility_mode_recipe_whitelist
 
 -------------------------------------------------------------------------------
 --- VALIDATION
 -------------------------------------------------------------------------------
 
-assert(module_value_increment > 0, "'round_rigor_to_nearest' must be positive.")
-assert(max_total_rigor > module_value_increment, "'max_total_rigor' must greater than 'module_value_increment'.")
-assert(max_total_rigor % module_value_increment == 0, "'max_total_rigor' must be a whole-number multipler of 'round_rigor_to_nearest'.")
+assert(module_value_increment > 0, "'round_parallel_to_nearest' must be positive.")
+assert(max_total_parallel > module_value_increment, "'max_total_parallel' must greater than 'module_value_increment'.")
+assert(max_total_parallel % module_value_increment == 0, "'max_total_parallel' must be a whole-number multipler of 'round_parallel_to_nearest'.")
 
 -------------------------------------------------------------------------------
 --- COMPATIBILITY
@@ -95,13 +95,13 @@ if mods["Flare Stack"] then
 end
 -- TODO: use space locations
 if mods["virentis"] then
-    require("__rigor-module__.compat.virentis-final-fixes")
+    require("__parallel-module__.compat.virentis-final-fixes")
 end
 if mods["planetaris-tellus"] then
-    require("__rigor-module__.compat.planetaris-tellus-final-fixes")
+    require("__parallel-module__.compat.planetaris-tellus-final-fixes")
 end
 if data.raw["space-location"]["secretas"] then
-    require("__rigor-module__.compat.secretas-final-fixes")
+    require("__parallel-module__.compat.secretas-final-fixes")
 end
 
 -------------------------------------------------------------------------------
@@ -189,23 +189,23 @@ for _, prototype_type in pairs(types_with_allowed_module_categories) do
     end
 end
 
--- Add rigor
+-- Add parallel
 data:extend({
   {
     type = "module-category",
-    name = "rigor"
+    name = "parallel"
   }
 })
 
-local function to_quality_values(quality_to_multiplier, rigor)
+local function to_quality_values(quality_to_multiplier, parallel)
   local result = {}
   for quality, multiplier in pairs(quality_to_multiplier) do
-    result[quality] = { "mod-tooltip-value.rigor-module-value", tostring(rigor * multiplier) }
+    result[quality] = { "mod-tooltip-value.parallel-module-value", tostring(parallel * multiplier) }
   end
   return result
 end
 
--- Update rigor module prototypes (do it here in case another mod added another tier)
+-- Update parallel module prototypes (do it here in case another mod added another tier)
 local quality_to_multiplier = {}
 local max_quality_multipler = 1
 for quality_name, quality in pairs(data.raw.quality) do
@@ -214,37 +214,37 @@ for quality_name, quality in pairs(data.raw.quality) do
     max_quality_multipler = math.max(max_quality_multipler, quality_multiplier)
 end
 
-local rigor_module_coefficients = data.raw["mod-data"].rigor_module_mod_data.data.rigor_formula_coefficients
+local parallel_module_coefficients = data.raw["mod-data"].parallel_module_mod_data.data.parallel_formula_coefficients
 for module_name, module in pairs(data.raw.module) do
-    if module.category ~= "rigor" then
+    if module.category ~= "parallel" then
         goto continue
     end
 
     if spoilable_items.register_item_spoiled_event(module) then
-        data.raw["mod-data"].spoilable_rigor_modules.data[module_name] = true
+        data.raw["mod-data"].spoilable_parallel_modules.data[module_name] = true
     end
 
-    -- Add consumption effect to rigor modules
+    -- Add consumption effect to parallel modules
     module.effect = { consumption = 0.125 * 2 ^ module.tier }
-    local rigor = utils.get_rigor_effect(rigor_module_coefficients, module.tier)
-    rigor_module_mod_data.max_rigor_per_module = math.max(rigor_module_mod_data.max_rigor_per_module, rigor * max_quality_multipler)
+    local parallel = utils.get_parallel_effect(parallel_module_coefficients, module.tier)
+    parallel_module_mod_data.max_parallel_per_module = math.max(parallel_module_mod_data.max_parallel_per_module, parallel * max_quality_multipler)
     module.custom_tooltip_fields = {{
-        name = { "mod-tooltip-name.rigor-module-rigor" },
-        value = { "mod-tooltip-value.rigor-module-value", tostring(rigor), },
-        quality_values = to_quality_values(quality_to_multiplier, rigor),
+        name = { "mod-tooltip-name.parallel-module-parallel" },
+        value = { "mod-tooltip-value.parallel-module-value", tostring(parallel), },
+        quality_values = to_quality_values(quality_to_multiplier, parallel),
         order = 80
     }}
     local tier = tostring(module.tier)
-    if not rigor_value_cache[tier] then
-        rigor_value_cache[tier] = {}
+    if not parallel_value_cache[tier] then
+        parallel_value_cache[tier] = {}
         for quality, multiplier in pairs(quality_to_multiplier) do
-            rigor_value_cache[tier][quality] = rigor * multiplier
+            parallel_value_cache[tier][quality] = parallel * multiplier
         end
     end
     ::continue::
 end
 
-local module_value_max_per_slot = rigor_module_mod_data.max_rigor_per_module / 100.0
+local module_value_max_per_slot = parallel_module_mod_data.max_parallel_per_module / 100.0
 
 -------------------------------------------------------------------------------
 --- RECIPE CATEGORIES
@@ -253,18 +253,18 @@ local module_value_max_per_slot = rigor_module_mod_data.max_rigor_per_module / 1
 -- Set max module slots per crafting category
 for name, _ in pairs(data.raw["recipe-category"]) do
     crafting_category_to_max_module_slots[name] = 0
-    crafting_category_to_max_rigor_without_modules[name] = 0
-    crafting_category_to_should_enable_rigor_effect[name] = false
+    crafting_category_to_max_parallel_without_modules[name] = 0
+    crafting_category_to_should_enable_parallel_effect[name] = false
 end
 
-local valid_machines_with_base_rigor = {}
+local valid_machines_with_base_parallel = {}
 
-local function max_rigor_without_modules(machine)
-    local base_rigor = machine and machine.type == "assembling-machine" and entity_to_base_rigor[machine.name] or 0
-    if base_rigor > 0 then
-        valid_machines_with_base_rigor[machine.name] = true
+local function max_parallel_without_modules(machine)
+    local base_parallel = machine and machine.type == "assembling-machine" and entity_to_base_parallel[machine.name] or 0
+    if base_parallel > 0 then
+        valid_machines_with_base_parallel[machine.name] = true
     end
-    return base_rigor
+    return base_parallel
 end
 
 local function calculate_max_module_slots(machines)
@@ -314,13 +314,13 @@ local function calculate_max_module_slots(machines)
             machine_module_slots = machine_module_slots + max_extra_module_slots
         end
         crafting_machine_to_max_module_slots[machine.name] = machine_module_slots
-        local base_machine_rigor = max_rigor_without_modules(machine)
+        local base_machine_parallel = max_parallel_without_modules(machine)
         for _, category in pairs(categories) do
             if not data.raw["recipe-category"][category] then
                 goto continue
             end
             crafting_category_to_max_module_slots[category] = math.max(crafting_category_to_max_module_slots[category], machine_module_slots)
-            crafting_category_to_max_rigor_without_modules[category] = math.max(crafting_category_to_max_rigor_without_modules[category], base_machine_rigor)
+            crafting_category_to_max_parallel_without_modules[category] = math.max(crafting_category_to_max_parallel_without_modules[category], base_machine_parallel)
             if machine.type == "furnace" then
                 crafting_categories_in_furnaces[category] = true
             end
@@ -333,21 +333,21 @@ end
 for _, machine_type in pairs(crafting_machine_types) do
     calculate_max_module_slots(data.raw[machine_type])
 end
-for machine_name, rigor in pairs(entity_to_base_rigor) do
-    if valid_machines_with_base_rigor[machine_name] then
+for machine_name, parallel in pairs(entity_to_base_parallel) do
+    if valid_machines_with_base_parallel[machine_name] then
         local item = data.raw.item[machine_name]
         if item then
             item.custom_tooltip_fields = item.custom_tooltip_fields or {}
             table.insert(item.custom_tooltip_fields, {
-                name = { "mod-tooltip-name.rigor-module-rigor" },
-                value = { "mod-tooltip-value.rigor-module-value", tostring(rigor) },
+                name = { "mod-tooltip-name.parallel-module-parallel" },
+                value = { "mod-tooltip-value.parallel-module-value", tostring(parallel) },
                 order = 110,
                 show_in_factoriopedia = true,
                 show_in_tooltip = true
             })
         end
     else
-        entity_to_base_rigor[machine_name] = nil
+        entity_to_base_parallel[machine_name] = nil
     end
 end
 
@@ -376,16 +376,16 @@ local function get_max_module_slots_for_recipe(crafting_categories)
     return slots
 end
 
-local function get_max_rigor_without_modules_for_recipe(crafting_categories)
-    local rigor = 0
+local function get_max_parallel_without_modules_for_recipe(crafting_categories)
+    local parallel = 0
     for _, category in pairs(crafting_categories) do
-        rigor = math.max(rigor, crafting_category_to_max_rigor_without_modules[category])
+        parallel = math.max(parallel, crafting_category_to_max_parallel_without_modules[category])
     end
-    return rigor
+    return parallel
 end
 
 -------------------------------------------------------------------------------
---- CREATE RIGOR RECIPE_CATEGORY PROTOTYPES
+--- CREATE PARALLEL RECIPE_CATEGORY PROTOTYPES
 -------------------------------------------------------------------------------
 
 local function get_or_create_crafting_category_if_valid(category)
@@ -393,7 +393,7 @@ local function get_or_create_crafting_category_if_valid(category)
         return category
     end
 
-    local new_category = string.format("%s__rigor_module_mod", category)
+    local new_category = string.format("%s__parallel_module_mod", category)
     if not new_crafting_categories[new_category] then
         original_to_altered_crafting_category[category] = new_category
         new_crafting_categories[new_category] = {
@@ -407,7 +407,7 @@ local function get_or_create_crafting_category_if_valid(category)
 end
 
 -------------------------------------------------------------------------------
---- CREATE RIGOR RECIPE PROTOTYPES
+--- CREATE PARALLEL RECIPE PROTOTYPES
 -------------------------------------------------------------------------------
 
 local function get_prototype_helper(base_type, name)
@@ -563,42 +563,42 @@ local function set_custom_tooltip(recipe, result_to_alter_idx)
     if not recipe.custom_tooltip_fields then
         recipe.custom_tooltip_fields = {}
     end
-    local rigor_tooltip_field
+    local parallel_tooltip_field
     local result_to_alter = recipe.results[result_to_alter_idx]
     local quality_tier = math.max(result_to_alter.quality_change or 0, quality_to_tier(result_to_alter.quality_min))
     if quality_tier > 0 then
         if result_to_alter.quality_max then
             quality_tier = math.min(quality_tier, quality_to_tier(result_to_alter.quality_max))
         end
-        rigor_tooltip_field = {
-            name = {"mod-tooltip-name.rigor-module-rigor"},
-            value = {"mod-tooltip-value.rigor-module-recipe-item-quality", result_to_alter.name, quality_by_tier[quality_tier] or "common"},
+        parallel_tooltip_field = {
+            name = {"mod-tooltip-name.parallel-module-parallel"},
+            value = {"mod-tooltip-value.parallel-module-recipe-item-quality", result_to_alter.name, quality_by_tier[quality_tier] or "common"},
             order = 200,
             show_in_factoriopedia = true,
             show_in_tooltip = false
         }
     else
-        rigor_tooltip_field = {
-            name = {"mod-tooltip-name.rigor-module-rigor"},
-            value = {"mod-tooltip-value.rigor-module-recipe-"..result_to_alter.type, result_to_alter.name},
+        parallel_tooltip_field = {
+            name = {"mod-tooltip-name.parallel-module-parallel"},
+            value = {"mod-tooltip-value.parallel-module-recipe-"..result_to_alter.type, result_to_alter.name},
             order = 200,
             show_in_factoriopedia = true,
             show_in_tooltip = false
         }
     end
-    if recipe.rigor_sensitivity then
-        recipe.rigor_sensitivity = utils.round(recipe.rigor_sensitivity, 0.01)
-        if recipe.rigor_sensitivity == 1 or recipe.rigor_sensitivity < 0.01 or recipe.rigor_sensitivity > 100 then
-            recipe.rigor_sensitivity = nil
+    if recipe.parallel_sensitivity then
+        recipe.parallel_sensitivity = utils.round(recipe.parallel_sensitivity, 0.01)
+        if recipe.parallel_sensitivity == 1 or recipe.parallel_sensitivity < 0.01 or recipe.parallel_sensitivity > 100 then
+            recipe.parallel_sensitivity = nil
         else
-            rigor_tooltip_field.value = {
+            parallel_tooltip_field.value = {
                 "",
-                rigor_tooltip_field.value,
-                {"mod-tooltip-value.rigor-module-rigor-sensitivity", tostring(recipe.rigor_sensitivity)}
+                parallel_tooltip_field.value,
+                {"mod-tooltip-value.parallel-module-parallel-sensitivity", tostring(recipe.parallel_sensitivity)}
             }
         end
     end
-    table.insert(recipe.custom_tooltip_fields, rigor_tooltip_field)
+    table.insert(recipe.custom_tooltip_fields, parallel_tooltip_field)
 end
 
 for recipe_name, base_recipe in pairs(data.raw.recipe) do
@@ -641,7 +641,7 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
             if utils.table_contains_value(explicit_recipes_without_results, recipe_name) then
                 table.insert(base_recipe.allowed_module_categories, EFFECT_NAME)
                 for _, category in pairs(valid_categories) do
-                    crafting_category_to_should_enable_rigor_effect[category] = true
+                    crafting_category_to_should_enable_parallel_effect[category] = true
                 end
                 base_recipe_to_affected_result[recipe_name] = "nil (explicit_recipes_without_results)"
             end
@@ -649,14 +649,14 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         end
     end
 
-    -- Explicitly allow rigor modules in recipe.allowed_module_categories
+    -- Explicitly allow parallel modules in recipe.allowed_module_categories
     table.insert(base_recipe.allowed_module_categories, EFFECT_NAME)
     for _, category in pairs(valid_categories) do
         if not crafting_category_to_recipes[category] then
             crafting_category_to_recipes[category] = {}
         end
         crafting_category_to_recipes[category][recipe_name] = true
-        crafting_category_to_should_enable_rigor_effect[category] = true
+        crafting_category_to_should_enable_parallel_effect[category] = true
     end
 
     if not result_to_alter_idx then
@@ -675,21 +675,21 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
     base_recipe_to_affected_result[recipe_name] = base_recipe.results[result_to_alter_idx].name
 
     base_recipe_to_altered_recipes[recipe_name] = { [tostring(0)] = recipe_name }
-    altered_recipe_to_base_recipe_rigor_pair[recipe_name] = { [tostring(0)] = recipe_name }
-    local total_max_module_value = math.min(max_total_rigor, get_max_rigor_without_modules_for_recipe(valid_categories) +
+    altered_recipe_to_base_recipe_parallel_pair[recipe_name] = { [tostring(0)] = recipe_name }
+    local total_max_module_value = math.min(max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
         module_value_max_per_slot * get_max_module_slots_for_recipe(valid_categories))
-    local sensitivity = base_recipe.rigor_sensitivity or 1
-    base_recipe.rigor_sensitivity = nil
+    local sensitivity = base_recipe.parallel_sensitivity or 1
+    base_recipe.parallel_sensitivity = nil
     for scale = module_value_increment, total_max_module_value, module_value_increment do
-        local new_recipe_name = string.format("%s__rigor_module_mod__%d", recipe_name, scale * 100)
+        local new_recipe_name = string.format("%s__parallel_module_mod__%d", recipe_name, scale * 100)
         local scale_str = tostring(scale * 100)
         base_recipe_to_altered_recipes[recipe_name][scale_str] = new_recipe_name
-        altered_recipe_to_base_recipe_rigor_pair[new_recipe_name] = { [scale_str] = recipe_name }
+        altered_recipe_to_base_recipe_parallel_pair[new_recipe_name] = { [scale_str] = recipe_name }
         local new_recipe = table.deepcopy(base_recipe)
         new_recipe.name = new_recipe_name
         new_recipe.localised_name = get_recipe_localised_field(base_recipe, "name")
         new_recipe.localised_description = get_recipe_localised_field(base_recipe, "description")
-        local effective_scale = scale * sensitivity -- Recipes with rigor sensitivity have their effective rigor multiplied by their sensitivity value.
+        local effective_scale = scale * sensitivity -- Recipes with parallel sensitivity have their effective parallel multiplied by their sensitivity value.
         ensure_recipe_icon_or_icons(new_recipe, base_recipe)
         new_recipe.factoriopedia_alternative = base_recipe.factoriopedia_alternative or recipe_name
         new_recipe.hidden = true
@@ -700,7 +700,7 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         local output = new_recipe.results[result_to_alter_idx]
         if use_extra_count_fraction then
             output.extra_count_fraction = utils.scale_probability_as_odds(output.extra_count_fraction, 1.0 + effective_scale)
-        elseif base_recipe.results[result_to_alter_idx].independent_probability and base_recipe.results[result_to_alter_idx].independent_probability < data_utils.maximum_probability_valid_for_rigor then
+        elseif base_recipe.results[result_to_alter_idx].independent_probability and base_recipe.results[result_to_alter_idx].independent_probability < data_utils.maximum_probability_valid_for_parallel then
             output.independent_probability = utils.scale_probability_as_odds(output.independent_probability, 1.0 + effective_scale)
         else
             data_utils.Strategy.simple_zero_sum_scale(new_recipe, result_to_alter_idx, 1.0 + effective_scale)
@@ -726,27 +726,27 @@ local function register_with_bplib(name)
     extract_entity_names[name] = true
 end
 
-local function enable_rigor_module_for_machines(machines)
+local function enable_parallel_module_for_machines(machines)
     for name, machine in pairs(machines) do
         if machine["module_slots"] == nil then
             goto continue
         end
 
-        local rigor_added = false
+        local parallel_added = false
         if utils.table_contains_value(explicit_entities, machine.name) then
             table.insert(machine.allowed_module_categories, EFFECT_NAME)
             register_with_bplib(name)
-            rigor_added = true
+            parallel_added = true
         end
 
         local should_add_categories = machine.type ~= "furnace"
         local new_categories = {}
         for _, category in pairs(machine.crafting_categories) do
-            if crafting_category_to_should_enable_rigor_effect[category] then
-                if not rigor_added then
+            if crafting_category_to_should_enable_parallel_effect[category] then
+                if not parallel_added then
                     table.insert(machine.allowed_module_categories, EFFECT_NAME)
                     register_with_bplib(name)
-                    rigor_added = true
+                    parallel_added = true
                 end
                 if should_add_categories then
                     table.insert(new_categories, original_to_altered_crafting_category[category])
@@ -761,7 +761,7 @@ local function enable_rigor_module_for_machines(machines)
 end
 
 for _, machine_type in pairs(crafting_machine_types) do
-    enable_rigor_module_for_machines(data.raw[machine_type])
+    enable_parallel_module_for_machines(data.raw[machine_type])
 end
 
 -------------------------------------------------------------------------------
@@ -823,7 +823,7 @@ for _, technology in pairs(data.raw.technology) do
 end
 
 -------------------------------------------------------------------------------
---- CREATE RIGOR ENTITY PROTOTYPES
+--- CREATE PARALLEL ENTITY PROTOTYPES
 -------------------------------------------------------------------------------
 
 local function get_entity_localised_field(prototype, field_type)
@@ -861,7 +861,7 @@ local function ensure_entity_icon_or_icons(prototype, base_prototype)
 end
 
 local function prepare_machine_for_copying(machine_name, machine)
-    if machine.type ~= "furnace"  or not machine.module_slots or not machine.allowed_module_categories or not utils.table_contains_value(machine.allowed_module_categories, "rigor") then
+    if machine.type ~= "furnace"  or not machine.module_slots or not machine.allowed_module_categories or not utils.table_contains_value(machine.allowed_module_categories, "parallel") then
         return false
     end
 
@@ -869,7 +869,7 @@ local function prepare_machine_for_copying(machine_name, machine)
         return false
     end
 
-    local total_max_module_value = math.min(max_total_rigor, module_value_max_per_slot * crafting_machine_to_max_module_slots[machine_name])
+    local total_max_module_value = math.min(max_total_parallel, module_value_max_per_slot * crafting_machine_to_max_module_slots[machine_name])
     if total_max_module_value <= 0 then
         return false
     end
@@ -918,7 +918,7 @@ for _, base_machine_name in pairs(base_machines_to_copy) do
         local recipe_name, _ = next(recipes)
         crafting_machine_to_fixed_base_recipe[base_machine_name] = recipe_name
     end
-    local new_machine_name = string.format("%s__rigor-module", base_machine_name)
+    local new_machine_name = string.format("%s__parallel-module", base_machine_name)
     local max_inventory_size = math.max(base_machine.result_inventory_size, base_machine.source_inventory_size)
     base_machine.trash_inventory_size = math.max(base_machine.trash_inventory_size or 1, max_inventory_size)
     local new_machine = table.deepcopy(base_machine)
@@ -934,7 +934,7 @@ for _, base_machine_name in pairs(base_machines_to_copy) do
                 icon_size = new_machine.icon_size,
             },
             {
-                icon = "__rigor-module__/graphics/icons/rigor-module-3.png",
+                icon = "__parallel-module__/graphics/icons/parallel-module-3.png",
                 icon_size = 64,
                 scale = 0.3,
                 shift = { -6, 6 },
@@ -944,7 +944,7 @@ for _, base_machine_name in pairs(base_machines_to_copy) do
         new_machine.icon = nil
     elseif new_machine.icons then
         table.insert(new_machine.icons, {
-            icon = "__rigor-module__/graphics/icons/rigor-module-3.png",
+            icon = "__parallel-module__/graphics/icons/parallel-module-3.png",
             icon_size = 64,
             scale = 0.3,
             shift = { -6, 6 },
@@ -994,7 +994,7 @@ end
 
 -- Update tips-and-tricks
 if mods["space-age"] and (not compatibility_mode or compatibiltiy_mode_include_vanilla) then
-    data.raw["tips-and-tricks-item"]["rigor-module-mod-tip-1"].simulation = {
+    data.raw["tips-and-tricks-item"]["parallel-module-mod-tip-1"].simulation = {
         init = [[
             game.forces[1].enable_all_prototypes()
             game.forces[1].enable_all_recipes()
@@ -1014,7 +1014,7 @@ if mods["space-age"] and (not compatibility_mode or compatibiltiy_mode_include_v
     }
 end
 
-rigor_module_mod_data.additional_default_categories = nil
+parallel_module_mod_data.additional_default_categories = nil
 
 local category_to_recipe_count = {}
 local category_to_recipe_to_result = {}
@@ -1027,5 +1027,5 @@ for name, result in pairs(base_recipe_to_affected_result) do
     end
     category_to_recipe_to_result[original_category][name] = result
 end
-log("Number of rigor-affected recipes by crafting category:\n" .. serpent.block(category_to_recipe_count))
-log("Rigor-affected result of recipes by crafting category:\n" .. serpent.block(category_to_recipe_to_result))
+log("Number of parallel-affected recipes by crafting category:\n" .. serpent.block(category_to_recipe_count))
+log("Parallel-affected result of recipes by crafting category:\n" .. serpent.block(category_to_recipe_to_result))

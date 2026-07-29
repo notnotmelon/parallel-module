@@ -4,13 +4,13 @@ data:extend({
   {
     effects = {
       {
-        recipe = "rigor-module",
+        recipe = "parallel-module",
         type = "unlock-recipe"
       }
     },
-    icon = "__rigor-module__/graphics/technology/rigor-module-1.png",
+    icon = "__parallel-module__/graphics/technology/parallel-module-1.png",
     icon_size = 256,
-    name = "rigor-module",
+    name = "parallel-module",
     prerequisites = {
       "modules"
     },
@@ -34,15 +34,15 @@ data:extend({
   {
     effects = {
       {
-        recipe = "rigor-module-2",
+        recipe = "parallel-module-2",
         type = "unlock-recipe"
       }
     },
-    icon = "__rigor-module__/graphics/technology/rigor-module-2.png",
+    icon = "__parallel-module__/graphics/technology/parallel-module-2.png",
     icon_size = 256,
-    name = "rigor-module-2",
+    name = "parallel-module-2",
     prerequisites = {
-      "rigor-module"
+      "parallel-module"
     },
     type = "technology",
     unit = {
@@ -68,15 +68,15 @@ data:extend({
   {
     effects = {
       {
-        recipe = "rigor-module-3",
+        recipe = "parallel-module-3",
         type = "unlock-recipe"
       }
     },
-    icon = "__rigor-module__/graphics/technology/rigor-module-3.png",
+    icon = "__parallel-module__/graphics/technology/parallel-module-3.png",
     icon_size = 256,
-    name = "rigor-module-3",
+    name = "parallel-module-3",
     prerequisites = {
-      "rigor-module-2"
+      "parallel-module-2"
     },
     type = "technology",
     unit = {
@@ -102,17 +102,17 @@ data:extend({
 })
 
 if is_space_age then
-  table.insert(data.raw.technology["rigor-module-2"].prerequisites, "space-science-pack")
-  table.insert(data.raw.technology["rigor-module-2"].unit.ingredients, {"space-science-pack", 1})
-  table.insert(data.raw.technology["rigor-module-3"].unit.ingredients, {"space-science-pack", 1})
+  table.insert(data.raw.technology["parallel-module-2"].prerequisites, "space-science-pack")
+  table.insert(data.raw.technology["parallel-module-2"].unit.ingredients, {"space-science-pack", 1})
+  table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"space-science-pack", 1})
   if not mods["planet-crucible"] then
-    table.insert(data.raw.technology["rigor-module-3"].prerequisites, "kovarex-enrichment-process")
-    table.insert(data.raw.technology["rigor-module-3"].prerequisites, "production-science-pack")
-    table.insert(data.raw.technology["rigor-module-3"].prerequisites, "utility-science-pack")
-    table.insert(data.raw.technology["rigor-module-3"].unit.ingredients, {"production-science-pack", 1})
-    table.insert(data.raw.technology["rigor-module-3"].unit.ingredients, {"utility-science-pack", 1})
+    table.insert(data.raw.technology["parallel-module-3"].prerequisites, "kovarex-enrichment-process")
+    table.insert(data.raw.technology["parallel-module-3"].prerequisites, "production-science-pack")
+    table.insert(data.raw.technology["parallel-module-3"].prerequisites, "utility-science-pack")
+    table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"production-science-pack", 1})
+    table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"utility-science-pack", 1})
   end
 else
-    table.insert(data.raw.technology["rigor-module-3"].prerequisites, "production-science-pack")
-    table.insert(data.raw.technology["rigor-module-3"].unit.ingredients, {"production-science-pack", 1})
+    table.insert(data.raw.technology["parallel-module-3"].prerequisites, "production-science-pack")
+    table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"production-science-pack", 1})
 end

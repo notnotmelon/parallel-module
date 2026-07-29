@@ -1,4 +1,4 @@
-local utils = require("__rigor-module__.utils")
+local utils = require("__parallel-module__.utils")
 
 data:extend({
     ---------------------------------------------------------------------------
@@ -9,54 +9,54 @@ data:extend({
     --- in your mod's data-updates.lua
     ---------------------------------------------------------------------------
     {
-        name = "rigor_module_mod_data",
+        name = "parallel_module_mod_data",
         type = "mod-data",
         data = {
-            -- Maximum possible rigor from non-module effect sources (machines, surfaces, etc.)
+            -- Maximum possible parallel from non-module effect sources (machines, surfaces, etc.)
             -- DEPRECATED: this is unused
-            max_rigor_wihtout_modules = 0,
+            max_parallel_wihtout_modules = 0,
 
-            -- Rigor of the highest quality of the highest tier of rigor module
+            -- Parallel of the highest quality of the highest tier of parallel module
             -- DEPRECATED: this is now calculated automatically
-            max_rigor_per_module = 200,
+            max_parallel_per_module = 200,
 
-            -- Maximum rigor allowed for any machine; must be a multiple of round_rigor_to_nearest
-            -- COMPAT: a very high value will require coarser rounding (a larger value for round_rigor_to_nearest)
-            max_total_rigor = 2400, -- +2400% = 25x
+            -- Maximum parallel allowed for any machine; must be a multiple of round_parallel_to_nearest
+            -- COMPAT: a very high value will require coarser rounding (a larger value for round_parallel_to_nearest)
+            max_total_parallel = 2400, -- +2400% = 25x
 
             -- Practical implementation necessity
             -- COMPAT: change this only if other changes make this an unreasonable rounding quantity
-            round_rigor_to_nearest = 25,
+            round_parallel_to_nearest = 25,
 
-            -- Maximum probability value of a recipe product for which rigor will be automatically applied
+            -- Maximum probability value of a recipe product for which parallel will be automatically applied
             -- COMPAT: explicit_recipe_results and extra_count_fraction_recipe_results have higher priority
-            maximum_probability_valid_for_rigor = 0.5,
+            maximum_probability_valid_for_parallel = 0.5,
 
-            -- Used to calculate rigor per module tier with formula:
+            -- Used to calculate parallel per module tier with formula:
             -- ax^2 + bx + c, where
             --   x = tier
-            --   a = rigor_formula_coefficients[1]
-            --   b = rigor_formula_coefficients[2]
-            --   c = rigor_formula_coefficients[3]
+            --   a = parallel_formula_coefficients[1]
+            --   b = parallel_formula_coefficients[2]
+            --   c = parallel_formula_coefficients[3]
             -- Default value gives: T1->30, T2->50, T3->80
-            -- COMPAT: change this if your mod breaks rigor module balance, e.g. by adding more module tiers, module slots, qualities, etc.
-            rigor_formula_coefficients = utils.is_quality_enabled() and { 5, 5, 20 } or { 5, 15, 10 },
+            -- COMPAT: change this if your mod breaks parallel module balance, e.g. by adding more module tiers, module slots, qualities, etc.
+            parallel_formula_coefficients = utils.is_quality_enabled() and { 5, 5, 20 } or { 5, 15, 10 },
 
-            -- Which types of crafting machine to consider for rigor modules and relevant recipes
+            -- Which types of crafting machine to consider for parallel modules and relevant recipes
             -- COMPAT: don't change this unless you really need to
             crafting_machine_types = {
                 "assembling-machine",
                 "furnace"
             },
 
-            -- Recipes in recycling categories are prevented from using rigor, for balance and bloat; only recycling recipes specified here are allowed
+            -- Recipes in recycling categories are prevented from using parallel, for balance and bloat; only recycling recipes specified here are allowed
             -- COMPAT: Recycling categories are all crafting categories that contain the substring 'recylcing'
             -- WARN: append, don't overwrite, to keep values added by other mods
             allowed_recycling_recipes = {
                 "scrap-recycling",
             },
 
-            -- Crafting categories to explicitly prevent from using rigor
+            -- Crafting categories to explicitly prevent from using parallel
             -- COMPAT: this is the easiest way to exclude a collection of recipes
             -- WARN: append, don't overwrite, to keep values added by other mods
             disallowed_crafting_categories = {
@@ -65,7 +65,7 @@ data:extend({
                 "ammunition"
             },
 
-            -- Recipes to explicitly prevent from using rigor
+            -- Recipes to explicitly prevent from using parallel
             -- COMPAT: this is the easiest way to exclude a recipe
             -- WARN: append, don't overwrite, to keep values added by other mods
             disallowed_recipes = {},
@@ -84,23 +84,23 @@ data:extend({
                 ["muluna-diffused-plastic"] = 2
             },
 
-            -- Recipes without a probabilistic result to explicitly allowed rigor
-            -- COMPAT: use this if a recipe needs to accept rigor modules despite rigor having no effect (added for Tellus compatibility)
+            -- Recipes without a probabilistic result to explicitly allowed parallel
+            -- COMPAT: use this if a recipe needs to accept parallel modules despite parallel having no effect (added for Tellus compatibility)
             -- WARN: append, don't overwrite, to keep values added by other mods
             explicit_recipes_without_results = {},
 
-            -- Crafting machine entities that would normally not allow rigor to explicitly allowed rigor
-            -- COMPAT: use this if an entity needs to accept rigor modules despite rigor having no effect (added for Tellus compatibility)
+            -- Crafting machine entities that would normally not allow parallel to explicitly allowed parallel
+            -- COMPAT: use this if an entity needs to accept parallel modules despite parallel having no effect (added for Tellus compatibility)
             -- WARN: append, don't overwrite, to keep values added by other mods
             explicit_entities = {},
 
-            -- Dictionary of [name -> rigor]; adds "base" rigor value to a crafting machine prototype
-            -- NOTE: this should usually be a multiple of 'round_rigor_to_nearest'
+            -- Dictionary of [name -> parallel]; adds "base" parallel value to a crafting machine prototype
+            -- NOTE: this should usually be a multiple of 'round_parallel_to_nearest'
             -- WARN: append, don't overwrite, to keep values added by other mods
-            entity_to_base_rigor = {},
+            entity_to_base_parallel = {},
 
             -- Dictionary of [recipe -> output]; must be used for any recipe where the 'extra_count_fraction', instead of the 'probability', will be affected
-            -- COMPAT: this is also a workaround for recipes where the rigor-affected output appears more than once in the products
+            -- COMPAT: this is also a workaround for recipes where the parallel-affected output appears more than once in the products
             -- WARN: append, don't overwrite, to keep values added by other mods
             extra_count_fraction_recipe_results = {},
 
@@ -120,7 +120,7 @@ data:extend({
             --- compatibility mode, rather than evaluating all recipes, only recipes
             --- that belong to a whitelisted category, or are whitelisted themselves,
             --- are evaluated.
-            --- See settings.startup["rigor-module-compatibility-mode"].
+            --- See settings.startup["parallel-module-compatibility-mode"].
             ---------------------------------------------------------------------------
             
             --- Dictionary of [recipe category -> true], of recipe categories to evaluate when in compatibility mode
@@ -138,31 +138,31 @@ data:extend({
     ---------------------------------------------------------------------------
     {
     -- Internal use only
-        name = "rigor_module_mod_recipe_table",
+        name = "parallel_module_mod_recipe_table",
         type = "mod-data",
         data = {}
     },
     {
     -- Internal use only
-        name = "rigor_module_mod_recipe_table_inverse",
+        name = "parallel_module_mod_recipe_table_inverse",
         type = "mod-data",
         data = {}
     },
     {
     -- Internal use only
-        name = "rigor_module_mod_crafting_machine_table",
+        name = "parallel_module_mod_crafting_machine_table",
         type = "mod-data",
         data = {}
     },
     {
     -- Internal use only
-        name = "rigor_module_mod_crafting_machine_table_inverse",
+        name = "parallel_module_mod_crafting_machine_table_inverse",
         type = "mod-data",
         data = {}
     },
     {
     -- Internal use only
-        name = "rigor_module_mod_rigor_value_cache",
+        name = "parallel_module_mod_parallel_value_cache",
         type = "mod-data",
         data = {}
     },
@@ -174,7 +174,7 @@ data:extend({
     },
     {
     -- Internal use only
-        name = "spoilable_rigor_modules",
+        name = "spoilable_parallel_modules",
         type = "mod-data",
         data = {}
     }
