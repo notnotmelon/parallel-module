@@ -104,14 +104,12 @@ data:extend({
 if is_space_age then
   table.insert(data.raw.technology["parallel-module-2"].prerequisites, "space-science-pack")
   table.insert(data.raw.technology["parallel-module-2"].unit.ingredients, {"space-science-pack", 1})
+  
+  table.insert(data.raw.technology["parallel-module-3"].prerequisites, "quantum-processor")
   table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"space-science-pack", 1})
-  if not mods["planet-crucible"] then
-    table.insert(data.raw.technology["parallel-module-3"].prerequisites, "kovarex-enrichment-process")
-    table.insert(data.raw.technology["parallel-module-3"].prerequisites, "production-science-pack")
-    table.insert(data.raw.technology["parallel-module-3"].prerequisites, "utility-science-pack")
-    table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"production-science-pack", 1})
-    table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"utility-science-pack", 1})
-  end
+  table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"production-science-pack", 1})
+  table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"utility-science-pack", 1})
+  table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"cryogenic-science-pack", 1})
 else
     table.insert(data.raw.technology["parallel-module-3"].prerequisites, "production-science-pack")
     table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"production-science-pack", 1})
