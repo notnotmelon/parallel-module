@@ -1,0 +1,798 @@
+local pairs = pairs
+local table = table
+
+utils = require("__rigor-module__.utils")
+
+TOOLTIP_ID = 2453693297
+
+local inventories_to_copy = {
+    -- TODO: Add check and include these? Or check if this ever returns wrong inventory for crafting machines?
+    -- defines.inventory.fuel,
+    -- defines.inventory.burnt_result,
+    defines.inventory.crafter_input,
+    defines.inventory.crafter_output,
+    defines.inventory.crafter_modules,
+    defines.inventory.crafter_trash,
+}
+
+local rigor_module_mod_data = prototypes.mod_data.rigor_module_mod_data.data
+local rigor_crafting_machine_types = rigor_module_mod_data.crafting_machine_types
+local round_rigor_to_nearest = rigor_module_mod_data.round_rigor_to_nearest
+local max_total_rigor = rigor_module_mod_data.max_total_rigor
+local entity_to_base_rigor = rigor_module_mod_data.entity_to_base_rigor
+local rigor_module_mod_recipe_table_inverse =  prototypes.mod_data.rigor_module_mod_recipe_table_inverse.data
+local rigor_module_mod_crafting_machine_table =  prototypes.mod_data.rigor_module_mod_crafting_machine_table.data
+local rigor_module_mod_crafting_machine_table_inverse = prototypes.mod_data.rigor_module_mod_crafting_machine_table_inverse.data
+local is_rigor_disabled = settings.startup["rigor-module-disable-rigor-effect"].value
+
+local rigor_module_mod_recipe_table = {}
+for base_recipe, recipes in pairs(prototypes.mod_data.rigor_module_mod_recipe_table.data) do
+    rigor_module_mod_recipe_table[base_recipe] = {}
+    for rigor, recipe in pairs(recipes) do
+        rigor_module_mod_recipe_table[base_recipe][tonumber(rigor)] = recipe
+    end
+end
+
+-- Call the prototypes_check in advance and cache the results to stop calling prototypes every tick
+local is_rigor_module = {}
+local module_name_to_quality_to_rigor = {}
+for module_name, module in pairs(prototypes.get_item_filtered{{filter = "type", type = "module"}}) do
+    if module.category == "rigor" then 
+        is_rigor_module[module_name] = true
+        module_name_to_quality_to_rigor[module_name] = prototypes.mod_data.rigor_module_mod_rigor_value_cache.data[tostring(module.tier)]
+    end
+end
+
+local machine_accepts_rigor_modules = {}
+for _, type in pairs(rigor_crafting_machine_types) do
+    for entity_name, entity in pairs(prototypes.get_entity_filtered{{filter = "type", type = type}}) do
+        if entity.allowed_module_categories and entity.allowed_module_categories["rigor"] then
+            machine_accepts_rigor_modules[entity_name] = true
+        end
+    end
+end
+
+local function cached_tostring(x)
+    local s = storage.cached_to_string[x]
+    if s == nil then
+        s = tostring(x)
+        storage.cached_to_string[x] = s
+    end
+    return s
+end
+
+local function cached_round(x)
+    local s = storage.cached_round[x]
+    if s == nil then
+        s = utils.round(x, round_rigor_to_nearest)
+        storage.cached_round[x] = s
+    end
+    return s
+end
+
+local Public = {}
+
+function Public.ensure_storage_cache_is_setup()
+    storage.machines_waiting_for_rigor_module = storage.machines_waiting_for_rigor_module or {}
+    storage.player_to_machine_with_open_gui = storage.player_to_machine_with_open_gui or {}
+    storage.player_to_selected_machine = storage.player_to_selected_machine or {}
+    storage.players_holding_cut_paste_tool = storage.players_holding_cut_paste_tool or {}
+    storage.machine_to_latest_recipe_and_rigor = storage.machine_to_latest_recipe_and_rigor or {}
+    if not storage.cached_to_string then storage.cached_to_string = {} end
+    if not storage.cached_round then storage.cached_round = {} end
+    -- TODO: reenable after fixing monotonic growth
+    -- if not storage.entity_info then storage.entity_info = {} end
+end
+
+function Public.update_all_entities()
+    for _, surface in pairs(game.surfaces) do
+        for _, entity in pairs(surface.find_entities()) do
+            if not entity or not entity.valid then
+                goto continue
+            end
+
+            local name = entity.name
+            entity = Public.update_machine_for_rigor(entity, true)
+            if entity and name ~= entity.name then
+                log(string.format("Migrated entity %s from prototype %s", entity, name))
+            end
+            ::continue::
+        end
+    end
+end
+
+function Public.get_rigor_recipe(base_recipe_name, rigor)
+    if not base_recipe_name or rigor == 0 then
+        return base_recipe_name
+    end
+
+    local rigor_recipes = rigor_module_mod_recipe_table[base_recipe_name]
+    if not rigor_recipes then
+        return base_recipe_name
+    end
+
+    return rigor_recipes[rigor] or base_recipe_name
+end
+
+function Public.get_crafting_machines_including_ghosts(surface, position, area)
+    local result = {}
+    local filters = {
+        type = rigor_crafting_machine_types
+    }
+    if position ~= nil then
+        filters["position"] = position
+    elseif area ~= nil then
+        filters["area"] = area
+    end
+    for _, machine in pairs(surface.find_entities_filtered(filters)) do
+        table.insert(result, machine)
+    end
+
+    filters["ghost_type"] = rigor_crafting_machine_types
+    filters["type"] = nil
+    for _, machine in pairs(surface.find_entities_filtered(filters)) do
+        table.insert(result, machine)
+    end
+    return result
+end
+
+-- Ignores ghost modules
+function Public.get_total_rigor_from_module_inventory(module_inventory)
+    local total_rigor = 0.0
+    if is_rigor_disabled or not module_inventory then
+        return total_rigor
+    end
+
+    local contents = module_inventory.get_contents()
+    for _, module in pairs(contents) do
+        if module == nil or not is_rigor_module[module.name] then
+            goto continue
+        end
+
+        total_rigor = total_rigor + module.count * module_name_to_quality_to_rigor[module.name][module.quality]
+        ::continue::
+    end
+    return total_rigor
+end
+
+function Public.get_total_machine_rigor_optimized(machine, is_ghost)
+    if machine == nil or not machine.valid then
+        return nil, nil, nil
+    end
+
+    -- if not storage.entity_info[machine.unit_number] then 
+    --     storage.entity_info[machine.unit_number] = {
+    --         module_inventory = machine.get_module_inventory(),
+    --         control_behavior = machine.get_control_behavior()
+    --     } 
+    -- end
+    -- local machine_info = storage.entity_info[machine.unit_number]
+    local machine_base_rigor = entity_to_base_rigor[machine.name]
+    local module_rigor
+    if machine_accepts_rigor_modules[machine.name] then
+        module_rigor = is_ghost and 0 or Public.get_total_rigor_from_module_inventory(machine.get_module_inventory())
+    elseif machine_base_rigor then
+        module_rigor = 0
+    else
+        return nil, nil, nil
+    end
+
+    local rigor = math.min(max_total_rigor, module_rigor + (machine_base_rigor or 0))
+    return rigor, cached_round(rigor), module_rigor > 0 
+end
+
+function Public.prepare_inventory(inventory)
+    if not inventory or inventory.is_empty() then
+        return nil
+    end
+
+    local filled = {}
+    for i = 1, #inventory do
+        local item_stack = inventory[i]
+        filled[i] = item_stack and item_stack.count and item_stack.count > 0 and {
+            name = item_stack.name,
+            count = item_stack.count or 1,
+            quality = item_stack.quality and item_stack.quality.name or nil,
+            -- health = item_stack.health,
+            -- durability = item_stack.durability,
+            -- ammo = item_stack.ammo,
+            -- tags = item_stack.tags,
+            spoil_percent = item_stack.spoil_percent
+        } or {}
+    end
+    return filled
+end
+
+function Public.spill_remaining_inventory(entity, filled)
+    for i = 1, #filled do
+        if filled[i] and table_size(filled[i]) > 0 and filled[i].count > 0 then
+            entity.surface.spill_item_stack{
+                position = entity.position,
+                stack = filled[i],
+                allow_belts = false
+            }
+        end
+    end
+end
+
+function Public.update_inventory(entity, inventory, filled)
+    if not filled then
+        return
+    end
+
+    if not inventory then
+        if entity.get_inventory(defines.inventory.crafter_trash) then
+            for i = 1, #filled do
+                filled[i].count = filled[i].count - entity.get_inventory(defines.inventory.crafter_trash).insert(filled[i])
+            end
+        end
+        Public.spill_remaining_inventory(entity, filled)
+        return
+    end
+
+    if #inventory == #filled then
+        for i = 1, #filled do
+            if filled[i] and table_size(filled[i]) > 0 then
+                inventory[i].set_stack(filled[i])
+                filled[i].count = filled[i].count - inventory[i].count
+                if filled[i].count > 0 then
+                    filled[i].count = filled[i].count - entity.get_inventory(defines.inventory.crafter_trash).insert(filled[i])
+                end
+            end
+        end
+    else
+        for i = 1, #filled do
+            if filled[i] and next(filled[i]) then
+                filled[i].count = filled[i].count - inventory.insert(filled[i])
+                if filled[i].count > 0 then
+                    filled[i].count = filled[i].count - entity.get_inventory(defines.inventory.crafter_trash).insert(filled[i])
+                end
+            end
+        end
+    end
+    Public.spill_remaining_inventory(entity, filled)
+end
+
+--- @param entity LuaEntity
+--- @param prototype_name string
+--- @param is_ghost boolean
+function Public.fast_replace_entity(entity, prototype_name, is_ghost, recipe, quality, current_recipe)
+    local different_prototypes = ((is_ghost and entity.ghost_name) or entity.name) ~= prototype_name
+    if not different_prototypes and recipe and recipe == current_recipe then
+        return nil
+    end
+
+    local players_with_machine_open = {}
+    local players_with_machine_selected = {}
+    for player_index, open_machine in pairs(storage.player_to_machine_with_open_gui) do
+        if open_machine == entity then table.insert(players_with_machine_open, player_index) end
+    end
+    for player_index, selected_machine in pairs(storage.player_to_selected_machine) do
+        if selected_machine == entity then table.insert(players_with_machine_selected, player_index) end
+    end
+
+    local health = entity.health
+    local temperature = entity.temperature
+    local products_finished = nil
+    local name_tag = entity.name_tag
+    local disabled_by_script = entity.disabled_by_script
+    local tooltip_fields = entity.get_tooltip_fields()
+
+    -- Undo fast-replace's changing and re-ordering of inventories
+    -- local current_prototype = is_ghost and entity.ghost_prototype or entity.prototype
+    -- local new_prototype = prototypes.entity[prototype_name]
+
+    -- TODO: what about to_be_upgraded()?
+    local item_request_proxy = entity.item_request_proxy
+    local insert_plan = item_request_proxy and item_request_proxy.insert_plan
+    local removal_plan = item_request_proxy and item_request_proxy.removal_plan
+
+    local inventory_to_filled = nil
+    local fluids_by_index = nil
+    if not is_ghost then
+        -- TODO: check interactions with all/any other code that touches inventories
+        inventory_to_filled = {}
+        for _, inventory in pairs(inventories_to_copy) do
+            inventory_to_filled[inventory] = Public.prepare_inventory(entity.get_inventory(inventory))
+        end
+        if different_prototypes and entity.fluids_count > 0 then
+            fluids_by_index = {}
+            for i = 1, entity.fluids_count do
+                fluids_by_index[i] = entity.get_fluid(i) or false
+                if fluids_by_index[i] and fluids_by_index[i].amount > 0 then
+                    entity.remove_fluid(i, fluids_by_index[i].amount)
+                end
+            end
+        end
+    end
+
+    local new_entity = nil
+    if different_prototypes then
+        if is_ghost then
+            new_entity = entity.surface.create_entity({
+                fast_replace = true,
+                name = "entity-ghost",
+                position = entity.position,
+                direction = entity.direction,
+                mirror = entity.mirroring,
+                quality = entity.quality,
+                force = entity.force,
+                spill = false,
+                create_build_effect_smoke = false,
+                inner_name = prototype_name
+            })
+        else
+            products_finished = entity.products_finished
+            new_entity = entity.surface.create_entity({
+                fast_replace = true,
+                name = prototype_name,
+                position = entity.position,
+                direction = entity.direction,
+                mirror = entity.mirroring,
+                quality = entity.quality,
+                force = entity.force,
+                spill = false,
+                create_build_effect_smoke = false
+            })
+        end
+        if new_entity and new_entity.valid then
+            entity = new_entity
+        end
+    end
+
+    if recipe and entity.type == "assembling-machine" then
+        entity.set_recipe(recipe, quality)
+    end
+    if inventory_to_filled then
+        for inventory, filled in pairs(inventory_to_filled) do
+            Public.update_inventory(entity, entity.get_inventory(inventory), filled)
+        end
+        if fluids_by_index then
+            for i = 1, entity.fluids_count do
+                if fluids_by_index[i] and fluids_by_index[i].amount > 0 then
+                    entity.set_fluid(i, fluids_by_index[i])
+                end
+            end
+        end
+    end
+
+    if not new_entity or not new_entity.valid then
+        return nil
+    end
+
+    if tooltip_fields then
+        for _, tooltip in pairs(tooltip_fields) do
+            entity.set_tooltip_field(tooltip)
+        end
+    end
+    if health then
+        new_entity.health = health
+    end
+    if temperature then
+        new_entity.temperature = temperature
+    end
+    if not is_ghost and products_finished then
+        new_entity.products_finished = products_finished
+    end
+    if name_tag then
+        new_entity.name_tag = name_tag
+    end
+    if disabled_by_script ~= nil then
+        new_entity.disabled_by_script = disabled_by_script
+    end
+    if item_request_proxy then
+        item_request_proxy.insert_plan = insert_plan
+        item_request_proxy.removal_plan = removal_plan
+    end
+
+    for _, player_index in pairs(players_with_machine_open) do
+        local player = game.get_player(player_index)
+        if player and player.valid then
+            player.opened = new_entity
+        end
+    end
+    for _, player_index in pairs(players_with_machine_selected) do
+        local player = game.get_player(player_index)
+        if player and player.valid then
+            player.selected = new_entity
+        end
+    end
+    return new_entity
+end
+
+function Public.return_ingredients_or_get_progress(machine, target_entity_name, recipe_prototype, quality)
+    if not recipe_prototype or not machine.is_crafting() then
+        return 0, 0
+    end
+
+    -- furnace => assembling machine
+    -- assembling machine => assembling machine
+    if machine.type == "furnace" or machine.name == target_entity_name then
+        return machine.crafting_progress, machine.bonus_progress
+    end
+
+    -- assembling machine => furnace
+    local inventory = machine.get_inventory(defines.inventory.crafter_input)
+    if not inventory or #inventory == 0 then
+        return 0, 0
+    end
+
+    for _, ingredient in pairs(recipe_prototype.ingredients) do
+        if ingredient.type == "fluid" then
+            -- TODO: might break when using fluid energy source?
+            machine.insert_fluid({
+                name = ingredient.name,
+                amount = ingredient.amount,
+                temperature = ingredient.temperature or ingredient.minimum_temperature
+            })
+        else
+            local stack = inventory.find_item_stack({
+                name = ingredient.name,
+                quality = quality and quality.name or "normal"
+            })
+            local spoil_percent = stack and stack.spoil_percent or nil
+            inventory.insert({
+                name = ingredient.name,
+                count = ingredient.amount or 1,
+                quality = quality and quality.name or "normal",
+                spoil_percent = spoil_percent
+            })
+        end
+    end
+    return 0, 0
+end
+
+function Public.get_latest_recipe_and_rigor(unit_number)
+    local latest = storage.machine_to_latest_recipe_and_rigor[unit_number]
+    if not latest then
+        return nil, nil, nil
+    end
+
+    return latest[1], latest[2], latest[3]
+end
+
+function Public.update_machine_for_rigor(machine, just_built)
+    if not machine or not machine.valid then
+        return
+    end
+
+    local is_ghost = machine.type == "entity-ghost"
+    local type = (is_ghost and machine.ghost_type) or machine.type
+    if not utils.table_contains_value(rigor_crafting_machine_types, type) then
+        return
+    end
+
+    local current_machine_rigor, rounded_machine_rigor, has_rigor_modules = Public.get_total_machine_rigor_optimized(machine, is_ghost)
+    -- Machine does not support rigor modules
+    if current_machine_rigor == nil then
+        return
+    end
+
+    -- Machine has no rigor and is not dirty
+    local latest_recipe, latest_rigor, latest_set_recipe = Public.get_latest_recipe_and_rigor(machine.unit_number)
+    if not just_built and (not latest_rigor or latest_rigor == 0) and current_machine_rigor == 0 then
+        return machine
+    end
+
+    local name = (is_ghost and machine.ghost_name) or machine.name
+    local is_furnace = type == "furnace"
+    local recipe, quality = machine.get_recipe()
+    if recipe then
+        recipe = recipe.prototype
+    elseif not is_ghost and is_furnace and machine.previous_recipe then
+        recipe = machine.previous_recipe.name
+        quality = machine.previous_recipe.quality
+    end
+    local recipe_name = recipe and recipe.name
+    -- local machine_info = storage.entity_info[machine.unit_number]
+    -- local machine_control_behavior = machine_info.control_behavior
+    local machine_control_behavior = machine.get_control_behavior()
+
+    local is_set_recipe = not is_furnace and machine_control_behavior and machine_control_behavior.circuit_set_recipe
+    if is_set_recipe and current_machine_rigor > 0 then
+        local has_base_rigor_but_no_connections = not has_rigor_modules and recipe and not machine_control_behavior.get_circuit_network(defines.wire_connector_id.circuit_red) and not machine_control_behavior.get_circuit_network(defines.wire_connector_id.circuit_green)
+        if has_rigor_modules or has_base_rigor_but_no_connections then
+            is_set_recipe = false
+            machine_control_behavior.circuit_set_recipe = false
+        else
+            current_machine_rigor = 0
+        end
+        if not latest_set_recipe or not is_set_recipe then
+            for _, player_to_machine_map in pairs{storage.player_to_selected_machine, storage.player_to_machine_with_open_gui} do
+                for player_idx, selected_machine in pairs(player_to_machine_map) do
+                    if machine == selected_machine then
+                        local player = game.get_player(player_idx)
+                        if player and player.valid and settings.get_player_settings(player_idx)["rigor-module-show-set-recipe-messages"].value then
+                            if has_rigor_modules then
+                                player.print({
+                                    "mod-tooltip-name.rigor-module-circuit-set-recipe-warning",
+                                    {"gui-control-behavior-modes.set-recipe"}
+                                }, {
+                                    skip = defines.print_skip.if_visible,
+                                    game_state = false
+                                })
+                            elseif not has_base_rigor_but_no_connections then
+                                player.print({
+                                    "mod-tooltip-name.rigor-module-entity-circuit-set-recipe-warning",
+                                    {"gui-control-behavior-modes.set-recipe"},
+                                    {"module-category-name.rigor"}
+                                }, {
+                                    skip = defines.print_skip.if_visible,
+                                    game_state = false
+                                })
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local was_changed = latest_recipe ~= recipe_name or latest_rigor ~= current_machine_rigor
+    local new_machine = nil
+    -- If no change, don't update
+    if was_changed or just_built then
+        local base_recipe_name = nil
+        if recipe_name then
+            _, base_recipe_name = next(rigor_module_mod_recipe_table_inverse[recipe_name] or {})
+        end
+        local was_crafting = was_changed and machine.is_crafting()
+        local base_machine_name = rigor_module_mod_crafting_machine_table_inverse[name] or name
+        local rigor_machine_name = base_machine_name and rigor_module_mod_crafting_machine_table[base_machine_name]
+        local target_entity_name = (current_machine_rigor > 0 and rigor_machine_name) or base_machine_name
+        local crafting_progress, bonus_progress = Public.return_ingredients_or_get_progress(machine, target_entity_name, recipe, quality)
+        new_machine = Public.fast_replace_entity(
+            machine,
+            target_entity_name,
+            is_ghost,
+            Public.get_rigor_recipe(base_recipe_name, rounded_machine_rigor),
+            quality,
+            (recipe and recipe.name) or nil
+        )
+        machine = new_machine or machine
+
+        if was_crafting and base_recipe_name and recipe then
+            if crafting_progress > 0 then
+                machine.crafting_progress = crafting_progress
+            end
+            if bonus_progress > 0 then
+                machine.bonus_progress = bonus_progress
+            end
+        end
+        Public.update_machine_info(machine, recipe_name, current_machine_rigor, is_set_recipe)
+    elseif current_machine_rigor > 0 then
+        Public.update_machine_info(machine, recipe_name, current_machine_rigor, is_set_recipe)
+    end
+
+    if new_machine then
+        script.raise_script_built{entity=new_machine}
+        script.register_on_object_destroyed(machine)
+    elseif just_built then
+        script.register_on_object_destroyed(machine)
+    end
+    return machine
+end
+
+function Public.update_machine_info(machine, recipe_name, current_machine_rigor, is_set_recipe)
+    if not machine or not machine.valid then
+        return
+    end
+
+    if not is_set_recipe and current_machine_rigor == 0 then
+        storage.machine_to_latest_recipe_and_rigor[machine.unit_number] = nil
+        machine.clear_tooltip_field(TOOLTIP_ID)
+        return
+    end
+    local old_values = storage.machine_to_latest_recipe_and_rigor[machine.unit_number]
+    local old_rigor = (old_values and old_values[2]) or nil
+    
+   
+    local tooltip_machine_rigor = current_machine_rigor
+    if old_rigor ~= tooltip_machine_rigor then
+        machine.set_tooltip_field({
+            id = TOOLTIP_ID,
+            name = { "mod-tooltip-name.rigor-module-rigor" },
+            value = {
+                tooltip_machine_rigor == max_total_rigor and "mod-tooltip-value.rigor-module-value-max" or "mod-tooltip-value.rigor-module-value",
+                cached_tostring(tooltip_machine_rigor)
+            },
+            order = 90
+        })
+    end
+    
+    storage.machine_to_latest_recipe_and_rigor[machine.unit_number] = { recipe_name, current_machine_rigor, is_set_recipe }
+end
+
+function Public.update_opened_machine_for_player(player_index)
+    Public.update_machine_for_rigor(storage.player_to_machine_with_open_gui[player_index])
+end
+
+function Public.update_selected_machine_for_player(player_index)
+    Public.update_machine_for_rigor(storage.player_to_selected_machine[player_index])
+end
+
+function Public.handle_on_tick()
+    if next(storage.player_to_machine_with_open_gui) then
+        for _, opened_machine in pairs(storage.player_to_machine_with_open_gui) do
+            Public.update_machine_for_rigor(opened_machine)
+        end
+    end
+    if next(storage.machines_waiting_for_rigor_module) then
+        for _, machine in pairs(storage.machines_waiting_for_rigor_module) do
+            Public.update_machine_for_rigor(machine, true)
+        end
+        storage.machines_waiting_for_rigor_module = {}
+    end
+end
+
+function Public.handle_undo_redo_action(surface, action)
+    if action.type == "upgraded-entity" or action.type == "upgraded-modules" or action.type == "copy-entity-settings" then
+        for _, machine in pairs(Public.get_crafting_machines_including_ghosts(surface, action.target.position)) do
+            Public.update_machine_for_rigor(machine, true)
+        end
+    end
+end
+
+function Public.handle_undo_redo_event(event)
+    local player = game.get_player(event.player_index)
+    if not player or not player.valid then
+        return
+    end
+
+    for _, action in pairs(event.actions) do
+        Public.handle_undo_redo_action(player.surface, action)
+    end
+end
+
+function Public.handle_bplib_overlaps(event)
+    if not event or not event.overlaps then
+        return
+    end
+
+    for _, entity in pairs(event.overlaps) do
+        storage.machines_waiting_for_rigor_module[entity.unit_number] = entity
+    end
+end
+
+function Public.handle_player_cursor_stack_changed(player_index)
+    local player = game.get_player(player_index)
+    storage.players_holding_cut_paste_tool[player_index] = player
+            and player.valid
+            and player.cursor_stack
+            and player.cursor_stack.valid_for_read
+            and player.cursor_stack.name == "cut-paste-tool"
+    Public.update_selected_machine_for_player(player_index)
+    -- TODO: Enable if `on_tick` is disabled
+    -- Public.update_opened_machine_for_player(player_index)
+end
+
+function Public.sanitize_bp_entities(bp_entities)
+    local was_modified = false
+    for _, bp_entity in pairs(bp_entities) do
+        local base_entity_name = rigor_module_mod_crafting_machine_table_inverse[bp_entity.name]
+        local current_rigor_to_base_recipe_name = bp_entity.recipe and rigor_module_mod_recipe_table_inverse[bp_entity.recipe]
+        if not base_entity_name and not current_rigor_to_base_recipe_name then
+            goto continue
+        end
+
+        -- Set blueprint entity to non-rigor version, if applicable
+        if base_entity_name and bp_entity.name ~= base_entity_name then
+            was_modified = true
+            bp_entity.name = base_entity_name
+        end
+
+        -- Set blueprint entity's recipe to non-rigor version, if applicable
+        if current_rigor_to_base_recipe_name then
+            local _, base_recipe_name = next(current_rigor_to_base_recipe_name)
+            if base_recipe_name and bp_entity.recipe ~= base_recipe_name then
+                was_modified = true
+                bp_entity.recipe = base_recipe_name
+            end
+        end
+        ::continue::
+    end
+
+    return was_modified
+end
+
+function Public.is_player_holding_cut_paste_tool(player)
+    if not player then
+        return false
+    end
+
+    local t = type(player)
+    if t == "number" then
+        return storage.players_holding_cut_paste_tool[player]
+    end
+
+    if t == "string" then
+        player = (game and game.get_player(player)) or player
+    end
+    return player.index and storage.players_holding_cut_paste_tool[player.index]
+end
+
+function Public.handle_bplib_extract(event)
+    -- Preserve external wire connections
+    if Public.is_player_holding_cut_paste_tool(event.player_index) then
+        return
+    end
+
+    if not event.blueprint then
+        return
+    end
+
+    local bp_entities = event.blueprint.get_blueprint_entities()
+    if not bp_entities then
+        return
+    end
+
+    if Public.sanitize_bp_entities(bp_entities) then
+        event.blueprint.set_blueprint_entities(bp_entities)
+    end
+end
+
+function Public.handle_entity_gui_opened(player_index, entity)
+    if not entity then
+        local player = game.players[player_index]
+        if not player or not player.valid then
+            return
+        end
+        entity = player.opened
+    end
+
+    if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or entity == storage.player_to_machine_with_open_gui[player_index] then
+        return
+    end
+
+    local entity_name = entity.name == "entity-ghost" and entity.ghost_name or entity.name
+    if machine_accepts_rigor_modules[entity_name] or entity_to_base_rigor[entity_name] then
+        storage.player_to_machine_with_open_gui[player_index] = entity
+    end
+    
+    -- TODO: Enable if `on_tick` is disabled
+    -- Public.update_machine_for_rigor(entity)
+end
+
+function Public.handle_entity_gui_closed(player_index, entity)
+    if entity ~= storage.player_to_machine_with_open_gui[player_index] then
+        return
+    end
+
+    -- TODO: Enable if `on_tick` is disabled
+    -- Public.update_machine_for_rigor(entity)
+    storage.player_to_machine_with_open_gui[player_index] = nil
+end
+
+function Public.handle_player_selection_changed(player_index, last_entity)
+    local player = game.get_player(player_index)
+    local entity = player and player.valid and player.selected or nil
+    if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or not utils.table_contains_value(rigor_crafting_machine_types, (entity.type == "entity-ghost" and entity.ghost_type) or entity.type) then
+        storage.player_to_selected_machine[player_index] = nil
+    else
+        storage.player_to_selected_machine[player_index] = entity
+    end
+end
+
+function Public.handle_player_joined(player_index, player_name)
+    Public.handle_entity_gui_opened(player_index or player_name)
+    Public.handle_player_selection_changed(player_index or player_name)
+end
+
+function Public.handle_player_left(player_index, player_name)
+    if not player_index then
+        local player = game.get_player(player_name)
+        player_index = player and player.valid and player.index
+    end
+    if not player_index then
+        return
+    end
+
+    -- TODO: Enable if `on_tick` is disabled
+    -- Public.update_opened_machine_for_player(player_index)
+    -- Public.update_selected_machine_for_player(player_index)
+
+    storage.player_to_machine_with_open_gui[player_index] = nil
+    storage.player_to_selected_machine[player_index] = nil
+end
+
+return Public

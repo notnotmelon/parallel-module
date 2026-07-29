@@ -4,7 +4,7 @@
   "title": "Parallel Module",
   "author": "notnotmelon",
   "homepage": "https://github.com/notnotmelon/parallel-module",
-  "description": "A powerful new module: Parallel modules cause machines to run multiple copies of their recipe simultaneously but with a heavy speed penalty.",
+  "description": "A powerful new module: Parallel modules cause machines to run multiple copies of their recipe simultaneously, at the cost of a heavy speed penalty.",
   "factorio_version": "2.1",
   "dependencies": [
     "base"
