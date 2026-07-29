@@ -8,8 +8,6 @@ require("__parallel-module__.prototypes.mod-data")
 require("__parallel-module__.prototypes.item")
 require("__parallel-module__.prototypes.technology")
 require("__parallel-module__.prototypes.achievement")
--- TODO: Enable if `on_tick` is disabled
--- require("__parallel-module__.prototypes.custom-input")
 
 if mods["secretas"] then
     require("__parallel-module__.compat.secretas")

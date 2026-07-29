@@ -112,18 +112,6 @@ script.on_event(defines.events.on_gui_closed, function(event)
     end
 end)
 
-local function on_click(event)
-    local entity = storage.player_to_machine_with_open_gui[event.player_index]
-    if entity and entity.valid then
-        control_helpers.update_machine_for_parallel(entity, true) -- Delay might be required here
-        -- storage.machines_waiting_for_parallel_module[entity.unit_number] = entity -- Delay version
-    end
-end
-
--- TODO: Enable if `on_tick` is disabled
--- script.on_event("confirm-gui", on_click)
--- script.on_event("build", on_click)
-
 script.on_event(defines.events.on_selected_entity_changed, function(event)
     control_helpers.handle_player_selection_changed(event.player_index, event.last_entity)
 end)
