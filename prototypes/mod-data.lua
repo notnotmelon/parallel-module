@@ -41,7 +41,10 @@ data:extend({
             disallowed_crafting_categories = {
                 "tiberium-reprocessing",
                 "cosmic_incubator",
-                "ammunition"
+                "ammunition",
+                "incineration",
+                "fuel-incineration",
+                "recycling"
             },
         }
     },
