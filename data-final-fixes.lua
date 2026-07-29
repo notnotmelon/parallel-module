@@ -47,12 +47,6 @@ local altered_machine_to_base_machine = data.raw["mod-data"].parallel_module_mod
 local parallel_value_cache = data.raw["mod-data"].parallel_module_mod_parallel_value_cache.data
 local crafting_machine_to_fixed_base_recipe = data.raw["mod-data"].crafting_machine_to_fixed_base_recipe.data
 
-local compatibility_mode = settings.startup["parallel-module-compatibility-mode"].value
-local compatibiltiy_mode_include_vanilla = compatibility_mode and settings.startup["parallel-module-compatibility-mode-include-vanilla"].value
-
-local compatibility_mode_category_whitelist = parallel_module_mod_data.compatibility_mode_category_whitelist
-local compatibility_mode_recipe_whitelist = parallel_module_mod_data.compatibility_mode_recipe_whitelist
-
 -------------------------------------------------------------------------------
 --- VALIDATION
 -------------------------------------------------------------------------------
@@ -60,35 +54,6 @@ local compatibility_mode_recipe_whitelist = parallel_module_mod_data.compatibili
 assert(module_value_increment > 0, "'round_parallel_to_nearest' must be positive.")
 assert(max_total_parallel > module_value_increment, "'max_total_parallel' must greater than 'module_value_increment'.")
 assert(max_total_parallel % module_value_increment == 0, "'max_total_parallel' must be a whole-number multipler of 'round_parallel_to_nearest'.")
-
--------------------------------------------------------------------------------
---- COMPATIBILITY
--------------------------------------------------------------------------------
-
-if compatibiltiy_mode_include_vanilla then
-    compatibility_mode_recipe_whitelist["uranium-processing"] = true
-    if mods["space-age"] then
-        compatibility_mode_recipe_whitelist["scrap-recycling"] = true
-        compatibility_mode_recipe_whitelist["yumako-processing"] = true
-        compatibility_mode_recipe_whitelist["jellynut-processing"] = true
-        compatibility_mode_recipe_whitelist["copper-bacteria"] = true
-        compatibility_mode_recipe_whitelist["iron-bacteria"] = true
-
-        for _, recipe in pairs({
-            "metallic-asteroid-crushing",
-            "carbonic-asteroid-crushing",
-            "oxide-asteroid-crushing"
-        }) do
-            compatibility_mode_recipe_whitelist[recipe] = true
-            compatibility_mode_recipe_whitelist["advanced-"..recipe] = true
-        end
-    end
-end
-if compatibility_mode then
-    log("\nCOMPATIBILITY MODE ENABLED")
-    log("\nRecipe category whitelist: " .. serpent.block(compatibility_mode_category_whitelist))
-    log("\nRecipe whitelist: " .. serpent.block(compatibility_mode_recipe_whitelist))
-end
 
 if mods["Flare Stack"] then
     require("compat.flare-stack-final-fixes")
@@ -284,7 +249,6 @@ local function calculate_max_module_slots(machines)
                 local has_any = false
                 for _, recipe_name in pairs(explicitly_allowed_recycling_recipes) do
                     local recipe = data.raw.recipe[recipe_name]
-                    -- TODO: compatibility mode?
                     if recipe and recipe.categories and utils.table_contains_value(recipe.categories, category) then
                         has_any = true
                         break
@@ -351,11 +315,10 @@ for machine_name, parallel in pairs(entity_to_base_parallel) do
     end
 end
 
-local function is_category_valid(recipe_name, category, category_requires_whitelist)
+local function is_category_valid(recipe_name, category)
     if not (category
             and crafting_category_to_max_module_slots[category]
-            and crafting_category_to_max_module_slots[category] > 0
-            and (not category_requires_whitelist or compatibility_mode_category_whitelist[category])) then
+            and crafting_category_to_max_module_slots[category] > 0) then
         return false
     end
 
@@ -611,12 +574,11 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
     end
 
     local valid_categories = {}
-    local category_requires_whitelist = compatibility_mode and not compatibility_mode_recipe_whitelist[recipe_name]
     if not base_recipe.categories then
         base_recipe.categories = { "crafting" }
     end
     for _, category in pairs(base_recipe.categories) do
-        if is_category_valid(recipe_name, category, category_requires_whitelist) then
+        if is_category_valid(recipe_name, category) then
             table.insert(valid_categories, category)
         end
     end
@@ -990,28 +952,6 @@ for _, new_recipe in pairs(new_recipes) do
 end
 if next(new_machines) then
     data:extend(new_machines)
-end
-
--- Update tips-and-tricks
-if mods["space-age"] and (not compatibility_mode or compatibiltiy_mode_include_vanilla) then
-    data.raw["tips-and-tricks-item"]["parallel-module-mod-tip-1"].simulation = {
-        init = [[
-            game.forces[1].enable_all_prototypes()
-            game.forces[1].enable_all_recipes()
-
-            game.surfaces[1].create_entities_from_blueprint_string{
-                string = "0eNq9WdtuozAQ/Rc/wyrGXCPtl6wqRIiTWgWbNaZqtuLf1ySbW+NpDCNtVbVNHJ8zPp4r/SSbZuCdFtKQ9ScRtZI9Wf/6JL3Yy6qZ3pNVy8ma8I9O874Pja5k3yltwg1vDBkDIuSWf5A1HV8CwqURRvATxvHFoZRDu+HafiA4YwmtZFi/8t6QgHSqt1uUnLgsTJiw4kcSkANZR5n9axyDB6TIF4k+Q2LB1/M1qtralW/tyqk9tjl0RwtkN0wyPEDHV+iG10aLOuSS6/0htGJzvatq7mTJbjg2w27HddmLPxaHri5fDrrkQtcPm95UR1AXfnyD/3uoGgtiNzV8z+W20gfXUdI5KtFZKmXBEwf7/iIi97XmOFTmRi2WoNJnttIVDhYwllKcBjEAG+FgEwCW4USArI1xsJC1CU6EFIBNcbAZAJvhRICszXGwkLUFToQcKBkrHCxUiShOBMjaCAcLWctQIhQrADbGwVIANkGJAFqb4mAha3GVrACqQ4QrZQVQHaJrlGleH+oGKOb52TpbyrfCfvS0bN9uhdbKIhk9cO9Ggl2jcDM0b7YT6rk2AHd6p80df+zCpjOwYxibRi7wa0D2hvPmm54zeXaljD1oX5Za7JUOW7UdGndbyMCbcGkfTNDi2Hr1ta668MQk5P4fVXmimn6VZb5aXXaUVzipdGtnANvhG96eWnqxvRkJbm0OGYG84Lzd7palkO9WDmUXjnDXVzaH2K61fiPrY3frXKHgSgSusPFltN+Oa8D1BuDtIrMWELAM1xsUQIPEkFkLaJDYoqyV38F6BOVjq9B31gHNk2QWf0W3CzvRTNuuzv2qmlYMbag0v/PsS1DUqu0qXZkpCZKfk5+rwdgpp7TTtNLnMNi5Z8NF3UgG6+NKiPGi3iSFSXIXyaJOJZ5JwuZdNPvvF21T4av7phdlGTYzEuJFSSea6U/IxglIQTFuPIFSULwkBcWrC2zq5ZgFjiTz0T3BjS6PJ3G6UEJxKduTBff4wFMwhjuKH0mMS+GeeiW4HO7JkuLO4idYhjtK5hOQSY4rR6nXSQociddJ0hUupXudJKW46uRHEuFIMi8fThlOL0+WRVE/s6qkyBHC71aQ1dxTrwynlycL8iFJ7sdS4MqKH0uGHA08WZCzgScLcjjIfRw5Qwa+HwmyjfcjQca9g+Tl9PRleiZ2+T9vQN657o8fSFLblhdFksdpZn+M41/zCNyA",
-                position = {0, -5}
-            }
-            
-            game.simulation.camera_position = {0, 0.5}
-            game.simulation.camera_alt_info = true
-            game.forces[1].bulk_inserter_capacity_bonus = 12
-
-            local steel_chest = game.surfaces[1].find_entities_filtered{name = "steel-chest"}[1]
-            steel_chest.insert({name = "scrap", count = 1000})
-        ]]
-    }
 end
 
 parallel_module_mod_data.additional_default_categories = nil
