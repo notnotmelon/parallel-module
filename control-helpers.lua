@@ -18,10 +18,9 @@ local inventories_to_copy = {
 local parallel_module_mod_data = prototypes.mod_data.parallel_module_mod_data.data
 local parallel_crafting_machine_types = parallel_module_mod_data.crafting_machine_types
 local max_total_parallel = parallel_module_mod_data.max_total_parallel
-local entity_to_base_parallel = parallel_module_mod_data.entity_to_base_parallel
+local entity_to_base_parallel = parallel_module_mod_data.parallel_module_mod_entity_to_base_parallel
 local parallel_module_mod_recipe_table_inverse =  prototypes.mod_data.parallel_module_mod_recipe_table_inverse.data
 local parallel_module_mod_crafting_machine_table =  prototypes.mod_data.parallel_module_mod_crafting_machine_table.data
-local parallel_module_mod_crafting_machine_table_inverse = prototypes.mod_data.parallel_module_mod_crafting_machine_table_inverse.data
 local is_parallel_disabled = settings.startup["parallel-module-disable-parallel-effect"].value
 
 local parallel_module_mod_recipe_table = {}
@@ -252,162 +251,9 @@ function Public.update_inventory(entity, inventory, filled)
     Public.spill_remaining_inventory(entity, filled)
 end
 
---- @param entity LuaEntity
---- @param prototype_name string
---- @param is_ghost boolean
-function Public.fast_replace_entity(entity, prototype_name, is_ghost, recipe, quality, current_recipe)
-    local different_prototypes = ((is_ghost and entity.ghost_name) or entity.name) ~= prototype_name
-    if not different_prototypes and recipe and recipe == current_recipe then
-        return nil
-    end
-
-    local players_with_machine_open = {}
-    local players_with_machine_selected = {}
-    for player_index, open_machine in pairs(storage.player_to_machine_with_open_gui) do
-        if open_machine == entity then table.insert(players_with_machine_open, player_index) end
-    end
-    for player_index, selected_machine in pairs(storage.player_to_selected_machine) do
-        if selected_machine == entity then table.insert(players_with_machine_selected, player_index) end
-    end
-
-    local health = entity.health
-    local temperature = entity.temperature
-    local products_finished = nil
-    local name_tag = entity.name_tag
-    local disabled_by_script = entity.disabled_by_script
-    local tooltip_fields = entity.get_tooltip_fields()
-
-    -- Undo fast-replace's changing and re-ordering of inventories
-    -- local current_prototype = is_ghost and entity.ghost_prototype or entity.prototype
-    -- local new_prototype = prototypes.entity[prototype_name]
-
-    -- TODO: what about to_be_upgraded()?
-    local item_request_proxy = entity.item_request_proxy
-    local insert_plan = item_request_proxy and item_request_proxy.insert_plan
-    local removal_plan = item_request_proxy and item_request_proxy.removal_plan
-
-    local inventory_to_filled = nil
-    local fluids_by_index = nil
-    if not is_ghost then
-        -- TODO: check interactions with all/any other code that touches inventories
-        inventory_to_filled = {}
-        for _, inventory in pairs(inventories_to_copy) do
-            inventory_to_filled[inventory] = Public.prepare_inventory(entity.get_inventory(inventory))
-        end
-        if different_prototypes and entity.fluids_count > 0 then
-            fluids_by_index = {}
-            for i = 1, entity.fluids_count do
-                fluids_by_index[i] = entity.get_fluid(i) or false
-                if fluids_by_index[i] and fluids_by_index[i].amount > 0 then
-                    entity.remove_fluid(i, fluids_by_index[i].amount)
-                end
-            end
-        end
-    end
-
-    local new_entity = nil
-    if different_prototypes then
-        if is_ghost then
-            new_entity = entity.surface.create_entity({
-                fast_replace = true,
-                name = "entity-ghost",
-                position = entity.position,
-                direction = entity.direction,
-                mirror = entity.mirroring,
-                quality = entity.quality,
-                force = entity.force,
-                spill = false,
-                create_build_effect_smoke = false,
-                inner_name = prototype_name
-            })
-        else
-            products_finished = entity.products_finished
-            new_entity = entity.surface.create_entity({
-                fast_replace = true,
-                name = prototype_name,
-                position = entity.position,
-                direction = entity.direction,
-                mirror = entity.mirroring,
-                quality = entity.quality,
-                force = entity.force,
-                spill = false,
-                create_build_effect_smoke = false
-            })
-        end
-        if new_entity and new_entity.valid then
-            entity = new_entity
-        end
-    end
-
-    if recipe and entity.type == "assembling-machine" then
-        entity.set_recipe(recipe, quality)
-    end
-    if inventory_to_filled then
-        for inventory, filled in pairs(inventory_to_filled) do
-            Public.update_inventory(entity, entity.get_inventory(inventory), filled)
-        end
-        if fluids_by_index then
-            for i = 1, entity.fluids_count do
-                if fluids_by_index[i] and fluids_by_index[i].amount > 0 then
-                    entity.set_fluid(i, fluids_by_index[i])
-                end
-            end
-        end
-    end
-
-    if not new_entity or not new_entity.valid then
-        return nil
-    end
-
-    if tooltip_fields then
-        for _, tooltip in pairs(tooltip_fields) do
-            entity.set_tooltip_field(tooltip)
-        end
-    end
-    if health then
-        new_entity.health = health
-    end
-    if temperature then
-        new_entity.temperature = temperature
-    end
-    if not is_ghost and products_finished then
-        new_entity.products_finished = products_finished
-    end
-    if name_tag then
-        new_entity.name_tag = name_tag
-    end
-    if disabled_by_script ~= nil then
-        new_entity.disabled_by_script = disabled_by_script
-    end
-    if item_request_proxy then
-        item_request_proxy.insert_plan = insert_plan
-        item_request_proxy.removal_plan = removal_plan
-    end
-
-    for _, player_index in pairs(players_with_machine_open) do
-        local player = game.get_player(player_index)
-        if player and player.valid then
-            player.opened = new_entity
-        end
-    end
-    for _, player_index in pairs(players_with_machine_selected) do
-        local player = game.get_player(player_index)
-        if player and player.valid then
-            player.selected = new_entity
-        end
-    end
-    return new_entity
-end
-
-function Public.return_ingredients_or_get_progress(machine, target_entity_name, recipe_prototype, quality)
+function Public.return_ingredients_or_get_progress(machine, recipe_prototype, quality)
     if not recipe_prototype or not machine.is_crafting() then
         return 0, 0
-    end
-
-    -- furnace => assembling machine
-    -- assembling machine => assembling machine
-    if machine.type == "furnace" or machine.name == target_entity_name then
-        return machine.crafting_progress, machine.bonus_progress
     end
 
     -- assembling machine => furnace
@@ -474,11 +320,10 @@ function Public.update_machine_for_parallel(machine, just_built)
     end
 
     local name = (is_ghost and machine.ghost_name) or machine.name
-    local is_furnace = type == "furnace"
     local recipe, quality = machine.get_recipe()
     if recipe then
         recipe = recipe.prototype
-    elseif not is_ghost and is_furnace and machine.previous_recipe then
+    elseif not is_ghost and machine.previous_recipe then
         recipe = machine.previous_recipe.name
         quality = machine.previous_recipe.quality
     end
@@ -487,7 +332,7 @@ function Public.update_machine_for_parallel(machine, just_built)
     -- local machine_control_behavior = machine_info.control_behavior
     local machine_control_behavior = machine.get_control_behavior()
 
-    local is_set_recipe = not is_furnace and machine_control_behavior and machine_control_behavior.circuit_set_recipe
+    local is_set_recipe = machine_control_behavior and machine_control_behavior.circuit_set_recipe
     if is_set_recipe and current_machine_parallel > 0 then
         local has_base_parallel_but_no_connections = not has_parallel_modules and recipe and not machine_control_behavior.get_circuit_network(defines.wire_connector_id.circuit_red) and not machine_control_behavior.get_circuit_network(defines.wire_connector_id.circuit_green)
         if has_parallel_modules or has_base_parallel_but_no_connections then
@@ -528,7 +373,6 @@ function Public.update_machine_for_parallel(machine, just_built)
     end
 
     local was_changed = latest_recipe ~= recipe_name or latest_parallel ~= current_machine_parallel
-    local new_machine = nil
     -- If no change, don't update
     if was_changed or just_built then
         local base_recipe_name = nil
@@ -536,19 +380,8 @@ function Public.update_machine_for_parallel(machine, just_built)
             _, base_recipe_name = next(parallel_module_mod_recipe_table_inverse[recipe_name] or {})
         end
         local was_crafting = was_changed and machine.is_crafting()
-        local base_machine_name = parallel_module_mod_crafting_machine_table_inverse[name] or name
-        local parallel_machine_name = base_machine_name and parallel_module_mod_crafting_machine_table[base_machine_name]
-        local target_entity_name = (current_machine_parallel > 0 and parallel_machine_name) or base_machine_name
-        local crafting_progress, bonus_progress = Public.return_ingredients_or_get_progress(machine, target_entity_name, recipe, quality)
-        new_machine = Public.fast_replace_entity(
-            machine,
-            target_entity_name,
-            is_ghost,
-            Public.get_parallel_recipe(base_recipe_name, rounded_machine_parallel),
-            quality,
-            (recipe and recipe.name) or nil
-        )
-        machine = new_machine or machine
+        local parallel_machine_name = parallel_module_mod_crafting_machine_table[name]
+        local crafting_progress, bonus_progress = Public.return_ingredients_or_get_progress(machine, recipe, quality)
 
         if was_crafting and base_recipe_name and recipe then
             if crafting_progress > 0 then
@@ -563,10 +396,7 @@ function Public.update_machine_for_parallel(machine, just_built)
         Public.update_machine_info(machine, recipe_name, current_machine_parallel, is_set_recipe)
     end
 
-    if new_machine then
-        script.raise_script_built{entity=new_machine}
-        script.register_on_object_destroyed(machine)
-    elseif just_built then
+    if just_built then
         script.register_on_object_destroyed(machine)
     end
     return machine
@@ -668,17 +498,7 @@ end
 function Public.sanitize_bp_entities(bp_entities)
     local was_modified = false
     for _, bp_entity in pairs(bp_entities) do
-        local base_entity_name = parallel_module_mod_crafting_machine_table_inverse[bp_entity.name]
         local current_parallel_to_base_recipe_name = bp_entity.recipe and parallel_module_mod_recipe_table_inverse[bp_entity.recipe]
-        if not base_entity_name and not current_parallel_to_base_recipe_name then
-            goto continue
-        end
-
-        -- Set blueprint entity to non-parallel version, if applicable
-        if base_entity_name and bp_entity.name ~= base_entity_name then
-            was_modified = true
-            bp_entity.name = base_entity_name
-        end
 
         -- Set blueprint entity's recipe to non-parallel version, if applicable
         if current_parallel_to_base_recipe_name then
@@ -688,7 +508,6 @@ function Public.sanitize_bp_entities(bp_entities)
                 bp_entity.recipe = base_recipe_name
             end
         end
-        ::continue::
     end
 
     return was_modified
