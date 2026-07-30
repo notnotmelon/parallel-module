@@ -11,9 +11,11 @@ local base_recipe_to_altered_recipes = data.raw["mod-data"].parallel_module_mod_
 local altered_recipe_to_base_recipe_parallel_pair = data.raw["mod-data"].parallel_module_mod_recipe_table_inverse.data
 
 local function is_category_parallelizable(recipe_name, category)
-    if not (category
-            and crafting_category_to_max_module_slots[category]
-            and crafting_category_to_max_module_slots[category] > 0) then
+    if category.parallel_blacklist == true then
+        return false
+    end
+
+    if (crafting_category_to_max_module_slots[category] or 0) == 0 then
         return false
     end
 
@@ -40,22 +42,6 @@ local function get_max_parallel_without_modules_for_recipe(crafting_categories)
         parallel = math.max(parallel, crafting_category_to_max_parallel_without_modules[category])
     end
     return parallel
-end
-
--------------------------------------------------------------------------------
---- CREATE PARALLEL RECIPE_CATEGORY PROTOTYPES
--------------------------------------------------------------------------------
-
-local function get_or_create_crafting_category_if_valid(category)
-    local new_category = string.format("%s__parallel_module_mod", category)
-    if not new_crafting_categories[new_category] then
-        new_crafting_categories[new_category] = {
-            type = "recipe-category",
-            name = new_category,
-            hidden = true
-        }
-    end
-    return new_category
 end
 
 -------------------------------------------------------------------------------
@@ -185,9 +171,6 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
             end
         end
 
-        for i, category in pairs(new_recipe.categories) do
-            new_recipe.categories[i] = get_or_create_crafting_category_if_valid(category)
-        end
         new_recipes[new_recipe_name] = new_recipe
     end
     ::continue::
