@@ -66,13 +66,8 @@ end
 -------------------------------------------------------------------------------
 
 for recipe_name, base_recipe in pairs(data.raw.recipe) do
-    if base_recipe.allow_parallel == false then
-        goto continue
-    end
-    local results = base_recipe.results
-    if results == nil then
-        goto continue
-    end
+    if base_recipe.allow_parallel == false then goto continue end
+    if base_recipe.results == nil then goto continue end
 
     local valid_categories = {}
     if not base_recipe.categories then
