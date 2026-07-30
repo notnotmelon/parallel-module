@@ -307,13 +307,9 @@ function Public.update_machine_for_parallel(machine, just_built)
         return machine
     end
 
-    local name = (is_ghost and machine.ghost_name) or machine.name
     local recipe, quality = machine.get_recipe()
     if recipe then
         recipe = recipe.prototype
-    elseif not is_ghost and machine.previous_recipe then
-        recipe = machine.previous_recipe.name
-        quality = machine.previous_recipe.quality
     end
     local recipe_name = recipe and recipe.name
     -- local machine_info = storage.entity_info[machine.unit_number]
