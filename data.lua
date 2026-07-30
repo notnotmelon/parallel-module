@@ -7,6 +7,7 @@ data:extend({
 
 require("__parallel-module__.prototypes.mod-data")
 require("__parallel-module__.prototypes.item")
+require("__parallel-module__.prototypes.recipe")
 require("__parallel-module__.prototypes.technology")
 require("__parallel-module__.prototypes.achievement")
 

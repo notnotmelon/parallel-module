@@ -96,5 +96,6 @@ for i, suffix in pairs{"", "-2", "-3"} do
       ingredient.name = "quantum-processor"
     end
   end
+  new_recipe.auto_recycle = true
   data:extend{new_recipe}
 end
