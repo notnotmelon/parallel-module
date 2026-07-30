@@ -66,8 +66,6 @@ function Public.ensure_storage_cache_is_setup()
     storage.machine_to_latest_recipe_and_parallel = storage.machine_to_latest_recipe_and_parallel or {}
     if not storage.cached_to_string then storage.cached_to_string = {} end
     if not storage.cached_round then storage.cached_round = {} end
-    -- TODO: reenable after fixing monotonic growth
-    -- if not storage.entity_info then storage.entity_info = {} end
 end
 
 function Public.update_all_entities()
@@ -146,13 +144,6 @@ function Public.get_total_machine_parallel_optimized(machine, is_ghost)
         return nil, nil, nil
     end
 
-    -- if not storage.entity_info[machine.unit_number] then 
-    --     storage.entity_info[machine.unit_number] = {
-    --         module_inventory = machine.get_module_inventory(),
-    --         control_behavior = machine.get_control_behavior()
-    --     } 
-    -- end
-    -- local machine_info = storage.entity_info[machine.unit_number]
     local machine_base_parallel = entity_to_base_parallel[machine.name]
     local module_parallel
     if machine_accepts_parallel_modules[machine.name] then
@@ -312,8 +303,6 @@ function Public.update_machine_for_parallel(machine, just_built)
         recipe = recipe.prototype
     end
     local recipe_name = recipe and recipe.name
-    -- local machine_info = storage.entity_info[machine.unit_number]
-    -- local machine_control_behavior = machine_info.control_behavior
     local machine_control_behavior = machine.get_control_behavior()
 
     local is_set_recipe = machine_control_behavior and machine_control_behavior.circuit_set_recipe
@@ -474,8 +463,6 @@ function Public.handle_player_cursor_stack_changed(player_index)
             and player.cursor_stack.valid_for_read
             and player.cursor_stack.name == "cut-paste-tool"
     Public.update_selected_machine_for_player(player_index)
-    -- TODO: Enable if `on_tick` is disabled
-    -- Public.update_opened_machine_for_player(player_index)
 end
 
 function Public.sanitize_bp_entities(bp_entities)
@@ -549,9 +536,6 @@ function Public.handle_entity_gui_opened(player_index, entity)
     if machine_accepts_parallel_modules[entity_name] or entity_to_base_parallel[entity_name] then
         storage.player_to_machine_with_open_gui[player_index] = entity
     end
-    
-    -- TODO: Enable if `on_tick` is disabled
-    -- Public.update_machine_for_parallel(entity)
 end
 
 function Public.handle_entity_gui_closed(player_index, entity)
@@ -559,8 +543,6 @@ function Public.handle_entity_gui_closed(player_index, entity)
         return
     end
 
-    -- TODO: Enable if `on_tick` is disabled
-    -- Public.update_machine_for_parallel(entity)
     storage.player_to_machine_with_open_gui[player_index] = nil
 end
 
@@ -587,10 +569,6 @@ function Public.handle_player_left(player_index, player_name)
     if not player_index then
         return
     end
-
-    -- TODO: Enable if `on_tick` is disabled
-    -- Public.update_opened_machine_for_player(player_index)
-    -- Public.update_selected_machine_for_player(player_index)
 
     storage.player_to_machine_with_open_gui[player_index] = nil
     storage.player_to_selected_machine[player_index] = nil
