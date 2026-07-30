@@ -32,7 +32,7 @@ end
 local machine_accepts_parallel_modules = {}
 for _, type in pairs(parallel_crafting_machine_types) do
     for entity_name, entity in pairs(prototypes.get_entity_filtered{{filter = "type", type = type}}) do
-        if entity.allowed_module_categories and entity.allowed_module_categories["parallel"] then
+        if entity.allowed_module_categories and entity.allowed_module_categories.parallel then
             machine_accepts_parallel_modules[entity_name] = true
         end
     end

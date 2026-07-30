@@ -34,7 +34,7 @@ Parallel Module adds several prototype fields for specifying how parallel module
 
 #### New `RecipeCategoryPrototype` Fields:
 
-* `parallel_blacklist` (`boolean`): Default `false`. If set to `true`, recipes with this category are not considered valid for parallel unless they either have another (non-blacklisted) category, or are marked with `parallel_whitelist = true`. Note: any category whose name contains either `"recycling"` or `"voidcraft"` as a substring is automatically blacklisted.
+* `parallel_blacklist` (`boolean`): Default `false`. If set to `true`, recipes with this category are not considered valid for parallel unless they either have another (non-blacklisted) category, or are marked with `parallel_whitelist = true`.
 
 #### New `RecipePrototype` Fields:
 

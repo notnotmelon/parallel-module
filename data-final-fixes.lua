@@ -9,7 +9,6 @@ if data.raw["agricultural-tower"] then
 end
 local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
 
-local explicitly_allowed_recycling_recipes = parallel_module_mod_data.allowed_recycling_recipes
 local explicitly_disallowed_categories = parallel_module_mod_data.disallowed_crafting_categories
 local additional_default_categories = parallel_module_mod_data.additional_default_categories
 local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
@@ -206,19 +205,6 @@ local function calculate_max_module_slots(machines)
         for _, category in pairs(machine.crafting_categories) do
             if utils.table_contains_value(explicitly_disallowed_categories, category) then
                 goto continue
-            end
-            if category:find("recycling", 1, true) or category:find("voidcraft", 1, true) then
-                local has_any = false
-                for _, recipe_name in pairs(explicitly_allowed_recycling_recipes) do
-                    local recipe = data.raw.recipe[recipe_name]
-                    if recipe and recipe.categories and utils.table_contains_value(recipe.categories, category) then
-                        has_any = true
-                        break
-                    end
-                end
-                if not has_any then
-                    goto continue
-                end
             end
 
             table.insert(categories, category)

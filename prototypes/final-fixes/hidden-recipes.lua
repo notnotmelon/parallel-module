@@ -1,8 +1,6 @@
 local data_utils = require("__parallel-module__.data-utils")
 local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
 
-local explicitly_allowed_recycling_recipes = parallel_module_mod_data.allowed_recycling_recipes
-
 local new_recipes = {}
 local crafting_category_to_recipes = {}
 local new_crafting_categories = {}
@@ -19,12 +17,6 @@ local function is_category_parallelizable(recipe_name, category)
         return false
     end
 
-    if category:find("recycling", 1, true) and not utils.table_contains_value(explicitly_allowed_recycling_recipes, recipe_name) then
-        return false
-    end
-    if category:find("voidcraft", 1, true) and not utils.table_contains_value(explicitly_allowed_recycling_recipes, recipe_name) then
-        return false
-    end
     return true
 end
 
@@ -57,7 +49,6 @@ local function can_recipe_be_parallelized(recipe)
     if table_size(recipe.ingredients) == 0 then return false end
     if table_size(recipe.results) == 0 then return false end
     if recipe.name:match("%-barrel$") then return false end
-    if recipe.name:match("%-recycling$") then return false end
 
     -- ensure recipes with results with the "non-stackable" flag are not parallelized
     for _, result in pairs(recipe.results) do
