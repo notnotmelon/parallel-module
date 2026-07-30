@@ -84,6 +84,7 @@ data:extend({
       parallel = 1.00
     },
     speed_quality_multiplier = 3.0,
+    pollution_quality_multiplier = 4.0,
     default_import_location = "frozeta"
   },
   {
