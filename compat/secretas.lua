@@ -82,7 +82,6 @@ data:extend({
       consumption = 0.6,
       pollution = 1.0,
       speed = -0.4,
-      productivity = -0.00,
       parallel = 1.00
     },
     speed_quality_multiplier = 3.0,

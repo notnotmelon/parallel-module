@@ -20,7 +20,6 @@ data:extend({
       consumption = 0.3,
       pollution = 0.25,
       speed = -1.0,
-      productivity = -0.04,
       parallel = 1.00
     },
     speed_quality_multiplier = 3.0,
@@ -43,7 +42,6 @@ data:extend({
       consumption = 0.4,
       pollution = 0.5,
       speed = -0.8,
-      productivity = -0.02,
       parallel = 1.00
     },
     speed_quality_multiplier = 3.0,
@@ -66,7 +64,6 @@ data:extend({
       consumption = 0.5,
       pollution = 0.75,
       speed = -0.6,
-      productivity = -0.00,
       parallel = 1.00
     },
     speed_quality_multiplier = 3.0,
