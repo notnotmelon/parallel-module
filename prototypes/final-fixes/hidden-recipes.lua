@@ -123,8 +123,8 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
 
         local new_recipe = table.deepcopy(base_recipe)
         new_recipe.name = new_recipe_name
-        new_recipe.localised_name = data_utils.get_recipe_localised_field(base_recipe, "name")
-        new_recipe.localised_description = data_utils.get_recipe_localised_field(base_recipe, "description")
+        new_recipe.localised_name = data_utils.get_recipe_localised_name(base_recipe)
+        new_recipe.localised_description = data_utils.get_recipe_localised_description(base_recipe)
         data_utils.ensure_recipe_icon_or_icons(new_recipe, base_recipe)
         new_recipe.factoriopedia_alternative = base_recipe.factoriopedia_alternative or recipe_name
         new_recipe.hidden = true

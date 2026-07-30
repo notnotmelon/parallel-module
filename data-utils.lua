@@ -154,61 +154,58 @@ function Public.get_prototype_helper(base_type, name)
     end
 end
 
-function Public.get_recipe_localised_field(prototype, field_type)
-    local field = "localised_"..field_type
-    if prototype[field] then
-        return prototype[field]
+local function get_recipe_main_product(recipe)
+    local main_product_name = recipe.main_product
+
+    if not main_product_name or type(main_product_name) ~= "string" then
+        if type(recipe.results) == "table" and table_size(recipe.results) == 1 and type(recipe.results[1]) == "table" then
+            main_product_name = recipe.results[1].name
+        end
     end
 
-    local fluid = data.raw.fluid[prototype.name]
-    if fluid and fluid[field] then
-        return fluid[field]
+    if type(main_product_name) ~= "string" then
+        return nil
     end
     
-    local entity = Public.get_prototype_helper("entity", prototype.name)
-    local equipment = Public.get_prototype_helper("equipment", prototype.name)
-    local tile = data.raw.tile[prototype.name]
-    local item = data.raw.item[prototype.name]
-    if item then
-        if item[field] then
-            return item[field]
+    for prototype in pairs(defines.prototypes.item) do
+        if data.raw[prototype] and data.raw[prototype][main_product_name] then
+            return data.raw[prototype][main_product_name]
         end
-
-        entity = entity or (item.place_result and Public.get_prototype_helper("entity", item.place_result))
-        equipment = equipment or (item.place_as_equipment_result and Public.get_prototype_helper("equipment", item.place_as_equipment_result))
-        tile = tile or (item.place_as_tile_result and data.raw.tile[item.place_as_tile_result])
     end
 
-    if entity and entity[field] then
-        return entity[field]
-    end
-    if equipment and equipment[field] then
-        return equipment[field]
-    end
-    if tile and tile[field] then
-        return tile[field]
-    end
+    return data.raw.fluid[main_product_name]
+end
 
-    local localised_field = {
+function Public.get_recipe_localised_name(recipe)
+    local fallback = recipe.localised_name or {"recipe-name." .. recipe.name}
+    local main_product = get_recipe_main_product(recipe)
+    if not main_product then return fallback end
+
+    return {
         "?",
-        { "recipe-"..field_type.."."..prototype.name }
+        fallback,
+        main_product.localised_name or {"item-name." .. main_product.name},
+        {"entity-name." .. main_product.name},
+        {"fluid-name." .. main_product.name},
+        {"equipment-name." .. main_product.name},
+        {"tile-name." .. main_product.name},
     }
-    if fluid then
-        table.insert(localised_field, { "fluid-"..field_type.."."..fluid.name })
-    end
-    if item then
-        table.insert(localised_field, { "item-"..field_type.."."..item.name })
-    end
-    if entity then
-        table.insert(localised_field, { "entity-"..field_type.."."..entity.name })
-    end
-    if equipment then
-        table.insert(localised_field, { "equipment-"..field_type.."."..equipment.name })
-    end
-    if tile then
-        table.insert(localised_field, { "tile-"..field_type.."."..tile.name })
-    end
-    return localised_field
+end
+
+function Public.get_recipe_localised_description(recipe)
+    local fallback = recipe.localised_description or {"recipe-description." .. recipe.name}
+    local main_product = get_recipe_main_product(recipe)
+    if not main_product then return fallback end
+
+    return {
+        "?",
+        fallback,
+        main_product.localised_description or {"item-description." .. main_product.name},
+        {"entity-description." .. main_product.name},
+        {"fluid-description." .. main_product.name},
+        {"equipment-description." .. main_product.name},
+        {"tile-description." .. main_product.name},
+    }
 end
 
 function Public.set_recipe_icon_or_icons(prototype, prototype_with_icon)
