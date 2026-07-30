@@ -17,8 +17,6 @@ local explicitly_allowed_recycling_recipes = parallel_module_mod_data.allowed_re
 local explicitly_disallowed_categories = parallel_module_mod_data.disallowed_crafting_categories
 local explicitly_disallowed_recipes = parallel_module_mod_data.disallowed_recipes
 local recipe_to_result_to_alter = parallel_module_mod_data.explicit_recipe_results
-local recipe_to_result_to_alter_idx = parallel_module_mod_data.explicit_recipe_result_indices
-local explicit_recipes_without_results = parallel_module_mod_data.explicit_recipes_without_results
 local explicit_entities = parallel_module_mod_data.explicit_entities
 local entity_to_base_parallel = parallel_module_mod_data.entity_to_base_parallel
 local extra_count_fraction_recipe_results = parallel_module_mod_data.extra_count_fraction_recipe_results
@@ -28,14 +26,11 @@ local max_total_parallel = parallel_module_mod_data.max_total_parallel / 100.0
 
 local crafting_category_to_max_module_slots = {}
 local crafting_category_to_max_parallel_without_modules = {}
-local crafting_machine_to_max_module_slots = {}
 local crafting_category_to_should_enable_parallel_effect = {}
 local crafting_categories_in_furnaces = {}
 local new_recipes = {}
-local base_recipe_to_affected_result = {}
 local crafting_category_to_recipes = {}
 local new_crafting_categories = {}
-local altered_to_original_crafting_category = {}
 local original_to_altered_crafting_category = {}
 
 local base_recipe_to_altered_recipes = data.raw["mod-data"].parallel_module_mod_recipe_table.data
@@ -241,7 +236,6 @@ local function calculate_max_module_slots(machines)
             end
             machine_module_slots = machine_module_slots + max_extra_module_slots
         end
-        crafting_machine_to_max_module_slots[machine.name] = machine_module_slots
         local base_machine_parallel = max_parallel_without_modules(machine)
         for _, category in pairs(categories) do
             if not data.raw["recipe-category"][category] then
@@ -328,7 +322,6 @@ local function get_or_create_crafting_category_if_valid(category)
             name = new_category,
             hidden = true
         }
-        altered_to_original_crafting_category[new_category] = category
     end
     return new_category
 end
@@ -470,64 +463,6 @@ for _, map in pairs({recipe_to_result_to_alter, extra_count_fraction_recipe_resu
     end
 end
 
-local quality_by_tier = {}
-if data.raw.quality then
-    for quality_name, quality in pairs(data.raw.quality) do
-        quality_by_tier[quality.level] = quality_name
-    end
-end
-
-local function quality_to_tier(name)
-    if not name then
-        return 0
-    end
-
-    local quality = data.raw.quality[name]
-    return quality and quality.level or 0
-end
-
-local function set_custom_tooltip(recipe, result_to_alter_idx)
-    if not recipe.custom_tooltip_fields then
-        recipe.custom_tooltip_fields = {}
-    end
-    local parallel_tooltip_field
-    local result_to_alter = recipe.results[result_to_alter_idx]
-    local quality_tier = math.max(result_to_alter.quality_change or 0, quality_to_tier(result_to_alter.quality_min))
-    if quality_tier > 0 then
-        if result_to_alter.quality_max then
-            quality_tier = math.min(quality_tier, quality_to_tier(result_to_alter.quality_max))
-        end
-        parallel_tooltip_field = {
-            name = {"mod-tooltip-name.parallel-module-parallel"},
-            value = {"mod-tooltip-value.parallel-module-recipe-item-quality", result_to_alter.name, quality_by_tier[quality_tier] or "common"},
-            order = 200,
-            show_in_factoriopedia = true,
-            show_in_tooltip = false
-        }
-    else
-        parallel_tooltip_field = {
-            name = {"mod-tooltip-name.parallel-module-parallel"},
-            value = {"mod-tooltip-value.parallel-module-recipe-"..result_to_alter.type, result_to_alter.name},
-            order = 200,
-            show_in_factoriopedia = true,
-            show_in_tooltip = false
-        }
-    end
-    if recipe.parallel_sensitivity then
-        recipe.parallel_sensitivity = utils.round(recipe.parallel_sensitivity, 0.01)
-        if recipe.parallel_sensitivity == 1 or recipe.parallel_sensitivity < 0.01 or recipe.parallel_sensitivity > 100 then
-            recipe.parallel_sensitivity = nil
-        else
-            parallel_tooltip_field.value = {
-                "",
-                parallel_tooltip_field.value,
-                {"mod-tooltip-value.parallel-module-parallel-sensitivity", tostring(recipe.parallel_sensitivity)}
-            }
-        end
-    end
-    table.insert(recipe.custom_tooltip_fields, parallel_tooltip_field)
-end
-
 for recipe_name, base_recipe in pairs(data.raw.recipe) do
     if utils.table_contains_value(explicitly_disallowed_recipes, recipe_name) then
         goto continue
@@ -556,24 +491,6 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         result_to_alter = extra_count_fraction_recipe_results[recipe_name]
         use_extra_count_fraction = result_to_alter ~= nil
     end
-    local result_to_alter_idx = recipe_to_result_to_alter_idx[recipe_name]
-    if result_to_alter_idx and result_to_alter_idx > table_size(results) then
-        result_to_alter_idx = nil
-    end
-    if not result_to_alter and not result_to_alter_idx then
-        result_to_alter_idx = data_utils.lowest_probability_ingredient_idx(base_recipe)
-        -- if still no result to alter, then this is not a probabilistic recipe
-        if not result_to_alter_idx then
-            if utils.table_contains_value(explicit_recipes_without_results, recipe_name) then
-                table.insert(base_recipe.allowed_module_categories, EFFECT_NAME)
-                for _, category in pairs(valid_categories) do
-                    crafting_category_to_should_enable_parallel_effect[category] = true
-                end
-                base_recipe_to_affected_result[recipe_name] = "nil (explicit_recipes_without_results)"
-            end
-            goto continue
-        end
-    end
 
     -- Explicitly allow parallel modules in recipe.allowed_module_categories
     table.insert(base_recipe.allowed_module_categories, EFFECT_NAME)
@@ -585,27 +502,10 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         crafting_category_to_should_enable_parallel_effect[category] = true
     end
 
-    if not result_to_alter_idx then
-        for i, output in pairs(base_recipe.results) do
-            if output.name == result_to_alter then
-                -- TODO: This is a mess and doesn't really work
-                if use_extra_count_fraction and output.extra_count_fraction or output.independent_probability or output.shared_probability then
-                    result_to_alter_idx = i
-                    break
-                end
-            end
-        end
-        assert(result_to_alter_idx, "Could not find valid explicitly requested result "..result_to_alter.." for recipe "..recipe_name)
-    end
-    set_custom_tooltip(base_recipe, result_to_alter_idx)
-    base_recipe_to_affected_result[recipe_name] = base_recipe.results[result_to_alter_idx].name
-
     base_recipe_to_altered_recipes[recipe_name] = { [tostring(0)] = recipe_name }
     altered_recipe_to_base_recipe_parallel_pair[recipe_name] = { [tostring(0)] = recipe_name }
     local total_max_module_value = math.min(max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
         module_value_max_per_slot * get_max_module_slots_for_recipe(valid_categories))
-    local sensitivity = base_recipe.parallel_sensitivity or 1
-    base_recipe.parallel_sensitivity = nil
     for scale = 1, total_max_module_value do
         local new_recipe_name = string.format("%s__parallel_module_mod__%d", recipe_name, scale * 100)
         local scale_str = tostring(scale * 100)
@@ -615,7 +515,6 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         new_recipe.name = new_recipe_name
         new_recipe.localised_name = get_recipe_localised_field(base_recipe, "name")
         new_recipe.localised_description = get_recipe_localised_field(base_recipe, "description")
-        local effective_scale = scale * sensitivity -- Recipes with parallel sensitivity have their effective parallel multiplied by their sensitivity value.
         ensure_recipe_icon_or_icons(new_recipe, base_recipe)
         new_recipe.factoriopedia_alternative = base_recipe.factoriopedia_alternative or recipe_name
         new_recipe.hidden = true
@@ -756,17 +655,3 @@ for _, new_recipe in pairs(new_recipes) do
 end
 
 parallel_module_mod_data.additional_default_categories = nil
-
-local category_to_recipe_count = {}
-local category_to_recipe_to_result = {}
-for name, result in pairs(base_recipe_to_affected_result) do
-    local recipe = data.raw.recipe[name]
-    local original_category = altered_to_original_crafting_category[recipe.categories[1]] or recipe.categories[1]
-    category_to_recipe_count[original_category] = (category_to_recipe_count[original_category] or 0) + table_size(base_recipe_to_altered_recipes[name] or {})
-    if not category_to_recipe_to_result[original_category] then
-        category_to_recipe_to_result[original_category] = {}
-    end
-    category_to_recipe_to_result[original_category][name] = result
-end
-log("Number of parallel-affected recipes by crafting category:\n" .. serpent.block(category_to_recipe_count))
-log("Parallel-affected result of recipes by crafting category:\n" .. serpent.block(category_to_recipe_to_result))

@@ -130,33 +130,6 @@ function Public.build_shared_prob_flags_of_result(recipe, idx)
     return recipe_flags, result_flags
 end
 
---- TODO: Currently unused WIP
-function Public.build_shared_probability_strategy(recipe, idx)
-    local recipe_flags, result_flags = Public.build_shared_prob_flags_of_result(recipe, idx)
-    if not recipe_flags then
-        return nil
-    end
-
-    local has_any_fully_below = Public.has_flag(recipe_flags, Public.SharedProbFlags.HAS_ANY_VALUE_FULLY_BELOW)
-    local has_any_fully_above = Public.has_flag(recipe_flags, Public.SharedProbFlags.HAS_ANY_VALUE_FULLY_ABOVE)
-    local has_any_overlap = Public.has_flag(recipe_flags, Public.SharedProbFlags.HAS_ANY_OVERLAP)
-
-    if not has_any_overlap  then
-        log("Strategy simple_zero_sum_scale: "..recipe.name)
-        return {
-            prepare = function() end,
-            scale = Public.Strategy.simple_zero_sum_scale
-        }
-    end
-
-    -- TODO: Actual strategies!!!
-    log("Strategy simple_positive_sum_scale: "..recipe.name)
-    return {
-        prepare = Public.Strategy.standardize,
-        scale = Public.Strategy.simple_positive_sum_scale
-    }
-end
-
 function Public.get_limits(recipe)
     local min_min = 1
     local max_max = 0
@@ -170,86 +143,6 @@ function Public.get_limits(recipe)
         ::continue::
     end
     return min_min, max_max
-end
-
-Public.Strategy = {}
-
---- Shift all values down so that lowest min = 0 (no-op change)
-function Public.Strategy.standardize(recipe)
-    local min_min = 1
-    for _, result in pairs(recipe.results) do
-        if not result.shared_probability then
-            goto continue
-        end
-
-        if result.shared_probability.min < min_min then
-            if result.shared_probability == 0 then
-                return
-            end
-
-            min_min = result.shared_probability.min
-        end
-        ::continue::
-    end
-    for _, result in pairs(recipe.results) do
-        if not result.shared_probability then
-            goto continue
-        end
-
-        result.shared_probability.min = result.shared_probability.min - min_min
-        result.shared_probability.max = result.shared_probability.max - min_min
-        ::continue::
-    end
-end
-
---- Scale up parallel result with standard formula.
---- Scale down other results to reach no net change.
-function Public.Strategy.simple_zero_sum_scale(recipe, idx, scale)
-    -- TODO: improve scaling
-    local min_min, max_max = Public.get_limits(recipe)
-    local shared = recipe.results[idx].shared_probability
-    local low = shared.min
-    local high = shared.max
-    local base_prob = high - low
-    local scaled_prob = utils.scale_probability_as_odds(base_prob, scale) * (max_max - min_min)
-    local diff = scaled_prob - base_prob * (max_max - min_min)
-    local p = function(x)
-        return (x <= low and x * (1 - diff / (1 - base_prob))) or (x >= high and 1 - (1 - x) * (1 - diff / (1 - base_prob))) or x
-    end
-    for _, result in pairs(recipe.results) do
-        if not result.shared_probability then
-            goto continue
-        end
-
-        result.shared_probability.min = p(result.shared_probability.min)
-        result.shared_probability.max = p(result.shared_probability.max)
-        ::continue::
-    end
-end
-
---- Scale up parallel result with standard formula.
---- Leave other results unchanged.
-function Public.Strategy.simple_positive_sum_scale(recipe, idx, scale)
-    local _, max_max = Public.get_limits(recipe)
-    local headroom = 1 - max_max
-    local shared = recipe.results[idx].shared_probability
-    local threshold = shared.max
-    local base_prob = shared.max - shared.min
-    local scaled_prob = utils.scale_probability_as_odds(base_prob, scale)
-    local diff = math.min(headroom, scaled_prob - base_prob)
-    for _, result in pairs(recipe.results) do
-        if not result.shared_probability then
-            goto continue
-        end
-
-        if result.shared_probability.min >= threshold then
-            result.shared_probability.min = result.shared_probability.min + diff
-        end
-        if result.shared_probability.max >= threshold then
-            result.shared_probability.max = result.shared_probability.max + diff
-        end
-        ::continue::
-    end
 end
 
 return Public
