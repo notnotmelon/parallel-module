@@ -164,7 +164,7 @@ function Public.get_total_machine_parallel_optimized(machine, is_ghost)
     end
 
     local parallel = math.min(max_total_parallel, module_parallel + (machine_base_parallel or 0))
-    return parallel, cached_round(parallel), module_parallel > 0 
+    return parallel, cached_round(parallel), module_parallel > 0
 end
 
 function Public.prepare_inventory(inventory)
