@@ -15,7 +15,6 @@ local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.d
 
 local explicitly_allowed_recycling_recipes = parallel_module_mod_data.allowed_recycling_recipes
 local explicitly_disallowed_categories = parallel_module_mod_data.disallowed_crafting_categories
-local explicitly_disallowed_recipes = parallel_module_mod_data.disallowed_recipes
 local recipe_to_result_to_alter = parallel_module_mod_data.explicit_recipe_results
 local extra_count_fraction_recipe_results = parallel_module_mod_data.extra_count_fraction_recipe_results
 local additional_default_categories = parallel_module_mod_data.additional_default_categories
@@ -364,7 +363,7 @@ for _, map in pairs({recipe_to_result_to_alter, extra_count_fraction_recipe_resu
 end
 
 for recipe_name, base_recipe in pairs(data.raw.recipe) do
-    if utils.table_contains_value(explicitly_disallowed_recipes, recipe_name) then
+    if base_recipe.allow_parallel == false then
         goto continue
     end
     local results = base_recipe.results
