@@ -2,10 +2,6 @@ local item_sounds = require("__base__.prototypes.item_sounds")
 
 -- Add module effect in data-final-fixes to prevent other mods from incorrectly classifying parallel modules as efficiency modules
 data:extend({
-  -- {
-  --   type = "module-category",
-  --   name = "parallel"
-  -- },
   {
     type = "module",
     name = "parallel-module",
@@ -20,7 +16,13 @@ data:extend({
     drop_sound = item_sounds.module_inventory_move,
     stack_size = 50,
     weight = 20 * kg,
-    effect = {},
+    effect = {
+      consumption = 0.3,
+      pollution = 0.25,
+      speed = -1.0,
+      productivity = -0.04,
+      parallel = 1.00
+    },
   },
   {
     type = "module",
@@ -36,7 +38,13 @@ data:extend({
     drop_sound = item_sounds.module_inventory_move,
     stack_size = 50,
     weight = 20 * kg,
-    effect = {},
+    effect = {
+      consumption = 0.4,
+      pollution = 0.5,
+      speed = -0.8,
+      productivity = -0.02,
+      parallel = 1.00
+    },
   },
   {
     type = "module",
@@ -52,6 +60,12 @@ data:extend({
     drop_sound = item_sounds.module_inventory_move,
     stack_size = 50,
     weight = 20 * kg,
-    effect = {},
+    effect = {
+      consumption = 0.5,
+      pollution = 0.75,
+      speed = -0.6,
+      productivity = -0.00,
+      parallel = 1.00
+    },
   },
 })
