@@ -15,7 +15,6 @@ local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.d
 
 local explicitly_allowed_recycling_recipes = parallel_module_mod_data.allowed_recycling_recipes
 local explicitly_disallowed_categories = parallel_module_mod_data.disallowed_crafting_categories
-local extra_count_fraction_recipe_results = parallel_module_mod_data.extra_count_fraction_recipe_results
 local additional_default_categories = parallel_module_mod_data.additional_default_categories
 local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
 local max_total_parallel = parallel_module_mod_data.max_total_parallel / 100.0
@@ -351,25 +350,6 @@ end
 -------------------------------------------------------------------------------
 --- CREATE PARALLEL RECIPE PROTOTYPES
 -------------------------------------------------------------------------------
-
-for _, map in pairs({recipe_to_result_to_alter, extra_count_fraction_recipe_results}) do
-    for recipe_name, result_name in pairs(map) do
-        local recipe = data.raw.recipe[recipe_name]
-        if not recipe or not recipe.results then
-            goto continue
-        end
-
-        for _, result in pairs(recipe.results) do
-            if result.name == result_name then
-                goto continue
-            end
-        end
-
-        -- TODO: Check that this is okay
-        map[recipe_name] = nil -- Expected result not in recipe results
-        ::continue::
-    end
-end
 
 for recipe_name, base_recipe in pairs(data.raw.recipe) do
     if base_recipe.allow_parallel == false then

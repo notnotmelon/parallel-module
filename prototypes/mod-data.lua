@@ -11,7 +11,7 @@ data:extend({
         type = "mod-data",
         data = {
             -- Maximum parallel allowed for any machine; must be an integer
-            max_total_parallel = 64, -- +64% = 64x
+            max_total_parallel = 64000, -- +64000% = 64x
 
 
             -- Which types of crafting machine to consider for parallel modules and relevant recipes
@@ -20,11 +20,6 @@ data:extend({
                 "assembling-machine",
                 "rocket-silo"
             },
-
-            -- Dictionary of [recipe -> output]; must be used for any recipe where the 'extra_count_fraction', instead of the 'probability', will be affected
-            -- COMPAT: this is also a workaround for recipes where the parallel-affected output appears more than once in the products
-            -- WARN: append, don't overwrite, to keep values added by other mods
-            extra_count_fraction_recipe_results = {},
 
             -- Module categories to be considered "default", i.e. that should be treated like vanilla module categories
             -- COMPAT: if this mod is removing module categories from crafting machines and/or recipes, adding them here should restore them 
