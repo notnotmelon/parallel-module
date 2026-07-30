@@ -17,7 +17,6 @@ data:extend({
     stack_size = 50,
     weight = 20 * kg,
     effect = {
-      consumption = 0.3,
       pollution = 0.25,
       speed = -1.0,
       parallel = 1.00
@@ -39,7 +38,6 @@ data:extend({
     stack_size = 50,
     weight = 20 * kg,
     effect = {
-      consumption = 0.4,
       pollution = 0.5,
       speed = -0.8,
       parallel = 1.00
@@ -61,7 +59,6 @@ data:extend({
     stack_size = 50,
     weight = 20 * kg,
     effect = {
-      consumption = 0.5,
       pollution = 0.75,
       speed = -0.6,
       parallel = 1.00

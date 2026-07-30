@@ -79,7 +79,6 @@ data:extend({
     stack_size = 50,
     weight = 25 * kg,
     effect = {
-      consumption = 0.6,
       pollution = 1.0,
       speed = -0.4,
       parallel = 1.00
