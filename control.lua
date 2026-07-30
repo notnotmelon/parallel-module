@@ -148,11 +148,3 @@ remote.add_interface("parallel-module", {
     get_total_machine_parallel = control_helpers.get_total_machine_parallel_optimized,
     is_player_holding_cut_paste_tool = control_helpers.is_player_holding_cut_paste_tool
 })
-if script.active_mods["funit"] then
-    remote.add_interface("__funit__parallel-module", {
-        update_all_entities = control_helpers.update_all_entities,
-        sanitize_bp_entities = control_helpers.sanitize_bp_entities
-    })
-    local mock = require("__funit__.mock")
-    mock.register()
-end
