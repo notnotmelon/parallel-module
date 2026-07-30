@@ -37,14 +37,10 @@ local crafting_category_to_recipes = {}
 local new_crafting_categories = {}
 local altered_to_original_crafting_category = {}
 local original_to_altered_crafting_category = {}
-local new_machines = {}
 
 local base_recipe_to_altered_recipes = data.raw["mod-data"].parallel_module_mod_recipe_table.data
 local altered_recipe_to_base_recipe_parallel_pair = data.raw["mod-data"].parallel_module_mod_recipe_table_inverse.data
-local base_machine_to_altered_machine = data.raw["mod-data"].parallel_module_mod_crafting_machine_table.data
-local altered_machine_to_base_machine = data.raw["mod-data"].parallel_module_mod_crafting_machine_table_inverse.data
 local parallel_value_cache = data.raw["mod-data"].parallel_module_mod_parallel_value_cache.data
-local crafting_machine_to_fixed_base_recipe = data.raw["mod-data"].crafting_machine_to_fixed_base_recipe.data
 
 -- TODO: use space locations
 if mods["virentis"] then
@@ -752,174 +748,11 @@ for _, technology in pairs(data.raw.technology) do
     ::continue::
 end
 
--------------------------------------------------------------------------------
---- CREATE PARALLEL ENTITY PROTOTYPES
--------------------------------------------------------------------------------
-
-local function get_entity_localised_field(prototype, field_type)
-    local field = "localised_"..field_type
-    if prototype[field] then
-        return prototype[field]
-    end
-
-    local item = data.raw.item[prototype.name]
-    if item and item[field] then
-        return item[field]
-    end
-
-    local localised_field = {
-        "?",
-        { "entity-"..field_type.."."..prototype.name }
-    }
-    if item then
-        table.insert(localised_field, { "item-"..field_type.."."..item.name })
-    end
-    return localised_field
-end
-
-local function ensure_entity_icon_or_icons(prototype, base_prototype)
-    if prototype.icon or prototype.icons then
-        return
-    end
-
-    local item = data.raw.item[base_prototype.name]
-    if item then
-        prototype.icon = item.icon
-        prototype.icon_size = item.icon_size
-        prototype.icons = item.icons -- Non-deep copy is probably better
-    end
-end
-
-local function prepare_machine_for_copying(machine_name, machine)
-    if machine.type ~= "furnace"  or not machine.module_slots or not machine.allowed_module_categories or not utils.table_contains_value(machine.allowed_module_categories, "parallel") then
-        return false
-    end
-
-    if not crafting_machine_to_max_module_slots[machine_name] or crafting_machine_to_max_module_slots[machine_name] <= 0 then
-        return false
-    end
-
-    local total_max_module_value = math.min(max_total_parallel, module_value_max_per_slot * crafting_machine_to_max_module_slots[machine_name])
-    if total_max_module_value <= 0 then
-        return false
-    end
-
-    if not machine.fast_replaceable_group then
-        machine.fast_replaceable_group = machine_name
-    end
-    return true
-end
-
-local base_machines_to_copy = {}
-for _, machine_type in pairs(crafting_machine_types) do
-    for machine_name, machine in pairs(data.raw[machine_type]) do
-        if prepare_machine_for_copying(machine_name, machine) then
-            table.insert(base_machines_to_copy, machine_name)
-        end
-    end
-end
-
--- Convert furnaces to crafting machines
-for _, base_machine_name in pairs(base_machines_to_copy) do
-    local base_machine = data.raw.furnace[base_machine_name]
-    if not base_machine then
-        goto continue_machines
-    end
-
-    local categories = {}
-    local recipes = {}
-    for _, category in pairs(base_machine.crafting_categories) do
-        if not crafting_category_to_recipes[category] then
-            goto continue_categories
-        end
-
-        categories[category] = true
-        for recipe_name, _ in pairs(crafting_category_to_recipes[category]) do
-            recipes[recipe_name] = true
-        end
-        ::continue_categories::
-    end
-
-    if table_size(recipes) == 0 then
-        goto continue_machines
-    end
-
-    if table_size(recipes) == 1 then
-        local recipe_name, _ = next(recipes)
-        crafting_machine_to_fixed_base_recipe[base_machine_name] = recipe_name
-    end
-    local new_machine_name = string.format("%s__parallel-module", base_machine_name)
-    local max_inventory_size = math.max(base_machine.result_inventory_size, base_machine.source_inventory_size)
-    base_machine.trash_inventory_size = math.max(base_machine.trash_inventory_size or 1, max_inventory_size)
-    local new_machine = table.deepcopy(base_machine)
-    new_machine.name = new_machine_name
-    new_machine.type = "assembling-machine"
-    new_machine.localised_name = get_entity_localised_field(base_machine, "name")
-    new_machine.localised_description = get_entity_localised_field(base_machine, "description")
-    ensure_entity_icon_or_icons(new_machine, base_machine)
-    if new_machine.icon then
-        new_machine.icons = {
-            {
-                icon = new_machine.icon,
-                icon_size = new_machine.icon_size,
-            },
-            {
-                icon = "__parallel-module__/graphics/icons/parallel-module-3.png",
-                icon_size = 64,
-                scale = 0.3,
-                shift = { -6, 6 },
-                draw_background = true
-            }
-        }
-        new_machine.icon = nil
-    elseif new_machine.icons then
-        table.insert(new_machine.icons, {
-            icon = "__parallel-module__/graphics/icons/parallel-module-3.png",
-            icon_size = 64,
-            scale = 0.3,
-            shift = { -6, 6 },
-            draw_background = true
-        })
-    end
-    if not new_machine.flags then
-        new_machine.flags = {}
-    end
-    if not utils.table_contains_value(new_machine.flags, "not-in-made-in") then
-        table.insert(new_machine.flags, "not-in-made-in")
-    end
-    if not utils.table_contains_value(new_machine.flags, "not-in-bonus-gui") then
-        table.insert(new_machine.flags, "not-in-bonus-gui")
-    end
-    if base_machine.placeable_by then
-        new_machine.placeable_by = base_machine.placeable_by
-    elseif data.raw.item[base_machine.name] then
-        new_machine.placeable_by = {
-            item = base_machine.name,
-            count = 1
-        }
-    end
-    new_machine.deconstruction_alternative = base_machine.deconstruction_alternative or base_machine.name
-    new_machine.factoriopedia_alternative = base_machine.factoriopedia_alternative or base_machine.name
-    new_machine.crafting_categories = {}
-    for category, _ in pairs(categories) do
-        table.insert(new_machine.crafting_categories, category)
-        table.insert(new_machine.crafting_categories, original_to_altered_crafting_category[category])
-    end
-    table.insert(new_machines, new_machine)
-    register_with_bplib(new_machine_name)
-    base_machine_to_altered_machine[base_machine_name] = new_machine_name
-    altered_machine_to_base_machine[new_machine_name] = base_machine_name
-    ::continue_machines::
-end
-
 for _, new_category in pairs(new_crafting_categories) do
     data:extend({ new_category })
 end
 for _, new_recipe in pairs(new_recipes) do
     data:extend({ new_recipe })
-end
-if next(new_machines) then
-    data:extend(new_machines)
 end
 
 parallel_module_mod_data.additional_default_categories = nil
