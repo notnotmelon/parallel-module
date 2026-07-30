@@ -118,6 +118,9 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         local new_recipe_name = string.format("%s__parallel_module_mod__%d", recipe_name, scale_str)
         base_recipe_to_altered_recipes[recipe_name][scale_str] = new_recipe_name
         altered_recipe_to_base_recipe_parallel_pair[new_recipe_name] = { [scale_str] = recipe_name }
+
+        local num_parallels = scale + 1
+
         local new_recipe = table.deepcopy(base_recipe)
         new_recipe.name = new_recipe_name
         new_recipe.localised_name = data_utils.get_recipe_localised_field(base_recipe, "name")
@@ -130,31 +133,32 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         new_recipe.hide_from_player_crafting = true
         new_recipe.allow_as_intermediate = false
         new_recipe.hide_from_bonus_gui = true
+        new_recipe.enabled = true
         new_recipe.allow_decomposition = false
         new_recipe.unlock_results = false
         new_recipe.hide_from_signal_gui = true
         new_recipe.auto_recycle = false
-        new_recipe.request_paste_multiplier = math.ceil((new_recipe.request_paste_multiplier or 1) / scale)
+        new_recipe.request_paste_multiplier = math.ceil((new_recipe.request_paste_multiplier or 1) / num_parallels)
         
         for _, products in pairs{new_recipe.ingredients or {}, new_recipe.results or {}} do
             for _, product in pairs(products) do
                 if product.amount then
-                    product.amount = product.amount * scale
+                    product.amount = product.amount * num_parallels
                 end
                 if product.ignored_by_stats then
-                    product.ignored_by_stats = product.ignored_by_stats * scale
+                    product.ignored_by_stats = product.ignored_by_stats * num_parallels
                 end
                 if product.ignored_by_productivity then
-                    product.ignored_by_productivity = product.ignored_by_productivity * scale
+                    product.ignored_by_productivity = product.ignored_by_productivity * num_parallels
                 end
                 if product.amount_min then
-                    product.amount_min = product.amount_min * scale
+                    product.amount_min = product.amount_min * num_parallels
                 end
                 if product.amount_max then
-                    product.amount_max = product.amount_max * scale
+                    product.amount_max = product.amount_max * num_parallels
                 end
                 if product.extra_count_fraction and product.extra_count_fraction > 0 then
-                    product.extra_count_fraction = product.extra_count_fraction * scale
+                    product.extra_count_fraction = product.extra_count_fraction * num_parallels
                     while product.extra_count_fraction > 1 do
                         product.extra_count_fraction = product.extra_count_fraction - 1
                         if product.amount then
