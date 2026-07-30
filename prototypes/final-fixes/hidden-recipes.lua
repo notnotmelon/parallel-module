@@ -69,6 +69,8 @@ local function can_recipe_be_parallelized(recipe)
     if not recipe.results then return false end
     if table_size(recipe.ingredients) == 0 then return false end
     if table_size(recipe.results) == 0 then return false end
+    if recipe.name:match("%-barrel$") then return false end
+    if recipe.name:match("%-recycling$") then return false end
 
     -- ensure recipes with results with the "non-stackable" flag are not parallelized
     for _, result in pairs(recipe.results) do
