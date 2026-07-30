@@ -78,7 +78,13 @@ data:extend({
     drop_sound = item_sounds.module_inventory_move,
     stack_size = 50,
     weight = 25 * kg,
-    effect = {},
+    effect = {
+      consumption = 0.6,
+      pollution = 1.0,
+      speed = -0.2,
+      productivity = -0.00,
+      parallel = 1.00
+    },
     default_import_location = "frozeta"
   },
   {
