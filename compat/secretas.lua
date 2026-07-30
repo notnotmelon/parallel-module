@@ -81,7 +81,7 @@ data:extend({
     effect = {
       consumption = 0.6,
       pollution = 1.0,
-      speed = -0.2,
+      speed = -0.4,
       productivity = -0.00,
       parallel = 1.00
     },
