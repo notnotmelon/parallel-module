@@ -55,18 +55,12 @@ assert(module_value_increment > 0, "'round_parallel_to_nearest' must be positive
 assert(max_total_parallel > module_value_increment, "'max_total_parallel' must greater than 'module_value_increment'.")
 assert(max_total_parallel % module_value_increment == 0, "'max_total_parallel' must be a whole-number multipler of 'round_parallel_to_nearest'.")
 
-if mods["Flare Stack"] then
-    require("compat.flare-stack-final-fixes")
-end
 -- TODO: use space locations
 if mods["virentis"] then
     require("__parallel-module__.compat.virentis-final-fixes")
 end
 if mods["planetaris-tellus"] then
     require("__parallel-module__.compat.planetaris-tellus-final-fixes")
-end
-if data.raw["space-location"]["secretas"] then
-    require("__parallel-module__.compat.secretas-final-fixes")
 end
 
 -------------------------------------------------------------------------------
@@ -153,14 +147,6 @@ for _, prototype_type in pairs(types_with_allowed_module_categories) do
         ::continue::
     end
 end
-
--- Add parallel
-data:extend({
-  {
-    type = "module-category",
-    name = "parallel"
-  }
-})
 
 local function to_quality_values(quality_to_multiplier, parallel)
   local result = {}

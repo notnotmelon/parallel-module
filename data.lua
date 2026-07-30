@@ -1,3 +1,10 @@
+data:extend({
+  {
+    type = "module-category",
+    name = "parallel"
+  }
+})
+
 require("__parallel-module__.prototypes.mod-data")
 require("__parallel-module__.prototypes.item")
 require("__parallel-module__.prototypes.technology")

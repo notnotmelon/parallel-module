@@ -64,8 +64,8 @@ end
 data:extend({
   {
     type = "module",
-    name = "parallel-module-4-S",
-    icon = "__parallel-module__/graphics/icons/parallel-module-4-S.png",
+    name = "parallel-module-4",
+    icon = "__parallel-module__/graphics/icons/parallel-module-4.png",
     icon_size = 64,
     subgroup = "module",
     category = "parallel",
@@ -82,7 +82,7 @@ data:extend({
     default_import_location = "frozeta"
   },
   {
-    name = "parallel-module-4-S",
+    name = "parallel-module-4",
     type = "recipe",
     categories = categories,
     enabled = false,
@@ -92,7 +92,7 @@ data:extend({
     results = {
       {
         amount = 1,
-        name = "parallel-module-4-S",
+        name = "parallel-module-4",
         type = "item"
       }
     }
@@ -100,13 +100,13 @@ data:extend({
   {
     effects = {
       {
-        recipe = "parallel-module-4-S",
+        recipe = "parallel-module-4",
         type = "unlock-recipe"
       }
     },
-    icon = "__parallel-module__/graphics/technology/parallel-module-4-S.png",
+    icon = "__parallel-module__/graphics/technology/parallel-module-4.png",
     icon_size = 256,
-    name = "parallel-module-4-S",
+    name = "parallel-module-4",
     prerequisites = {
       "parallel-module-3",
       "golden-science-pack"
