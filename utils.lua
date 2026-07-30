@@ -71,14 +71,6 @@ utils.scale_probability_as_odds = function(prob, scale)
     return (scale * prob) / (scale * prob - prob + 1)
 end
 
-utils.is_recipe_in_parallel_mod_data = function(mod_data, recipe_name)
-    return mod_data.explicit_recipe_results[recipe_name]
-            or mod_data.explicit_recipe_result_indices[recipe_name]
-            or mod_data.extra_count_fraction_recipe_results[recipe_name]
-            or mod_data.compatibility_mode_recipe_whitelist[recipe_name]
-            or utils.table_contains_value(mod_data.explicit_recipes_without_results, recipe_name)
-end
-
 utils.is_quality_enabled = function()
     if utils._is_quality_enabled == nil then
         utils._is_quality_enabled = mods["quality"] and data.raw.quality and table_size(data.raw.quality) > 1

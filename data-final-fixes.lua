@@ -15,7 +15,6 @@ local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.d
 
 local explicitly_allowed_recycling_recipes = parallel_module_mod_data.allowed_recycling_recipes
 local explicitly_disallowed_categories = parallel_module_mod_data.disallowed_crafting_categories
-local recipe_to_result_to_alter = parallel_module_mod_data.explicit_recipe_results
 local extra_count_fraction_recipe_results = parallel_module_mod_data.extra_count_fraction_recipe_results
 local additional_default_categories = parallel_module_mod_data.additional_default_categories
 local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
@@ -382,13 +381,6 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
     end
     if table_size(valid_categories) == 0 then
         goto continue
-    end
-
-    local use_extra_count_fraction = false
-    local result_to_alter = recipe_to_result_to_alter[recipe_name]
-    if not result_to_alter then
-        result_to_alter = extra_count_fraction_recipe_results[recipe_name]
-        use_extra_count_fraction = result_to_alter ~= nil
     end
 
     -- Explicitly allow parallel modules in recipe.allowed_module_categories
