@@ -520,16 +520,50 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         new_recipe.hidden = true
         -- new_recipe.hidden_in_factoriopedia = true
         -- new_recipe.hide_from_stats = true
-        -- new_recipe.hide_from_player_crafting = true
+        new_recipe.hide_from_player_crafting = true
+        new_recipe.allow_as_intermediate = false
         new_recipe.hide_from_bonus_gui = true
-        local output = new_recipe.results[result_to_alter_idx]
-        if use_extra_count_fraction then
-            output.extra_count_fraction = utils.scale_probability_as_odds(output.extra_count_fraction, 1.0 + effective_scale)
-        elseif base_recipe.results[result_to_alter_idx].independent_probability and base_recipe.results[result_to_alter_idx].independent_probability < data_utils.maximum_probability_valid_for_parallel then
-            output.independent_probability = utils.scale_probability_as_odds(output.independent_probability, 1.0 + effective_scale)
-        else
-            data_utils.Strategy.simple_zero_sum_scale(new_recipe, result_to_alter_idx, 1.0 + effective_scale)
+        new_recipe.allow_decomposition = false
+        new_recipe.unlock_results = false
+        new_recipe.hide_from_signal_gui = true
+        new_recipe.auto_recycle = false
+        new_recipe.request_paste_multiplier = math.ceil((new_recipe.request_paste_multiplier or 1) / scale)
+        
+        for _, products in pairs{new_recipe.ingredients or {}, new_recipe.results or {}} do
+            for _, product in pairs(products) do
+                if product.amount then
+                    product.amount = product.amount * scale
+                end
+                if product.ignored_by_stats then
+                    product.ignored_by_stats = product.ignored_by_stats * scale
+                end
+                if product.ignored_by_productivity then
+                    product.ignored_by_productivity = product.ignored_by_productivity * scale
+                end
+                if product.amount_min then
+                    product.amount_min = product.amount_min * scale
+                end
+                if product.amount_max then
+                    product.amount_max = product.amount_max * scale
+                end
+                if product.extra_count_fraction and product.extra_count_fraction > 0 then
+                    product.extra_count_fraction = product.extra_count_fraction * scale
+                    while product.extra_count_fraction > 1 do
+                        product.extra_count_fraction = product.extra_count_fraction - 1
+                        if product.amount then
+                            product.amount = product.amount + 1
+                        end
+                        if product.amount_min then
+                            product.amount_min = product.amount_min + 1
+                        end
+                        if product.amount_max then
+                            product.amount_max = product.amount_max + 1
+                        end
+                    end
+                end
+            end
         end
+
         for i, category in pairs(new_recipe.categories) do
             new_recipe.categories[i] = get_or_create_crafting_category_if_valid(category)
         end
