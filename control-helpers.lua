@@ -20,7 +20,6 @@ local parallel_crafting_machine_types = parallel_module_mod_data.crafting_machin
 local max_total_parallel = parallel_module_mod_data.max_total_parallel
 local entity_to_base_parallel = parallel_module_mod_data.parallel_module_mod_entity_to_base_parallel
 local parallel_module_mod_recipe_table_inverse =  prototypes.mod_data.parallel_module_mod_recipe_table_inverse.data
-local is_parallel_disabled = settings.startup["parallel-module-disable-parallel-effect"].value
 
 local parallel_module_mod_recipe_table = {}
 for base_recipe, recipes in pairs(prototypes.mod_data.parallel_module_mod_recipe_table.data) do
@@ -136,7 +135,7 @@ end
 -- Ignores ghost modules
 function Public.get_total_parallel_from_module_inventory(module_inventory)
     local total_parallel = 0.0
-    if is_parallel_disabled or not module_inventory then
+    if not module_inventory then
         return total_parallel
     end
 
