@@ -14,10 +14,11 @@ local explicitly_disallowed_categories = parallel_module_mod_data.disallowed_cra
 local additional_default_categories = parallel_module_mod_data.additional_default_categories
 local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
 
-local crafting_category_to_max_module_slots = {}
-local crafting_category_to_max_parallel_without_modules = {}
+_G.crafting_category_to_max_module_slots = {}
+_G.crafting_category_to_max_parallel_without_modules = {}
 local crafting_category_to_should_enable_parallel_effect = {}
 local original_to_altered_crafting_category = {}
+_G.max_parallel_per_module = 0
 
 local parallel_value_cache = data.raw["mod-data"].parallel_module_mod_parallel_value_cache.data
 local entity_to_base_parallel = data.raw["mod-data"].parallel_module_mod_entity_to_base_parallel.data
@@ -125,8 +126,6 @@ local function module_stregth(module, quality)
     return 100 * module.effect.parallel * (quality.level + 1)
 end
 
-local max_parallel_per_module = 0
-
 do
     local max_quality_multipler = 1
     for _, quality in pairs(data.raw.quality) do
@@ -170,8 +169,6 @@ do
     end
 end
 
-_G.module_value_max_per_slot = max_parallel_per_module / 100.0
-
 for _, machine_type in pairs(crafting_machine_types) do
     for _, machine in pairs(data.raw[machine_type]) do
         if machine.effect_receiver and machine.base_effect and machine.base_effect.parallel and machine.base_effect.parallel > 0 then
@@ -204,10 +201,7 @@ end
 local function calculate_max_module_slots(machines)
     for _, machine in pairs(machines) do
         local machine_module_slots = machine.module_slots or 0
-        if machine.fixed_recipe then
-            goto continue
-        end
-
+        
         local categories = {}
         for _, category in pairs(machine.crafting_categories) do
             if utils.table_contains_value(explicitly_disallowed_categories, category) then

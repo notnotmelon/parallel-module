@@ -2,10 +2,7 @@ local data_utils = require("__parallel-module__.data-utils")
 local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
 
 local explicitly_allowed_recycling_recipes = parallel_module_mod_data.allowed_recycling_recipes
-local max_total_parallel = parallel_module_mod_data.max_total_parallel / 100.0
 
-local crafting_category_to_max_module_slots = {}
-local crafting_category_to_max_parallel_without_modules = {}
 local new_recipes = {}
 local crafting_category_to_recipes = {}
 local new_crafting_categories = {}
@@ -84,6 +81,7 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
 
     -- Explicitly allow parallel modules in recipe.allowed_module_categories
     table.insert(base_recipe.allowed_module_categories, EFFECT_NAME)
+    
     for _, category in pairs(valid_categories) do
         if not crafting_category_to_recipes[category] then
             crafting_category_to_recipes[category] = {}
@@ -93,11 +91,12 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
 
     base_recipe_to_altered_recipes[recipe_name] = { [tostring(0)] = recipe_name }
     altered_recipe_to_base_recipe_parallel_pair[recipe_name] = { [tostring(0)] = recipe_name }
-    local total_max_module_value = math.min(max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
-        module_value_max_per_slot * get_max_module_slots_for_recipe(valid_categories))
+    local total_max_module_value = math.min(parallel_module_mod_data.max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
+        max_parallel_per_module * get_max_module_slots_for_recipe(valid_categories))
+    
     for scale = 1, total_max_module_value do
-        local new_recipe_name = string.format("%s__parallel_module_mod__%d", recipe_name, scale * 100)
-        local scale_str = tostring(scale * 100)
+        local scale_str = tostring(scale)
+        local new_recipe_name = string.format("%s__parallel_module_mod__%d", recipe_name, scale_str)
         base_recipe_to_altered_recipes[recipe_name][scale_str] = new_recipe_name
         altered_recipe_to_base_recipe_parallel_pair[new_recipe_name] = { [scale_str] = recipe_name }
         local new_recipe = table.deepcopy(base_recipe)
