@@ -47,15 +47,6 @@ local function cached_tostring(x)
     return s
 end
 
-local function cached_round(x)
-    local s = storage.cached_round[x]
-    if s == nil then
-        s = utils.round(x, 1)
-        storage.cached_round[x] = s
-    end
-    return s
-end
-
 local Public = {}
 
 function Public.ensure_storage_cache_is_setup()
@@ -65,7 +56,6 @@ function Public.ensure_storage_cache_is_setup()
     storage.players_holding_cut_paste_tool = storage.players_holding_cut_paste_tool or {}
     storage.machine_to_latest_recipe_and_parallel = storage.machine_to_latest_recipe_and_parallel or {}
     if not storage.cached_to_string then storage.cached_to_string = {} end
-    if not storage.cached_round then storage.cached_round = {} end
 end
 
 function Public.update_all_entities()
@@ -155,7 +145,7 @@ function Public.get_total_machine_parallel_optimized(machine, is_ghost)
     end
 
     local parallel = math.min(max_total_parallel, module_parallel + (machine_base_parallel or 0))
-    return parallel, cached_round(parallel), module_parallel > 0
+    return parallel, math.ceil(parallel), module_parallel > 0
 end
 
 function Public.prepare_inventory(inventory)

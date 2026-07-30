@@ -110,7 +110,7 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
 
     base_recipe_to_altered_recipes[recipe_name] = { [tostring(0)] = recipe_name }
     altered_recipe_to_base_recipe_parallel_pair[recipe_name] = { [tostring(0)] = recipe_name }
-    local total_max_module_value = math.min(parallel_module_mod_data.max_total_parallel / 100, get_max_parallel_without_modules_for_recipe(valid_categories) +
+    local total_max_module_value = math.min(parallel_module_mod_data.max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
         max_parallel_per_module * get_max_module_slots_for_recipe(valid_categories))
     
     for scale = 1, total_max_module_value do

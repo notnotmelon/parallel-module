@@ -24,7 +24,7 @@ Currently, the supported entities are:
 
 Parallel Module has several parameters it uses in its calculations. These can be modified by editing the fields of the `parallel_module_mod_data` mod data object, i.e. `data.raw['mod-data'].parallel_module_mod_data.data`:
 
-* `max_total_parallel` (`double`): Default `64000` (`+64000%` = `64x`). Determines the maximum possible parallel value an entity can have (analagous to the 300% productivity maximum for most recipes). Must be an integer.
+* `max_total_parallel` (`double`): Default `64` (`+64000%` = `64x`). Determines the maximum possible parallel value an entity can have (analagous to the 300% productivity maximum for most recipes). Must be an integer.
 
 #### See [`mod-data.lua`](prototypes/mod-data.lua) for more details.
 

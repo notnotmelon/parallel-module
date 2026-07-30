@@ -121,9 +121,9 @@ local function module_stregth(module, quality)
         return 0
     end
     if not quality then
-        return 100 * module.effect.parallel
+        return module.effect.parallel
     end
-    return 100 * module.effect.parallel * (quality.level + 1)
+    return module.effect.parallel * (quality.level + 1)
 end
 
 do
@@ -136,7 +136,7 @@ do
     local function to_quality_values(module)
         local result = {}
         for name, quality in pairs(data.raw.quality) do
-            result[name] = { "mod-tooltip-value.parallel-module-value", tostring(module_stregth(module, quality)) }
+            result[name] = { "mod-tooltip-value.parallel-module-value", tostring(100 * module_stregth(module, quality)) }
         end
         return result
     end

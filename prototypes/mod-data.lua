@@ -11,7 +11,7 @@ data:extend({
         type = "mod-data",
         data = {
             -- Maximum parallel allowed for any machine; must be an integer
-            max_total_parallel = 64000, -- +64000% = 64x
+            max_total_parallel = 64, -- +64000% = 64x
 
 
             -- Which types of crafting machine to consider for parallel modules and relevant recipes
