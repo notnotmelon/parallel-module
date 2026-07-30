@@ -145,7 +145,6 @@ do
         return result
     end
 
-    local parallel_module_coefficients = data.raw["mod-data"].parallel_module_mod_data.data.parallel_formula_coefficients
     for module_name, module in pairs(data.raw.module) do
         if module.category ~= "parallel" then
             goto continue
@@ -155,8 +154,7 @@ do
             data.raw["mod-data"].spoilable_parallel_modules.data[module_name] = true
         end
 
-        local parallel = utils.get_parallel_effect(parallel_module_coefficients, module.tier)
-        parallel_module_mod_data.max_parallel_per_module = math.max(parallel_module_mod_data.max_parallel_per_module, parallel * max_quality_multipler)
+        parallel_module_mod_data.max_parallel_per_module = math.max(parallel_module_mod_data.max_parallel_per_module, module.effect.parallel * max_quality_multipler)
         module.custom_tooltip_fields = {{
             name = { "mod-tooltip-name.parallel-module-parallel" },
             value = { "mod-tooltip-value.parallel-module-value", tostring(module.effect.parallel), },
@@ -167,7 +165,7 @@ do
         if not parallel_value_cache[tier] then
             parallel_value_cache[tier] = {}
             for name, quality in pairs(data.raw.quality) do
-                parallel_value_cache[tier][name] = parallel * quality.level
+                parallel_value_cache[tier][name] = module.effect.parallel * quality.level
             end
         end
         ::continue::
