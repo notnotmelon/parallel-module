@@ -139,51 +139,42 @@ for _, prototype_type in pairs(types_with_allowed_module_categories) do
     end
 end
 
-local function to_quality_values(quality_to_multiplier, parallel)
-  local result = {}
-  for quality, multiplier in pairs(quality_to_multiplier) do
-    result[quality] = { "mod-tooltip-value.parallel-module-value", tostring(parallel * multiplier) }
-  end
-  return result
-end
-
--- Update parallel module prototypes (do it here in case another mod added another tier)
-local quality_to_multiplier = {}
-local max_quality_multipler = 1
-for quality_name, quality in pairs(data.raw.quality) do
-    local quality_multiplier = quality.default_multiplier or (1.0 + 0.3 * quality.level)
-    quality_to_multiplier[quality_name] = quality_multiplier
-    max_quality_multipler = math.max(max_quality_multipler, quality_multiplier)
-end
-
-local parallel_module_coefficients = data.raw["mod-data"].parallel_module_mod_data.data.parallel_formula_coefficients
-for module_name, module in pairs(data.raw.module) do
-    if module.category ~= "parallel" then
-        goto continue
+do
+    local function to_quality_values(module)
+    local result = {}
+    for name, quality in pairs(data.raw.quality) do
+        result[name] = { "mod-tooltip-value.parallel-module-value", tostring(module.effect.parallel * quality.level) }
+    end
+    return result
     end
 
-    if spoilable_items.register_item_spoiled_event(module) then
-        data.raw["mod-data"].spoilable_parallel_modules.data[module_name] = true
-    end
-
-    -- Add consumption effect to parallel modules
-    module.effect = { consumption = 0.125 * 2 ^ module.tier }
-    local parallel = utils.get_parallel_effect(parallel_module_coefficients, module.tier)
-    parallel_module_mod_data.max_parallel_per_module = math.max(parallel_module_mod_data.max_parallel_per_module, parallel * max_quality_multipler)
-    module.custom_tooltip_fields = {{
-        name = { "mod-tooltip-name.parallel-module-parallel" },
-        value = { "mod-tooltip-value.parallel-module-value", tostring(parallel), },
-        quality_values = to_quality_values(quality_to_multiplier, parallel),
-        order = 80
-    }}
-    local tier = tostring(module.tier)
-    if not parallel_value_cache[tier] then
-        parallel_value_cache[tier] = {}
-        for quality, multiplier in pairs(quality_to_multiplier) do
-            parallel_value_cache[tier][quality] = parallel * multiplier
+    local parallel_module_coefficients = data.raw["mod-data"].parallel_module_mod_data.data.parallel_formula_coefficients
+    for module_name, module in pairs(data.raw.module) do
+        if module.category ~= "parallel" then
+            goto continue
         end
+
+        if spoilable_items.register_item_spoiled_event(module) then
+            data.raw["mod-data"].spoilable_parallel_modules.data[module_name] = true
+        end
+
+        local parallel = utils.get_parallel_effect(parallel_module_coefficients, module.tier)
+        parallel_module_mod_data.max_parallel_per_module = math.max(parallel_module_mod_data.max_parallel_per_module, parallel * max_quality_multipler)
+        module.custom_tooltip_fields = {{
+            name = { "mod-tooltip-name.parallel-module-parallel" },
+            value = { "mod-tooltip-value.parallel-module-value", tostring(module.effect.parallel), },
+            quality_values = to_quality_values(module),
+            order = 79
+        }}
+        local tier = tostring(module.tier)
+        if not parallel_value_cache[tier] then
+            parallel_value_cache[tier] = {}
+            for name, quality in pairs(data.raw.quality) do
+                parallel_value_cache[tier][name] = parallel * quality.level
+            end
+        end
+        ::continue::
     end
-    ::continue::
 end
 
 local module_value_max_per_slot = parallel_module_mod_data.max_parallel_per_module / 100.0
