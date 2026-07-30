@@ -127,19 +127,29 @@ for _, prototype_type in pairs(types_with_allowed_module_categories) do
     end
 end
 
+local function module_stregth(module, quality)
+    if not module.effect or not module.effect.parallel then
+        return 0
+    end
+    if not quality then
+        return module.effect.parallel
+    end
+    return module.effect.parallel * (quality.level + 1)
+end
+
 local max_parallel_per_module = 0
 
 do
     local max_quality_multipler = 1
     for _, quality in pairs(data.raw.quality) do
-        max_quality_multipler = math.max(max_quality_multipler, quality.level or 1)
+        max_quality_multipler = math.max(max_quality_multipler, quality.level + 1)
     end
 
 
     local function to_quality_values(module)
         local result = {}
         for name, quality in pairs(data.raw.quality) do
-            result[name] = { "mod-tooltip-value.parallel-module-value", tostring(module.effect.parallel * quality.level) }
+            result[name] = { "mod-tooltip-value.parallel-module-value", tostring(100 * module_stregth(module, quality)) }
         end
         return result
     end
@@ -165,7 +175,7 @@ do
         if not parallel_value_cache[tier] then
             parallel_value_cache[tier] = {}
             for name, quality in pairs(data.raw.quality) do
-                parallel_value_cache[tier][name] = module.effect.parallel * quality.level
+                parallel_value_cache[tier][name] = module_stregth(module, quality)
             end
         end
         ::continue::
