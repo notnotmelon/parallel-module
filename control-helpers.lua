@@ -20,7 +20,6 @@ local parallel_crafting_machine_types = parallel_module_mod_data.crafting_machin
 local max_total_parallel = parallel_module_mod_data.max_total_parallel
 local entity_to_base_parallel = parallel_module_mod_data.parallel_module_mod_entity_to_base_parallel
 local parallel_module_mod_recipe_table_inverse =  prototypes.mod_data.parallel_module_mod_recipe_table_inverse.data
-local parallel_module_mod_crafting_machine_table =  prototypes.mod_data.parallel_module_mod_crafting_machine_table.data
 local is_parallel_disabled = settings.startup["parallel-module-disable-parallel-effect"].value
 
 local parallel_module_mod_recipe_table = {}
@@ -380,7 +379,6 @@ function Public.update_machine_for_parallel(machine, just_built)
             _, base_recipe_name = next(parallel_module_mod_recipe_table_inverse[recipe_name] or {})
         end
         local was_crafting = was_changed and machine.is_crafting()
-        local parallel_machine_name = parallel_module_mod_crafting_machine_table[name]
         local crafting_progress, bonus_progress = Public.return_ingredients_or_get_progress(machine, recipe, quality)
 
         if was_crafting and base_recipe_name and recipe then

@@ -17,8 +17,6 @@ local explicitly_allowed_recycling_recipes = parallel_module_mod_data.allowed_re
 local explicitly_disallowed_categories = parallel_module_mod_data.disallowed_crafting_categories
 local explicitly_disallowed_recipes = parallel_module_mod_data.disallowed_recipes
 local recipe_to_result_to_alter = parallel_module_mod_data.explicit_recipe_results
-local explicit_entities = parallel_module_mod_data.explicit_entities
-local entity_to_base_parallel = parallel_module_mod_data.entity_to_base_parallel
 local extra_count_fraction_recipe_results = parallel_module_mod_data.extra_count_fraction_recipe_results
 local additional_default_categories = parallel_module_mod_data.additional_default_categories
 local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
@@ -36,6 +34,7 @@ local original_to_altered_crafting_category = {}
 local base_recipe_to_altered_recipes = data.raw["mod-data"].parallel_module_mod_recipe_table.data
 local altered_recipe_to_base_recipe_parallel_pair = data.raw["mod-data"].parallel_module_mod_recipe_table_inverse.data
 local parallel_value_cache = data.raw["mod-data"].parallel_module_mod_parallel_value_cache.data
+local entity_to_base_parallel = data.raw["mod-data"].parallel_module_mod_entity_to_base_parallel.data
 
 -- TODO: use space locations
 if mods["virentis"] then
@@ -130,6 +129,8 @@ for _, prototype_type in pairs(types_with_allowed_module_categories) do
     end
 end
 
+local max_parallel_per_module = 0
+
 do
     local max_quality_multipler = 1
     for _, quality in pairs(data.raw.quality) do
@@ -154,7 +155,8 @@ do
             data.raw["mod-data"].spoilable_parallel_modules.data[module_name] = true
         end
 
-        parallel_module_mod_data.max_parallel_per_module = math.max(parallel_module_mod_data.max_parallel_per_module, module.effect.parallel * max_quality_multipler)
+        module.effect.parallel = module.effect.parallel or 0
+        max_parallel_per_module = math.max(max_parallel_per_module, module.effect.parallel * max_quality_multipler)
         module.custom_tooltip_fields = {{
             name = { "mod-tooltip-name.parallel-module-parallel" },
             value = { "mod-tooltip-value.parallel-module-value", tostring(module.effect.parallel), },
@@ -172,7 +174,15 @@ do
     end
 end
 
-local module_value_max_per_slot = parallel_module_mod_data.max_parallel_per_module / 100.0
+local module_value_max_per_slot = max_parallel_per_module / 100.0
+
+for _, machine_type in pairs(crafting_machine_types) do
+    for _, machine in pairs(data.raw[machine_type]) do
+        if machine.effect_receiver and machine.base_effect and machine.base_effect.parallel and machine.base_effect.parallel > 0 then
+            entity_to_base_parallel[machine.name] = machine.base_effect.parallel
+        end
+    end
+end
 
 -------------------------------------------------------------------------------
 --- RECIPE CATEGORIES
@@ -198,8 +208,7 @@ end
 local function calculate_max_module_slots(machines)
     for _, machine in pairs(machines) do
         local machine_module_slots = machine.module_slots or 0
-        local explicitly_allowed = utils.table_contains_value(explicit_entities, machine.name)
-        if not explicitly_allowed and machine.fixed_recipe then
+        if machine.fixed_recipe then
             goto continue
         end
 
@@ -225,7 +234,7 @@ local function calculate_max_module_slots(machines)
             table.insert(categories, category)
             ::continue::
         end
-        if not explicitly_allowed and table_size(categories) == 0 then
+        if table_size(categories) == 0 then
             goto continue
         end
 
@@ -259,6 +268,7 @@ end
 for _, machine_type in pairs(crafting_machine_types) do
     calculate_max_module_slots(data.raw[machine_type])
 end
+
 for machine_name, parallel in pairs(entity_to_base_parallel) do
     if valid_machines_with_base_parallel[machine_name] then
         local item = data.raw.item[machine_name]
@@ -267,7 +277,7 @@ for machine_name, parallel in pairs(entity_to_base_parallel) do
             table.insert(item.custom_tooltip_fields, {
                 name = { "mod-tooltip-name.parallel-module-parallel" },
                 value = { "mod-tooltip-value.parallel-module-value", tostring(parallel) },
-                order = 110,
+                order = 109,
                 show_in_factoriopedia = true,
                 show_in_tooltip = true
             })
@@ -477,29 +487,16 @@ end
 
 local function enable_parallel_module_for_machines(machines)
     for name, machine in pairs(machines) do
-        if machine["module_slots"] == nil then
+        if machine["module_slots"] == nil or machine.type == "furnace" then
             goto continue
         end
 
-        local parallel_added = false
-        if utils.table_contains_value(explicit_entities, machine.name) then
-            table.insert(machine.allowed_module_categories, EFFECT_NAME)
-            register_with_bplib(name)
-            parallel_added = true
-        end
-
-        local should_add_categories = machine.type ~= "furnace"
         local new_categories = {}
         for _, category in pairs(machine.crafting_categories) do
             if crafting_category_to_should_enable_parallel_effect[category] then
-                if not parallel_added then
-                    table.insert(machine.allowed_module_categories, EFFECT_NAME)
-                    register_with_bplib(name)
-                    parallel_added = true
-                end
-                if should_add_categories then
-                    table.insert(new_categories, original_to_altered_crafting_category[category])
-                end
+                table.insert(machine.allowed_module_categories, EFFECT_NAME)
+                register_with_bplib(name)
+                table.insert(new_categories, original_to_altered_crafting_category[category])
             end
         end
         for _, new_category in pairs(new_categories) do

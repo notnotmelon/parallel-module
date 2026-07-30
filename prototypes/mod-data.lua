@@ -66,31 +66,19 @@ data:extend({
     },
     {
     -- Internal use only
-        name = "parallel_module_mod_crafting_machine_table",
-        type = "mod-data",
-        data = {}
-    },
-    {
-    -- Internal use only
-        name = "parallel_module_mod_crafting_machine_table_inverse",
-        type = "mod-data",
-        data = {}
-    },
-    {
-    -- Internal use only
         name = "parallel_module_mod_parallel_value_cache",
         type = "mod-data",
         data = {}
     },
     {
     -- Internal use only
-        name = "crafting_machine_to_fixed_base_recipe",
+        name = "spoilable_parallel_modules",
         type = "mod-data",
         data = {}
     },
     {
     -- Internal use only
-        name = "spoilable_parallel_modules",
+        name = "parallel_module_mod_entity_to_base_parallel",
         type = "mod-data",
         data = {}
     }
