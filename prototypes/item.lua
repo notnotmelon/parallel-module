@@ -23,6 +23,7 @@ data:extend({
       productivity = -0.04,
       parallel = 1.00
     },
+    speed_quality_multiplier = 1.0,
   },
   {
     type = "module",
@@ -45,6 +46,7 @@ data:extend({
       productivity = -0.02,
       parallel = 1.00
     },
+    speed_quality_multiplier = 1.0,
   },
   {
     type = "module",
@@ -67,5 +69,6 @@ data:extend({
       productivity = -0.00,
       parallel = 1.00
     },
+    speed_quality_multiplier = 1.0,
   },
 })
