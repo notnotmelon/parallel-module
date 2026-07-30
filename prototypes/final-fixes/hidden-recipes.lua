@@ -10,7 +10,7 @@ local new_crafting_categories = {}
 local base_recipe_to_altered_recipes = data.raw["mod-data"].parallel_module_mod_recipe_table.data
 local altered_recipe_to_base_recipe_parallel_pair = data.raw["mod-data"].parallel_module_mod_recipe_table_inverse.data
 
-local function is_category_valid(recipe_name, category)
+local function is_category_parallelizable(recipe_name, category)
     if not (category
             and crafting_category_to_max_module_slots[category]
             and crafting_category_to_max_module_slots[category] > 0) then
@@ -62,26 +62,52 @@ end
 --- CREATE PARALLEL RECIPE PROTOTYPES
 -------------------------------------------------------------------------------
 
-for recipe_name, base_recipe in pairs(data.raw.recipe) do
-    if base_recipe.allow_parallel == false then goto continue end
-    if base_recipe.results == nil then goto continue end
+local function can_recipe_be_parallelized(recipe)
+    if recipe.allow_parallel == false then return false end
+    if recipe.results == nil then return false end
 
-    local valid_categories = {}
-    if not base_recipe.categories then
-        base_recipe.categories = { "crafting" }
+    -- ensure recipes with results with the "non-stackable" flag are not parallelized
+    for _, result in pairs(recipe.results) do
+        if result.type == "item" then
+            for prototype in pairs(defines.prototypes.item) do
+                if result.name and data.raw[prototype] and data.raw[prototype][result.name] then
+                    if data.raw[prototype][result.name].stack_size == 1 then
+                        return false
+                    end
+                    local flags = data.raw[prototype][result.name].flags
+                    for _, flag in pairs(flags or {}) do
+                        if flag == "not-stackable" then
+                            return false
+                        end
+                    end
+                end
+            end
+        end
     end
-    for _, category in pairs(base_recipe.categories) do
-        if is_category_valid(recipe_name, category) then
+    
+    local valid_categories = {}
+    recipe.categories = recipe.categories or {"crafting"}
+    for _, category in pairs(recipe.categories) do
+        if is_category_parallelizable(recipe.name, category) then
             table.insert(valid_categories, category)
         end
     end
+
     if table_size(valid_categories) == 0 then
-        goto continue
+        return false
     end
+
+    return true, valid_categories
+end
+
+for recipe_name, base_recipe in pairs(data.raw.recipe) do
+    local can_be, valid_categories = can_recipe_be_parallelized(base_recipe)
+    if not can_be then goto continue end
 
     -- Explicitly allow parallel modules in recipe.allowed_module_categories
     table.insert(base_recipe.allowed_module_categories, EFFECT_NAME)
     
+    valid_categories = valid_categories or {}
     for _, category in pairs(valid_categories) do
         if not crafting_category_to_recipes[category] then
             crafting_category_to_recipes[category] = {}
