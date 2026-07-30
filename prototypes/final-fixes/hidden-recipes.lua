@@ -63,6 +63,7 @@ end
 -------------------------------------------------------------------------------
 
 local function can_recipe_be_parallelized(recipe)
+    if recipe.hidden then return false end
     if recipe.allow_speed == false then return false end
     if recipe.allow_parallel == false then return false end
     if not recipe.ingredients then return false end
