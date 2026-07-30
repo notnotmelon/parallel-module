@@ -5,20 +5,10 @@ utils = require("__parallel-module__.utils")
 
 TOOLTIP_ID = 2453693297
 
-local inventories_to_copy = {
-    -- TODO: Add check and include these? Or check if this ever returns wrong inventory for crafting machines?
-    -- defines.inventory.fuel,
-    -- defines.inventory.burnt_result,
-    defines.inventory.crafter_input,
-    defines.inventory.crafter_output,
-    defines.inventory.crafter_modules,
-    defines.inventory.crafter_trash,
-}
-
 local parallel_module_mod_data = prototypes.mod_data.parallel_module_mod_data.data
 local parallel_crafting_machine_types = parallel_module_mod_data.crafting_machine_types
 local max_total_parallel = parallel_module_mod_data.max_total_parallel
-local entity_to_base_parallel = parallel_module_mod_data.parallel_module_mod_entity_to_base_parallel
+local entity_to_base_parallel = prototypes.mod_data.parallel_module_mod_entity_to_base_parallel.data
 local parallel_module_mod_recipe_table_inverse =  prototypes.mod_data.parallel_module_mod_recipe_table_inverse.data
 
 local parallel_module_mod_recipe_table = {}
