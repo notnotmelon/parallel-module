@@ -131,12 +131,18 @@ for _, prototype_type in pairs(types_with_allowed_module_categories) do
 end
 
 do
-    local function to_quality_values(module)
-    local result = {}
-    for name, quality in pairs(data.raw.quality) do
-        result[name] = { "mod-tooltip-value.parallel-module-value", tostring(module.effect.parallel * quality.level) }
+    local max_quality_multipler = 1
+    for _, quality in pairs(data.raw.quality) do
+        max_quality_multipler = math.max(max_quality_multipler, quality.level or 1)
     end
-    return result
+
+
+    local function to_quality_values(module)
+        local result = {}
+        for name, quality in pairs(data.raw.quality) do
+            result[name] = { "mod-tooltip-value.parallel-module-value", tostring(module.effect.parallel * quality.level) }
+        end
+        return result
     end
 
     local parallel_module_coefficients = data.raw["mod-data"].parallel_module_mod_data.data.parallel_formula_coefficients
@@ -330,120 +336,6 @@ end
 --- CREATE PARALLEL RECIPE PROTOTYPES
 -------------------------------------------------------------------------------
 
-local function get_prototype_helper(base_type, name)
-    for type_name in pairs(defines.prototypes[base_type]) do
-        local prototypes = data.raw[type_name]
-        if prototypes and prototypes[name] then
-            return prototypes[name]
-        end
-    end
-end
-
-local function get_recipe_localised_field(prototype, field_type)
-    local field = "localised_"..field_type
-    if prototype[field] then
-        return prototype[field]
-    end
-
-    local fluid = data.raw.fluid[prototype.name]
-    if fluid and fluid[field] then
-        return fluid[field]
-    end
-    
-    local entity = get_prototype_helper("entity", prototype.name)
-    local equipment = get_prototype_helper("equipment", prototype.name)
-    local tile = data.raw.tile[prototype.name]
-    local item = data.raw.item[prototype.name]
-    if item then
-        if item[field] then
-            return item[field]
-        end
-
-        entity = entity or (item.place_result and get_prototype_helper("entity", item.place_result))
-        equipment = equipment or (item.place_as_equipment_result and get_prototype_helper("equipment", item.place_as_equipment_result))
-        tile = tile or (item.place_as_tile_result and data.raw.tile[item.place_as_tile_result])
-    end
-
-    if entity and entity[field] then
-        return entity[field]
-    end
-    if equipment and equipment[field] then
-        return equipment[field]
-    end
-    if tile and tile[field] then
-        return tile[field]
-    end
-
-    local localised_field = {
-        "?",
-        { "recipe-"..field_type.."."..prototype.name }
-    }
-    if fluid then
-        table.insert(localised_field, { "fluid-"..field_type.."."..fluid.name })
-    end
-    if item then
-        table.insert(localised_field, { "item-"..field_type.."."..item.name })
-    end
-    if entity then
-        table.insert(localised_field, { "entity-"..field_type.."."..entity.name })
-    end
-    if equipment then
-        table.insert(localised_field, { "equipment-"..field_type.."."..equipment.name })
-    end
-    if tile then
-        table.insert(localised_field, { "tile-"..field_type.."."..tile.name })
-    end
-    return localised_field
-end
-
-local function set_recipe_icon_or_icons(prototype, prototype_with_icon)
-    prototype.icon = prototype_with_icon.icon
-    prototype.icon_size = prototype_with_icon.icon_size
-    prototype.icons = prototype_with_icon.icons -- Non-deep copy is probably better
-end
-
-local function ensure_recipe_icon_or_icons(prototype, base_prototype)
-    if prototype.icon or prototype.icons then
-        return
-    end
-
-    local fluid = data.raw.fluid[base_prototype.name]
-    if fluid and (fluid.icon or fluid.icons) then
-        set_recipe_icon_or_icons(prototype, fluid)
-        return
-    end
-
-    local entity = get_prototype_helper("entity", base_prototype.name)
-    local equipment = get_prototype_helper("equipment", base_prototype.name)
-    local tile = data.raw.tile[base_prototype.name]
-    local item = data.raw.item[base_prototype.name]
-    if item then
-        if item and (item.icon or item.icons) then
-            set_recipe_icon_or_icons(prototype, item)
-            return
-        end
-
-        entity = entity or (item.place_result and get_prototype_helper("entity", item.place_result))
-        equipment = equipment or (item.place_as_equipment_result and get_prototype_helper("equipment", item.place_as_equipment_result))
-        tile = tile or (item.place_as_tile_result and data.raw.tile[item.place_as_tile_result])
-    end
-
-    if entity and (entity.icon or entity.icons) then
-        set_recipe_icon_or_icons(prototype, entity)
-        return
-    end
-
-    if equipment and (equipment.icon or equipment.icons) then
-        set_recipe_icon_or_icons(prototype, equipment)
-        return
-    end
-
-    if tile and (tile.icon or tile.icons) then
-        set_recipe_icon_or_icons(prototype, tile)
-        return
-    end
-end
-
 for _, map in pairs({recipe_to_result_to_alter, extra_count_fraction_recipe_results}) do
     for recipe_name, result_name in pairs(map) do
         local recipe = data.raw.recipe[recipe_name]
@@ -513,9 +405,9 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         altered_recipe_to_base_recipe_parallel_pair[new_recipe_name] = { [scale_str] = recipe_name }
         local new_recipe = table.deepcopy(base_recipe)
         new_recipe.name = new_recipe_name
-        new_recipe.localised_name = get_recipe_localised_field(base_recipe, "name")
-        new_recipe.localised_description = get_recipe_localised_field(base_recipe, "description")
-        ensure_recipe_icon_or_icons(new_recipe, base_recipe)
+        new_recipe.localised_name = data_utils.get_recipe_localised_field(base_recipe, "name")
+        new_recipe.localised_description = data_utils.get_recipe_localised_field(base_recipe, "description")
+        data_utils.ensure_recipe_icon_or_icons(new_recipe, base_recipe)
         new_recipe.factoriopedia_alternative = base_recipe.factoriopedia_alternative or recipe_name
         new_recipe.hidden = true
         -- new_recipe.hidden_in_factoriopedia = true
