@@ -81,7 +81,7 @@ for i, suffix in pairs{"", "-2", "-3"} do
   new_recipe.results = {
     {
       amount = 1,
-      name = "parallel-module-3",
+      name = "parallel-module" .. suffix,
       type = "item"
     }
   }
