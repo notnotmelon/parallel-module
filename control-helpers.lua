@@ -23,7 +23,7 @@ end
 local is_parallel_module = {}
 local module_name_to_quality_to_parallel = {}
 for module_name, module in pairs(prototypes.get_item_filtered{{filter = "type", type = "module"}}) do
-    if module.category == "parallel" then 
+    if module.category == "parallel" then
         is_parallel_module[module_name] = true
         module_name_to_quality_to_parallel[module_name] = prototypes.mod_data.parallel_module_mod_parallel_value_cache.data[tostring(module.tier)]
     end
@@ -355,6 +355,14 @@ function Public.update_machine_for_parallel(machine, just_built)
         local was_crafting = was_changed and machine.is_crafting()
         local crafting_progress, bonus_progress = Public.return_ingredients_or_get_progress(machine, recipe, quality)
 
+        Public.set_parallel_recipe(
+            machine,
+            is_ghost,
+            Public.get_parallel_recipe(base_recipe_name, rounded_machine_parallel),
+            quality,
+            (recipe and recipe.name) or nil
+        )
+
         if was_crafting and base_recipe_name and recipe then
             if crafting_progress > 0 then
                 machine.crafting_progress = crafting_progress
@@ -572,6 +580,58 @@ function Public.handle_player_left(player_index, player_name)
 
     storage.player_to_machine_with_open_gui[player_index] = nil
     storage.player_to_selected_machine[player_index] = nil
+end
+
+local inventories_to_copy = {
+    -- TODO: Add check and include these? Or check if this ever returns wrong inventory for crafting machines?
+    -- defines.inventory.fuel,
+    -- defines.inventory.burnt_result,
+    defines.inventory.crafter_input,
+    defines.inventory.crafter_output,
+    defines.inventory.crafter_modules,
+    defines.inventory.crafter_trash,
+}
+
+function Public.set_parallel_recipe(entity, is_ghost, recipe, quality, current_recipe)
+    if recipe and recipe == current_recipe then
+        return
+    end
+
+    local players_with_machine_open = {}
+    local players_with_machine_selected = {}
+    for player_index, open_machine in pairs(storage.player_to_machine_with_open_gui) do
+        if open_machine == entity then table.insert(players_with_machine_open, player_index) end
+    end
+    for player_index, selected_machine in pairs(storage.player_to_selected_machine) do
+        if selected_machine == entity then table.insert(players_with_machine_selected, player_index) end
+    end
+
+    -- TODO: what about to_be_upgraded()?
+    local inventory_to_filled = nil
+    local fluids_by_index = nil
+    if not is_ghost then
+        -- TODO: check interactions with all/any other code that touches inventories
+        inventory_to_filled = {}
+        for _, inventory in pairs(inventories_to_copy) do
+            inventory_to_filled[inventory] = Public.prepare_inventory(entity.get_inventory(inventory))
+        end
+    end
+
+    if recipe and entity.type == "assembling-machine" then
+        entity.set_recipe(recipe, quality)
+    end
+    if inventory_to_filled then
+        for inventory, filled in pairs(inventory_to_filled) do
+            Public.update_inventory(entity, entity.get_inventory(inventory), filled)
+        end
+        if fluids_by_index then
+            for i = 1, entity.fluids_count do
+                if fluids_by_index[i] and fluids_by_index[i].amount > 0 then
+                    entity.set_fluid(i, fluids_by_index[i])
+                end
+            end
+        end
+    end
 end
 
 return Public
