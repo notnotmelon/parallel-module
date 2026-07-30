@@ -148,114 +148,6 @@ function Public.get_total_machine_parallel_optimized(machine, is_ghost)
     return parallel, math.ceil(parallel), module_parallel > 0
 end
 
-function Public.prepare_inventory(inventory)
-    if not inventory or inventory.is_empty() then
-        return nil
-    end
-
-    local filled = {}
-    for i = 1, #inventory do
-        local item_stack = inventory[i]
-        filled[i] = item_stack and item_stack.count and item_stack.count > 0 and {
-            name = item_stack.name,
-            count = item_stack.count or 1,
-            quality = item_stack.quality and item_stack.quality.name or nil,
-            -- health = item_stack.health,
-            -- durability = item_stack.durability,
-            -- ammo = item_stack.ammo,
-            -- tags = item_stack.tags,
-            spoil_percent = item_stack.spoil_percent
-        } or {}
-    end
-    return filled
-end
-
-function Public.spill_remaining_inventory(entity, filled)
-    for i = 1, #filled do
-        if filled[i] and table_size(filled[i]) > 0 and filled[i].count > 0 then
-            entity.surface.spill_item_stack{
-                position = entity.position,
-                stack = filled[i],
-                allow_belts = false
-            }
-        end
-    end
-end
-
-function Public.update_inventory(entity, inventory, filled)
-    if not filled then
-        return
-    end
-
-    if not inventory then
-        if entity.get_inventory(defines.inventory.crafter_trash) then
-            for i = 1, #filled do
-                filled[i].count = filled[i].count - entity.get_inventory(defines.inventory.crafter_trash).insert(filled[i])
-            end
-        end
-        Public.spill_remaining_inventory(entity, filled)
-        return
-    end
-
-    if #inventory == #filled then
-        for i = 1, #filled do
-            if filled[i] and table_size(filled[i]) > 0 then
-                inventory[i].set_stack(filled[i])
-                filled[i].count = filled[i].count - inventory[i].count
-                if filled[i].count > 0 then
-                    filled[i].count = filled[i].count - entity.get_inventory(defines.inventory.crafter_trash).insert(filled[i])
-                end
-            end
-        end
-    else
-        for i = 1, #filled do
-            if filled[i] and next(filled[i]) then
-                filled[i].count = filled[i].count - inventory.insert(filled[i])
-                if filled[i].count > 0 then
-                    filled[i].count = filled[i].count - entity.get_inventory(defines.inventory.crafter_trash).insert(filled[i])
-                end
-            end
-        end
-    end
-    Public.spill_remaining_inventory(entity, filled)
-end
-
-function Public.return_ingredients_or_get_progress(machine, recipe_prototype, quality)
-    if not recipe_prototype or not machine.is_crafting() then
-        return 0, 0
-    end
-
-    -- assembling machine => furnace
-    local inventory = machine.get_inventory(defines.inventory.crafter_input)
-    if not inventory or #inventory == 0 then
-        return 0, 0
-    end
-
-    for _, ingredient in pairs(recipe_prototype.ingredients) do
-        if ingredient.type == "fluid" then
-            -- TODO: might break when using fluid energy source?
-            machine.insert_fluid({
-                name = ingredient.name,
-                amount = ingredient.amount,
-                temperature = ingredient.temperature or ingredient.minimum_temperature
-            })
-        else
-            local stack = inventory.find_item_stack({
-                name = ingredient.name,
-                quality = quality and quality.name or "normal"
-            })
-            local spoil_percent = stack and stack.spoil_percent or nil
-            inventory.insert({
-                name = ingredient.name,
-                count = ingredient.amount or 1,
-                quality = quality and quality.name or "normal",
-                spoil_percent = spoil_percent
-            })
-        end
-    end
-    return 0, 0
-end
-
 function Public.get_latest_recipe_and_parallel(unit_number)
     local latest = storage.machine_to_latest_recipe_and_parallel[unit_number]
     if not latest then
@@ -342,9 +234,7 @@ function Public.update_machine_for_parallel(machine, just_built)
         if recipe_name then
             _, base_recipe_name = next(parallel_module_mod_recipe_table_inverse[recipe_name] or {})
         end
-        local was_crafting = was_changed and machine.is_crafting()
-        local crafting_progress, bonus_progress = Public.return_ingredients_or_get_progress(machine, recipe, quality)
-
+        
         Public.set_parallel_recipe(
             machine,
             is_ghost,
@@ -352,15 +242,6 @@ function Public.update_machine_for_parallel(machine, just_built)
             quality,
             (recipe and recipe.name) or nil
         )
-
-        if was_crafting and base_recipe_name and recipe then
-            if crafting_progress > 0 then
-                machine.crafting_progress = crafting_progress
-            end
-            if bonus_progress > 0 then
-                machine.bonus_progress = bonus_progress
-            end
-        end
         Public.update_machine_info(machine, recipe_name, current_machine_parallel, is_set_recipe)
     elseif current_machine_parallel > 0 then
         Public.update_machine_info(machine, recipe_name, current_machine_parallel, is_set_recipe)
@@ -587,40 +468,18 @@ function Public.set_parallel_recipe(entity, is_ghost, recipe, quality, current_r
         return
     end
 
-    local players_with_machine_open = {}
-    local players_with_machine_selected = {}
-    for player_index, open_machine in pairs(storage.player_to_machine_with_open_gui) do
-        if open_machine == entity then table.insert(players_with_machine_open, player_index) end
-    end
-    for player_index, selected_machine in pairs(storage.player_to_selected_machine) do
-        if selected_machine == entity then table.insert(players_with_machine_selected, player_index) end
-    end
 
-    -- TODO: what about to_be_upgraded()?
-    local inventory_to_filled = nil
-    local fluids_by_index = nil
-    if not is_ghost then
-        -- TODO: check interactions with all/any other code that touches inventories
-        inventory_to_filled = {}
-        for _, inventory in pairs(inventories_to_copy) do
-            inventory_to_filled[inventory] = Public.prepare_inventory(entity.get_inventory(inventory))
-        end
-    end
-
-    if recipe and entity.type == "assembling-machine" then
-        entity.set_recipe(recipe, quality)
-    end
-    if inventory_to_filled then
-        for inventory, filled in pairs(inventory_to_filled) do
-            Public.update_inventory(entity, entity.get_inventory(inventory), filled)
-        end
-        if fluids_by_index then
-            for i = 1, entity.fluids_count do
-                if fluids_by_index[i] and fluids_by_index[i].amount > 0 then
-                    entity.set_fluid(i, fluids_by_index[i])
-                end
-            end
-        end
+    local spillage = entity.set_recipe(recipe, quality)
+    for _, spillage in pairs(spillage) do
+        entity.surface.spill_item_stack {
+            position = entity.position,
+            stack = spillage,
+            enable_looted = true,
+            force = entity.force_index,
+            allow_belts = false,
+            use_start_position_on_failure = true,
+            drop_full_stack = true
+        }
     end
 end
 
