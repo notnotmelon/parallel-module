@@ -1,12 +1,8 @@
--------------------------------------------------------------------------------
---- SETUP
--------------------------------------------------------------------------------
+_G.EFFECT_NAME = "parallel"
 
 local utils = require("__parallel-module__.utils")
-local data_utils = require("__parallel-module__.data-utils")
 local spoilable_items = require("__item-request-proxy-events__.spoilable-items")
 
-local EFFECT_NAME = "parallel"
 local types_with_allowed_module_categories = { "assembling-machine", "furnace", "beacon", "lab", "mining-drill", "recipe" }
 if data.raw["agricultural-tower"] then
     table.insert(types_with_allowed_module_categories, "agricultural-tower")
@@ -17,19 +13,12 @@ local explicitly_allowed_recycling_recipes = parallel_module_mod_data.allowed_re
 local explicitly_disallowed_categories = parallel_module_mod_data.disallowed_crafting_categories
 local additional_default_categories = parallel_module_mod_data.additional_default_categories
 local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
-local max_total_parallel = parallel_module_mod_data.max_total_parallel / 100.0
 
 local crafting_category_to_max_module_slots = {}
 local crafting_category_to_max_parallel_without_modules = {}
 local crafting_category_to_should_enable_parallel_effect = {}
-local crafting_categories_in_furnaces = {}
-local new_recipes = {}
-local crafting_category_to_recipes = {}
-local new_crafting_categories = {}
 local original_to_altered_crafting_category = {}
 
-local base_recipe_to_altered_recipes = data.raw["mod-data"].parallel_module_mod_recipe_table.data
-local altered_recipe_to_base_recipe_parallel_pair = data.raw["mod-data"].parallel_module_mod_recipe_table_inverse.data
 local parallel_value_cache = data.raw["mod-data"].parallel_module_mod_parallel_value_cache.data
 local entity_to_base_parallel = data.raw["mod-data"].parallel_module_mod_entity_to_base_parallel.data
 
@@ -181,7 +170,7 @@ do
     end
 end
 
-local module_value_max_per_slot = max_parallel_per_module / 100.0
+_G.module_value_max_per_slot = max_parallel_per_module / 100.0
 
 for _, machine_type in pairs(crafting_machine_types) do
     for _, machine in pairs(data.raw[machine_type]) do
@@ -263,9 +252,6 @@ local function calculate_max_module_slots(machines)
             end
             crafting_category_to_max_module_slots[category] = math.max(crafting_category_to_max_module_slots[category], machine_module_slots)
             crafting_category_to_max_parallel_without_modules[category] = math.max(crafting_category_to_max_parallel_without_modules[category], base_machine_parallel)
-            if machine.type == "furnace" then
-                crafting_categories_in_furnaces[category] = true
-            end
             ::continue::
         end
         ::continue::
@@ -294,164 +280,8 @@ for machine_name, parallel in pairs(entity_to_base_parallel) do
     end
 end
 
-local function is_category_valid(recipe_name, category)
-    if not (category
-            and crafting_category_to_max_module_slots[category]
-            and crafting_category_to_max_module_slots[category] > 0) then
-        return false
-    end
 
-    if category:find("recycling", 1, true) and not utils.table_contains_value(explicitly_allowed_recycling_recipes, recipe_name) then
-        return false
-    end
-    if category:find("voidcraft", 1, true) and not utils.table_contains_value(explicitly_allowed_recycling_recipes, recipe_name) then
-        return false
-    end
-    return true
-end
-
-local function get_max_module_slots_for_recipe(crafting_categories)
-    local slots = 0
-    for _, category in pairs(crafting_categories) do
-        slots = math.max(slots, crafting_category_to_max_module_slots[category])
-    end
-    return slots
-end
-
-local function get_max_parallel_without_modules_for_recipe(crafting_categories)
-    local parallel = 0
-    for _, category in pairs(crafting_categories) do
-        parallel = math.max(parallel, crafting_category_to_max_parallel_without_modules[category])
-    end
-    return parallel
-end
-
--------------------------------------------------------------------------------
---- CREATE PARALLEL RECIPE_CATEGORY PROTOTYPES
--------------------------------------------------------------------------------
-
-local function get_or_create_crafting_category_if_valid(category)
-    if not category or not crafting_categories_in_furnaces[category] then
-        return category
-    end
-
-    local new_category = string.format("%s__parallel_module_mod", category)
-    if not new_crafting_categories[new_category] then
-        original_to_altered_crafting_category[category] = new_category
-        new_crafting_categories[new_category] = {
-            type = "recipe-category",
-            name = new_category,
-            hidden = true
-        }
-    end
-    return new_category
-end
-
--------------------------------------------------------------------------------
---- CREATE PARALLEL RECIPE PROTOTYPES
--------------------------------------------------------------------------------
-
-for recipe_name, base_recipe in pairs(data.raw.recipe) do
-    if base_recipe.allow_parallel == false then
-        goto continue
-    end
-    local results = base_recipe.results
-    if results == nil then
-        goto continue
-    end
-
-    local valid_categories = {}
-    if not base_recipe.categories then
-        base_recipe.categories = { "crafting" }
-    end
-    for _, category in pairs(base_recipe.categories) do
-        if is_category_valid(recipe_name, category) then
-            table.insert(valid_categories, category)
-        end
-    end
-    if table_size(valid_categories) == 0 then
-        goto continue
-    end
-
-    -- Explicitly allow parallel modules in recipe.allowed_module_categories
-    table.insert(base_recipe.allowed_module_categories, EFFECT_NAME)
-    for _, category in pairs(valid_categories) do
-        if not crafting_category_to_recipes[category] then
-            crafting_category_to_recipes[category] = {}
-        end
-        crafting_category_to_recipes[category][recipe_name] = true
-        crafting_category_to_should_enable_parallel_effect[category] = true
-    end
-
-    base_recipe_to_altered_recipes[recipe_name] = { [tostring(0)] = recipe_name }
-    altered_recipe_to_base_recipe_parallel_pair[recipe_name] = { [tostring(0)] = recipe_name }
-    local total_max_module_value = math.min(max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
-        module_value_max_per_slot * get_max_module_slots_for_recipe(valid_categories))
-    for scale = 1, total_max_module_value do
-        local new_recipe_name = string.format("%s__parallel_module_mod__%d", recipe_name, scale * 100)
-        local scale_str = tostring(scale * 100)
-        base_recipe_to_altered_recipes[recipe_name][scale_str] = new_recipe_name
-        altered_recipe_to_base_recipe_parallel_pair[new_recipe_name] = { [scale_str] = recipe_name }
-        local new_recipe = table.deepcopy(base_recipe)
-        new_recipe.name = new_recipe_name
-        new_recipe.localised_name = data_utils.get_recipe_localised_field(base_recipe, "name")
-        new_recipe.localised_description = data_utils.get_recipe_localised_field(base_recipe, "description")
-        data_utils.ensure_recipe_icon_or_icons(new_recipe, base_recipe)
-        new_recipe.factoriopedia_alternative = base_recipe.factoriopedia_alternative or recipe_name
-        new_recipe.hidden = true
-        -- new_recipe.hidden_in_factoriopedia = true
-        -- new_recipe.hide_from_stats = true
-        new_recipe.hide_from_player_crafting = true
-        new_recipe.allow_as_intermediate = false
-        new_recipe.hide_from_bonus_gui = true
-        new_recipe.allow_decomposition = false
-        new_recipe.unlock_results = false
-        new_recipe.hide_from_signal_gui = true
-        new_recipe.auto_recycle = false
-        new_recipe.request_paste_multiplier = math.ceil((new_recipe.request_paste_multiplier or 1) / scale)
-        
-        for _, products in pairs{new_recipe.ingredients or {}, new_recipe.results or {}} do
-            for _, product in pairs(products) do
-                if product.amount then
-                    product.amount = product.amount * scale
-                end
-                if product.ignored_by_stats then
-                    product.ignored_by_stats = product.ignored_by_stats * scale
-                end
-                if product.ignored_by_productivity then
-                    product.ignored_by_productivity = product.ignored_by_productivity * scale
-                end
-                if product.amount_min then
-                    product.amount_min = product.amount_min * scale
-                end
-                if product.amount_max then
-                    product.amount_max = product.amount_max * scale
-                end
-                if product.extra_count_fraction and product.extra_count_fraction > 0 then
-                    product.extra_count_fraction = product.extra_count_fraction * scale
-                    while product.extra_count_fraction > 1 do
-                        product.extra_count_fraction = product.extra_count_fraction - 1
-                        if product.amount then
-                            product.amount = product.amount + 1
-                        end
-                        if product.amount_min then
-                            product.amount_min = product.amount_min + 1
-                        end
-                        if product.amount_max then
-                            product.amount_max = product.amount_max + 1
-                        end
-                    end
-                end
-            end
-        end
-
-        for i, category in pairs(new_recipe.categories) do
-            new_recipe.categories[i] = get_or_create_crafting_category_if_valid(category)
-        end
-        new_recipes[new_recipe_name] = new_recipe
-    end
-    ::continue::
-end
+require "prototypes.final-fixes.recipe-productivity-technologies"
 
 -------------------------------------------------------------------------------
 --- ENTITIES
@@ -491,69 +321,6 @@ for _, machine_type in pairs(crafting_machine_types) do
     enable_parallel_module_for_machines(data.raw[machine_type])
 end
 
--------------------------------------------------------------------------------
---- TECHNOLOGIES
--------------------------------------------------------------------------------
-
-for _, technology in pairs(data.raw.technology) do
-    if not technology.effects then
-        goto continue
-    end
-
-    local base_unlock_recipes = {}
-    local base_productivity_recipes = {}
-    for _, effect in pairs(technology.effects) do
-        if effect.type == "unlock-recipe" then
-            table.insert(base_unlock_recipes, effect.recipe)
-        elseif effect.type == "change-recipe-productivity" then
-            base_productivity_recipes[effect.recipe] = effect.change
-        end
-    end
-
-    for _, base_recipe in pairs(base_unlock_recipes) do
-        local altered_recipes = base_recipe_to_altered_recipes[base_recipe]
-        if altered_recipes == nil then
-            goto continue
-        end
-
-        for _, altered_recipe in pairs(altered_recipes) do
-            if altered_recipe ~= base_recipe then
-                table.insert(technology.effects, {
-                    type   = "unlock-recipe",
-                    recipe = altered_recipe,
-                    hidden = true
-                })
-            end
-        end
-        ::continue::
-    end
-
-    for base_recipe, change in pairs(base_productivity_recipes) do
-        local altered_recipes = base_recipe_to_altered_recipes[base_recipe]
-        if altered_recipes == nil then
-            goto continue
-        end
-
-        for _, altered_recipe in pairs(altered_recipes) do
-            if altered_recipe ~= base_recipe then
-                table.insert(technology.effects, {
-                    type   = "change-recipe-productivity",
-                    recipe = altered_recipe,
-                    change = change,
-                    hidden = true
-                })
-            end
-        end
-        ::continue::
-    end
-    ::continue::
-end
-
-for _, new_category in pairs(new_crafting_categories) do
-    data:extend({ new_category })
-end
-for _, new_recipe in pairs(new_recipes) do
-    data:extend({ new_recipe })
-end
+require "prototypes.final-fixes.hidden-recipes"
 
 parallel_module_mod_data.additional_default_categories = nil
