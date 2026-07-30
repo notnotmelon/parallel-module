@@ -65,7 +65,10 @@ end
 local function can_recipe_be_parallelized(recipe)
     if recipe.allow_speed == false then return false end
     if recipe.allow_parallel == false then return false end
-    if recipe.results == nil then return false end
+    if not recipe.ingredients then return false end
+    if not recipe.results then return false end
+    if table_size(recipe.ingredients) == 0 then return false end
+    if table_size(recipe.results) == 0 then return false end
 
     -- ensure recipes with results with the "non-stackable" flag are not parallelized
     for _, result in pairs(recipe.results) do
