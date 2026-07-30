@@ -17,7 +17,6 @@ local inventories_to_copy = {
 
 local parallel_module_mod_data = prototypes.mod_data.parallel_module_mod_data.data
 local parallel_crafting_machine_types = parallel_module_mod_data.crafting_machine_types
-local round_parallel_to_nearest = parallel_module_mod_data.round_parallel_to_nearest
 local max_total_parallel = parallel_module_mod_data.max_total_parallel
 local entity_to_base_parallel = parallel_module_mod_data.entity_to_base_parallel
 local parallel_module_mod_recipe_table_inverse =  prototypes.mod_data.parallel_module_mod_recipe_table_inverse.data
@@ -64,7 +63,7 @@ end
 local function cached_round(x)
     local s = storage.cached_round[x]
     if s == nil then
-        s = utils.round(x, round_parallel_to_nearest)
+        s = utils.round(x, 1)
         storage.cached_round[x] = s
     end
     return s

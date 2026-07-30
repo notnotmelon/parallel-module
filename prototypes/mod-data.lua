@@ -10,7 +10,7 @@ data:extend({
         name = "parallel_module_mod_data",
         type = "mod-data",
         data = {
-            -- Maximum parallel allowed for any machine; must be a multiple of round_parallel_to_nearest
+            -- Maximum parallel allowed for any machine; must be an integer
             max_total_parallel = 64, -- +64% = 64x
 
 

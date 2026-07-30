@@ -24,7 +24,6 @@ local entity_to_base_parallel = parallel_module_mod_data.entity_to_base_parallel
 local extra_count_fraction_recipe_results = parallel_module_mod_data.extra_count_fraction_recipe_results
 local additional_default_categories = parallel_module_mod_data.additional_default_categories
 local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
-local module_value_increment = parallel_module_mod_data.round_parallel_to_nearest / 100.0
 local max_total_parallel = parallel_module_mod_data.max_total_parallel / 100.0
 
 local crafting_category_to_max_module_slots = {}
@@ -46,14 +45,6 @@ local base_machine_to_altered_machine = data.raw["mod-data"].parallel_module_mod
 local altered_machine_to_base_machine = data.raw["mod-data"].parallel_module_mod_crafting_machine_table_inverse.data
 local parallel_value_cache = data.raw["mod-data"].parallel_module_mod_parallel_value_cache.data
 local crafting_machine_to_fixed_base_recipe = data.raw["mod-data"].crafting_machine_to_fixed_base_recipe.data
-
--------------------------------------------------------------------------------
---- VALIDATION
--------------------------------------------------------------------------------
-
-assert(module_value_increment > 0, "'round_parallel_to_nearest' must be positive.")
-assert(max_total_parallel > module_value_increment, "'max_total_parallel' must greater than 'module_value_increment'.")
-assert(max_total_parallel % module_value_increment == 0, "'max_total_parallel' must be a whole-number multipler of 'round_parallel_to_nearest'.")
 
 -- TODO: use space locations
 if mods["virentis"] then
@@ -628,7 +619,7 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         module_value_max_per_slot * get_max_module_slots_for_recipe(valid_categories))
     local sensitivity = base_recipe.parallel_sensitivity or 1
     base_recipe.parallel_sensitivity = nil
-    for scale = module_value_increment, total_max_module_value, module_value_increment do
+    for scale = 1, total_max_module_value do
         local new_recipe_name = string.format("%s__parallel_module_mod__%d", recipe_name, scale * 100)
         local scale_str = tostring(scale * 100)
         base_recipe_to_altered_recipes[recipe_name][scale_str] = new_recipe_name
