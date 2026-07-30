@@ -88,7 +88,7 @@ function Public.get_parallel_recipe(base_recipe_name, parallel)
     return parallel_recipes[parallel] or base_recipe_name
 end
 
-function Public.get_crafting_machines_including_ghosts(surface, position, area)
+function Public.get_crafting_machines(surface, position, area)
     local result = {}
     local filters = {
         type = parallel_crafting_machine_types
@@ -110,15 +110,23 @@ function Public.get_crafting_machines_including_ghosts(surface, position, area)
     return result
 end
 
--- Ignores ghost modules
-function Public.get_total_parallel_from_module_inventory(module_inventory)
+function Public.get_total_parallel_from_module_inventory(entity)
+    local module_inventory
+    if entity.type == "entity-ghost" then
+        module_inventory = entity.item_requests
+    else
+        module_inventory = entity.get_module_inventory()
+        if module_inventory then
+            module_inventory = module_inventory.get_contents()
+        end
+    end
+
     local total_parallel = 0.0
     if not module_inventory then
         return total_parallel
     end
 
-    local contents = module_inventory.get_contents()
-    for _, module in pairs(contents) do
+    for _, module in pairs(module_inventory) do
         if module == nil or not is_parallel_module[module.name] then
             goto continue
         end
@@ -129,15 +137,16 @@ function Public.get_total_parallel_from_module_inventory(module_inventory)
     return total_parallel
 end
 
-function Public.get_total_machine_parallel_optimized(machine, is_ghost)
+function Public.get_total_machine_parallel_optimized(machine)
     if machine == nil or not machine.valid then
         return nil, nil, nil
     end
 
-    local machine_base_parallel = entity_to_base_parallel[machine.name]
+    local machine_name = machine.type == "entity-ghost" and machine.ghost_name or machine.name
+    local machine_base_parallel = entity_to_base_parallel[machine_name]
     local module_parallel
-    if machine_accepts_parallel_modules[machine.name] then
-        module_parallel = is_ghost and 0 or Public.get_total_parallel_from_module_inventory(machine.get_module_inventory())
+    if machine_accepts_parallel_modules[machine_name] then
+        module_parallel = Public.get_total_parallel_from_module_inventory(machine)
     elseif machine_base_parallel then
         module_parallel = 0
     else
@@ -162,13 +171,12 @@ function Public.update_machine_for_parallel(machine, just_built)
         return
     end
 
-    local is_ghost = machine.type == "entity-ghost"
-    local type = (is_ghost and machine.ghost_type) or machine.type
-    if not utils.table_contains_value(parallel_crafting_machine_types, type) then
+    local machine_type = (machine.type == "entity-ghost" and machine.ghost_type) or machine.type
+    if not utils.table_contains_value(parallel_crafting_machine_types, machine_type) then
         return
     end
 
-    local current_machine_parallel, rounded_machine_parallel, has_parallel_modules = Public.get_total_machine_parallel_optimized(machine, is_ghost)
+    local current_machine_parallel, rounded_machine_parallel, has_parallel_modules = Public.get_total_machine_parallel_optimized(machine)
     -- Machine does not support parallel modules
     if current_machine_parallel == nil then
         return
@@ -237,7 +245,6 @@ function Public.update_machine_for_parallel(machine, just_built)
         
         Public.set_parallel_recipe(
             machine,
-            is_ghost,
             Public.get_parallel_recipe(base_recipe_name, rounded_machine_parallel),
             quality,
             (recipe and recipe.name) or nil
@@ -307,7 +314,7 @@ end
 
 function Public.handle_undo_redo_action(surface, action)
     if action.type == "upgraded-entity" or action.type == "upgraded-modules" or action.type == "copy-entity-settings" then
-        for _, machine in pairs(Public.get_crafting_machines_including_ghosts(surface, action.target.position)) do
+        for _, machine in pairs(Public.get_crafting_machines(surface, action.target.position)) do
             Public.update_machine_for_parallel(machine, true)
         end
     end
@@ -463,7 +470,7 @@ local inventories_to_copy = {
     defines.inventory.crafter_trash,
 }
 
-function Public.set_parallel_recipe(entity, is_ghost, recipe, quality, current_recipe)
+function Public.set_parallel_recipe(entity, recipe, quality, current_recipe)
     if recipe and recipe == current_recipe then
         return
     end
