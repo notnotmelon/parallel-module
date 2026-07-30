@@ -85,7 +85,7 @@ data:extend({
       productivity = -0.00,
       parallel = 1.00
     },
-    speed_quality_multiplier = 1.0,
+    speed_quality_multiplier = 3.0,
     default_import_location = "frozeta"
   },
   {
