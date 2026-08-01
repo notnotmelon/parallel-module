@@ -288,6 +288,10 @@ function Public.update_machine_info(machine, recipe_name, current_machine_parall
     end
     
     storage.machine_to_latest_recipe_and_parallel[machine.unit_number] = { recipe_name, current_machine_parallel, is_set_recipe }
+
+    if machine.type == "entity-ghost" then
+        machine.clear_tooltip_field(TOOLTIP_ID)
+    end
 end
 
 function Public.update_opened_machine_for_player(player_index)
