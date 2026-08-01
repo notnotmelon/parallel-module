@@ -3,6 +3,8 @@ local entity_to_base_parallel = data.raw["mod-data"].parallel_module_mod_entity_
 local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
 
 function parallel.get_base_parallel(machine)
+    if machine.hidden then return 0 end
+    
     if machine.effect_receiver and machine.effect_receiver.base_effect and machine.effect_receiver.base_effect.parallel then
         return math.min(
             parallel_module_mod_data.max_total_parallel,

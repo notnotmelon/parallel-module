@@ -167,11 +167,12 @@ function Public.get_latest_recipe_and_parallel(unit_number)
 end
 
 function Public.update_machine_for_parallel(machine, just_built)
-    if not machine or not machine.valid then
-        return
-    end
-
+    if not machine then return end
+    if not machine.valid then return end
+    if machine.prototype.hidden then return end
     local machine_type = (machine.type == "entity-ghost" and machine.ghost_type) or machine.type
+    if machine_type == "furnace" then return end
+
     if not utils.table_contains_value(parallel_crafting_machine_types, machine_type) then
         return
     end
