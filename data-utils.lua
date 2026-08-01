@@ -1,4 +1,4 @@
-local utils = require("__parallel-module__.utils")
+local utils = require "utils"
 
 local Public = {}
 

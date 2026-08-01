@@ -1,5 +1,5 @@
-local utils = require("__parallel-module__.utils")
-local data_utils = require("__parallel-module__.data-utils")
+local utils = require "utils"
+local data_utils = require "data-utils"
 local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
 
 local new_recipes = {}
@@ -14,7 +14,7 @@ local function is_category_parallelizable(recipe_name, category)
         return false
     end
 
-    if (crafting_category_to_max_module_slots[category] or 0) == 0 then
+    if (parallel.crafting_category_to_max_module_slots[category] or 0) == 0 then
         return false
     end
 
@@ -24,17 +24,17 @@ end
 local function get_max_module_slots_for_recipe(crafting_categories)
     local slots = 0
     for _, category in pairs(crafting_categories) do
-        slots = math.max(slots, crafting_category_to_max_module_slots[category])
+        slots = math.max(slots, parallel.crafting_category_to_max_module_slots[category])
     end
     return slots
 end
 
 local function get_max_parallel_without_modules_for_recipe(crafting_categories)
-    local parallel = 0
+    local max_parallel = 0
     for _, category in pairs(crafting_categories) do
-        parallel = math.max(parallel, crafting_category_to_max_parallel_without_modules[category])
+        max_parallel = math.max(max_parallel, parallel.crafting_category_to_max_parallel_without_modules[category])
     end
-    return parallel
+    return max_parallel
 end
 
 -------------------------------------------------------------------------------
@@ -89,8 +89,8 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
     local can_be, valid_categories = can_recipe_be_parallelized(base_recipe)
     if not can_be then goto continue end
 
-    -- Explicitly allow parallel modules in recipe.allowed_module_categories
-    table.insert(base_recipe.allowed_module_categories, EFFECT_NAME)
+    -- explicitly allow parallel modules in recipe.allowed_module_categories
+    table.insert(base_recipe.allowed_module_categories, "parallel")
     
     valid_categories = valid_categories or {}
     for _, category in pairs(valid_categories) do
@@ -103,7 +103,7 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
     base_recipe_to_altered_recipes[recipe_name] = { [tostring(0)] = recipe_name }
     altered_recipe_to_base_recipe_parallel_pair[recipe_name] = { [tostring(0)] = recipe_name }
     local total_max_module_value = math.min(parallel_module_mod_data.max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
-        max_parallel_per_module * get_max_module_slots_for_recipe(valid_categories))
+        parallel.max_parallel_per_module * get_max_module_slots_for_recipe(valid_categories))
     
     for scale = 1, utils.round_parallel(total_max_module_value) do
         local scale_str = tostring(scale)

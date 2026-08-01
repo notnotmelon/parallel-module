@@ -2,7 +2,7 @@ local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.d
 local entity_to_base_parallel = data.raw["mod-data"].parallel_module_mod_entity_to_base_parallel.data
 local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
 
-local function get_base_parallel(machine)
+function parallel.get_base_parallel(machine)
     if machine.effect_receiver and machine.effect_receiver.base_effect and machine.effect_receiver.base_effect.parallel then
         return math.min(
             parallel_module_mod_data.max_total_parallel,
@@ -17,7 +17,7 @@ local function get_all_machines_with_base_parallel()
 
     for _, machine_type in pairs(crafting_machine_types) do
         for _, machine in pairs(data.raw[machine_type]) do
-            if get_base_parallel(machine) ~= 0 then
+            if parallel.get_base_parallel(machine) ~= 0 then
                 table.insert(result, machine)
             end
         end
@@ -28,7 +28,7 @@ end
 
 -- add to mod-data table
 for _, machine in pairs(get_all_machines_with_base_parallel()) do
-    entity_to_base_parallel[machine.name] = get_base_parallel(machine)
+    entity_to_base_parallel[machine.name] = parallel.get_base_parallel(machine)
 end
 
 -- add to item tooltip
@@ -47,5 +47,3 @@ for prototype in pairs(defines.prototypes.item) do
         end
     end
 end
-
-return get_base_parallel

@@ -1,1 +1,1 @@
-require("__parallel-module__.compat.Krastorio2-updates")
+require "compat.Krastorio2-updates"
