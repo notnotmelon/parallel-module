@@ -1,3 +1,5 @@
+if not mods["secretas"] then return end
+
 local item_sounds = require("__base__.prototypes.item_sounds")
 
 local categories = data.raw.recipe["speed-module"].categories

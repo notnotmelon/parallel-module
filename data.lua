@@ -11,6 +11,6 @@ require("__parallel-module__.prototypes.recipe")
 require("__parallel-module__.prototypes.technology")
 require("__parallel-module__.prototypes.achievement")
 
-if mods["secretas"] then
-    require("__parallel-module__.compat.secretas")
-end
+require("__parallel-module__.compat.secretas")
+
+-- data.raw["assembling-machine"]["chemical-plant"].effect_receiver = {base_effect = {speed = 0.5, parallel = 0.5, pollution = 0.5}}
