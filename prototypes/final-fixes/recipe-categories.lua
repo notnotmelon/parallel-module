@@ -1,7 +1,4 @@
 local utils = require "utils"
-local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
-local explicitly_disallowed_categories = parallel_module_mod_data.disallowed_crafting_categories
-local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
 
 -- defaults
 do
@@ -24,7 +21,7 @@ local function calculate_max_module_slots(machine)
 
     local categories = {}
     for _, category in pairs(machine.crafting_categories) do
-        if not utils.table_contains_value(explicitly_disallowed_categories, category) then
+        if not utils.table_contains_value(mod_data.disallowed_crafting_categories, category) then
             table.insert(categories, category)
         end
     end
@@ -52,7 +49,7 @@ local function calculate_max_module_slots(machine)
     end
 end
 
-for _, machine_type in pairs(crafting_machine_types) do
+for _, machine_type in pairs(mod_data.crafting_machine_types) do
     for _, machine in pairs(data.raw[machine_type]) do
         calculate_max_module_slots(machine)
     end

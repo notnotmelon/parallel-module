@@ -1,10 +1,6 @@
-local utils = require "utils"
-
 local Public = {}
 
-local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
-
-Public.maximum_probability_valid_for_parallel = parallel_module_mod_data.maximum_probability_valid_for_parallel
+Public.maximum_probability_valid_for_parallel = mod_data.maximum_probability_valid_for_parallel
 
 function Public.get_recipe_result_combined_probability(result)
     if result.shared_probability then

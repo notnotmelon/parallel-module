@@ -25,7 +25,7 @@ For furnaces to function, this mod automatically converts all `furnace` prototyp
 
 ## Parallel Module Parameters 
 
-Parallel Module has several parameters it uses in its calculations. These can be modified by editing the fields of the `parallel_module_mod_data` mod data object, i.e. `data.raw['mod-data'].parallel_module_mod_data.data`:
+Parallel Module has several parameters it uses in its calculations. These can be modified by editing the fields of the `parallel-module` mod data object, i.e. `data.raw['mod-data']["parallel-module"].data`:
 
 * `max_total_parallel` (`double`): Default `64` (`+64000%` = `64x`). Determines the maximum possible parallel value an entity can have (analagous to the 300% productivity maximum for most recipes). Must be an integer.
 

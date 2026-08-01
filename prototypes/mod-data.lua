@@ -7,7 +7,7 @@ data:extend({
     --- in your mod's data-updates.lua
     ---------------------------------------------------------------------------
     {
-        name = "parallel_module_mod_data",
+        name = "parallel-module",
         type = "mod-data",
         data = {
             -- Maximum parallel allowed for any machine; must be an integer
@@ -42,40 +42,14 @@ data:extend({
                 "fuel-incineration",
                 "recycling"
             },
+
+            -- internal use only
+            recipe_table = {},
+            recipe_table_inverse = {},
+            parallel_value_cache = {},
+            spoilable_modules = {},
+            entity_to_base_parallel = {},
+            allowed_machines = {},
         }
     },
-    
-    ---------------------------------------------------------------------------
-    --- INTERNAL USE ONLY
-    ---------------------------------------------------------------------------
-    {
-    -- Internal use only
-        name = "parallel_module_mod_recipe_table",
-        type = "mod-data",
-        data = {}
-    },
-    {
-    -- Internal use only
-        name = "parallel_module_mod_recipe_table_inverse",
-        type = "mod-data",
-        data = {}
-    },
-    {
-    -- Internal use only
-        name = "parallel_module_mod_parallel_value_cache",
-        type = "mod-data",
-        data = {}
-    },
-    {
-    -- Internal use only
-        name = "spoilable_parallel_modules",
-        type = "mod-data",
-        data = {}
-    },
-    {
-    -- Internal use only
-        name = "parallel_module_mod_entity_to_base_parallel",
-        type = "mod-data",
-        data = {}
-    }
 })

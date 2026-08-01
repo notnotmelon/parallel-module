@@ -1,5 +1,3 @@
-local base_recipe_to_altered_recipes = data.raw["mod-data"].parallel_module_mod_recipe_table.data
-
 for _, technology in pairs(data.raw.technology) do
     if not technology.effects then
         goto continue
@@ -13,7 +11,7 @@ for _, technology in pairs(data.raw.technology) do
     end
 
     for base_recipe, change in pairs(base_productivity_recipes) do
-        for _, altered_recipe in pairs(base_recipe_to_altered_recipes[base_recipe] or {}) do
+        for _, altered_recipe in pairs(mod_data.recipe_table[base_recipe] or {}) do
             if altered_recipe ~= base_recipe then
                 table.insert(technology.effects, {
                     type   = "change-recipe-productivity",

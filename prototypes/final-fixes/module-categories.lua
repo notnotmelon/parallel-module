@@ -1,6 +1,3 @@
-local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
-local additional_default_categories = parallel_module_mod_data.additional_default_categories
-
 local types_with_allowed_module_categories = {
     "assembling-machine",
     "furnace",
@@ -23,7 +20,7 @@ else
         table.insert(base_module_categories, "quality")
     end
 end
-for _, category in pairs(additional_default_categories) do
+for _, category in pairs(mod_data.additional_default_categories) do
     if data.raw["module-category"][category] then
         table.insert(base_module_categories, category)
     end

@@ -5,17 +5,11 @@ utils = require "utils"
 
 TOOLTIP_ID = 2453693297
 
-local parallel_module_mod_data = prototypes.mod_data.parallel_module_mod_data.data
-local parallel_crafting_machine_types = parallel_module_mod_data.crafting_machine_types
-local max_total_parallel = parallel_module_mod_data.max_total_parallel
-local entity_to_base_parallel = prototypes.mod_data.parallel_module_mod_entity_to_base_parallel.data
-local parallel_module_mod_recipe_table_inverse =  prototypes.mod_data.parallel_module_mod_recipe_table_inverse.data
-
-local parallel_module_mod_recipe_table = {}
-for base_recipe, recipes in pairs(prototypes.mod_data.parallel_module_mod_recipe_table.data) do
-    parallel_module_mod_recipe_table[base_recipe] = {}
+local recipe_table = {}
+for base_recipe, recipes in pairs(mod_data.recipe_table) do
+    recipe_table[base_recipe] = {}
     for parallel, recipe in pairs(recipes) do
-        parallel_module_mod_recipe_table[base_recipe][tonumber(parallel)] = recipe
+        recipe_table[base_recipe][tonumber(parallel)] = recipe
     end
 end
 
@@ -25,15 +19,14 @@ local module_name_to_quality_to_parallel = {}
 for module_name, module in pairs(prototypes.get_item_filtered{{filter = "type", type = "module"}}) do
     if module.category == "parallel" then
         is_parallel_module[module_name] = true
-        module_name_to_quality_to_parallel[module_name] = prototypes.mod_data.parallel_module_mod_parallel_value_cache.data[tostring(module.tier)]
+        module_name_to_quality_to_parallel[module_name] = mod_data.parallel_value_cache[tostring(module.tier)]
     end
 end
 
-local machine_accepts_parallel_modules = {}
-for _, type in pairs(parallel_crafting_machine_types) do
+for _, type in pairs(mod_data.crafting_machine_types) do
     for entity_name, entity in pairs(prototypes.get_entity_filtered{{filter = "type", type = type}}) do
         if entity.allowed_module_categories and entity.allowed_module_categories.parallel then
-            machine_accepts_parallel_modules[entity_name] = true
+            mod_data.allowed_machines[entity_name] = true
         end
     end
 end
@@ -80,7 +73,7 @@ function Public.get_parallel_recipe(base_recipe_name, parallel)
         return base_recipe_name
     end
 
-    local parallel_recipes = parallel_module_mod_recipe_table[base_recipe_name]
+    local parallel_recipes = recipe_table[base_recipe_name]
     if not parallel_recipes then
         return base_recipe_name
     end
@@ -91,7 +84,7 @@ end
 function Public.get_crafting_machines(surface, position, area)
     local result = {}
     local filters = {
-        type = parallel_crafting_machine_types
+        type = mod_data.crafting_machine_types
     }
     if position ~= nil then
         filters["position"] = position
@@ -102,7 +95,7 @@ function Public.get_crafting_machines(surface, position, area)
         table.insert(result, machine)
     end
 
-    filters["ghost_type"] = parallel_crafting_machine_types
+    filters["ghost_type"] = mod_data.crafting_machine_types
     filters["type"] = nil
     for _, machine in pairs(surface.find_entities_filtered(filters)) do
         table.insert(result, machine)
@@ -143,9 +136,9 @@ function Public.get_total_machine_parallel_optimized(machine)
     end
 
     local machine_name = machine.type == "entity-ghost" and machine.ghost_name or machine.name
-    local machine_base_parallel = entity_to_base_parallel[machine_name]
+    local machine_base_parallel = mod_data.entity_to_base_parallel[machine_name]
     local module_parallel
-    if machine_accepts_parallel_modules[machine_name] then
+    if mod_data.allowed_machines[machine_name] then
         module_parallel = Public.get_total_parallel_from_module_inventory(machine)
     elseif machine_base_parallel then
         module_parallel = 0
@@ -153,7 +146,7 @@ function Public.get_total_machine_parallel_optimized(machine)
         return nil, nil
     end
 
-    local parallel = math.min(max_total_parallel, module_parallel + (machine_base_parallel or 0))
+    local parallel = math.min(mod_data.max_total_parallel, module_parallel + (machine_base_parallel or 0))
     return parallel, module_parallel > 0
 end
 
@@ -173,7 +166,7 @@ function Public.update_machine_for_parallel(machine, just_built)
     local machine_type = (machine.type == "entity-ghost" and machine.ghost_type) or machine.type
     if machine_type == "furnace" then return end
 
-    if not utils.table_contains_value(parallel_crafting_machine_types, machine_type) then
+    if not utils.table_contains_value(mod_data.crafting_machine_types, machine_type) then
         return
     end
 
@@ -241,7 +234,7 @@ function Public.update_machine_for_parallel(machine, just_built)
     if was_changed or just_built then
         local base_recipe_name = nil
         if recipe_name then
-            _, base_recipe_name = next(parallel_module_mod_recipe_table_inverse[recipe_name] or {})
+            _, base_recipe_name = next(mod_data.recipe_table_inverse[recipe_name] or {})
         end
         
         Public.set_parallel_recipe(
@@ -283,7 +276,7 @@ function Public.update_machine_info(machine, recipe_name, current_machine_parall
                 "mod-tooltip-value.parallel-module-num-parallels",
                 utils.round_parallel(tooltip_machine_parallel) + 1,
                 {
-                    tooltip_machine_parallel == max_total_parallel and "mod-tooltip-value.parallel-module-value-max" or "mod-tooltip-value.parallel-module-value",
+                    tooltip_machine_parallel == mod_data.max_total_parallel and "mod-tooltip-value.parallel-module-value-max" or "mod-tooltip-value.parallel-module-value",
                     cached_tostring(tooltip_machine_parallel * 100)
                 }
             },
@@ -362,7 +355,7 @@ end
 function Public.sanitize_bp_entities(bp_entities)
     local was_modified = false
     for _, bp_entity in pairs(bp_entities) do
-        local current_parallel_to_base_recipe_name = bp_entity.recipe and parallel_module_mod_recipe_table_inverse[bp_entity.recipe]
+        local current_parallel_to_base_recipe_name = bp_entity.recipe and mod_data.recipe_table_inverse[bp_entity.recipe]
 
         -- Set blueprint entity's recipe to non-parallel version, if applicable
         if current_parallel_to_base_recipe_name then
@@ -421,7 +414,7 @@ function Public.handle_entity_gui_opened(player, entity)
     end
 
     local entity_name = entity.name == "entity-ghost" and entity.ghost_name or entity.name
-    if machine_accepts_parallel_modules[entity_name] or entity_to_base_parallel[entity_name] then
+    if mod_data.allowed_machines[entity_name] or mod_data.entity_to_base_parallel[entity_name] then
         storage.player_to_machine_with_open_gui[player.index] = entity
     end
 end
@@ -436,7 +429,7 @@ end
 
 function Public.handle_player_selection_changed(player)
     local entity = player.selected
-    if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or not utils.table_contains_value(parallel_crafting_machine_types, (entity.type == "entity-ghost" and entity.ghost_type) or entity.type) then
+    if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or not utils.table_contains_value(mod_data.crafting_machine_types, (entity.type == "entity-ghost" and entity.ghost_type) or entity.type) then
         storage.player_to_selected_machine[player.index] = nil
     else
         storage.player_to_selected_machine[player.index] = entity

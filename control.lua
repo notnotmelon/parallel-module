@@ -1,15 +1,13 @@
+_G.mod_data = prototypes.mod_data["parallel-module"].data
 local control_helpers = require "control-helpers"
-local parallel_module_mod_data = prototypes.mod_data.parallel_module_mod_data.data
-local parallel_crafting_machine_types = parallel_module_mod_data.crafting_machine_types
 
-script.on_init(function()
-    control_helpers.ensure_storage_cache_is_setup()
-end)
-
-script.on_configuration_changed(function()
+local function init()
     control_helpers.ensure_storage_cache_is_setup()
     control_helpers.update_all_entities()
-end)
+end
+
+script.on_init(init)
+script.on_configuration_changed(init)
 
 script.on_event(defines.events.on_tick, control_helpers.handle_on_tick)
 
@@ -46,7 +44,7 @@ for _, build_event in pairs{
 end
 
 script.on_event("item-request-proxy-created", function(event)
-    if not event.proxy_target or not event.proxy_target.valid or not utils.table_contains_value(parallel_crafting_machine_types, event.proxy_target.type) then
+    if not event.proxy_target or not event.proxy_target.valid or not utils.table_contains_value(mod_data.crafting_machine_types, event.proxy_target.type) then
         return
     end
 
@@ -60,7 +58,7 @@ script.on_event({
     control_helpers.update_machine_for_parallel(event.proxy_target, true)
 end)
 
-if next(prototypes.mod_data.spoilable_parallel_modules.data) then
+if next(mod_data.spoilable_modules) then
     script.on_event("item-spoiled", function(event)
         if event.entity and event.entity.valid and event.entity.unit_number then
             storage.machines_waiting_for_parallel_module[event.entity.unit_number] = event.entity

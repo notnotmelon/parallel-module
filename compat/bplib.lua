@@ -1,9 +1,5 @@
 assert(mods["bplib"])
-
 local utils = require "utils"
-
-local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
-local crafting_machine_types = parallel_module_mod_data.crafting_machine_types
 
 local function register_with_bplib(name)
     local bplib = data.raw["mod-data"]["bplib"]
@@ -26,7 +22,7 @@ local function try_register_entity_with_bp_lib(machine)
     end
 end
 
-for _, machine_type in pairs(crafting_machine_types) do
+for _, machine_type in pairs(mod_data.crafting_machine_types) do
     for _, machine in pairs(data.raw[machine_type]) do
         try_register_entity_with_bp_lib(machine)
     end

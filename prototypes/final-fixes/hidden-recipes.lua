@@ -1,13 +1,9 @@
 local utils = require "utils"
 local data_utils = require "data-utils"
-local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
 
 local new_recipes = {}
 local crafting_category_to_recipes = {}
 local new_crafting_categories = {}
-
-local base_recipe_to_altered_recipes = data.raw["mod-data"].parallel_module_mod_recipe_table.data
-local altered_recipe_to_base_recipe_parallel_pair = data.raw["mod-data"].parallel_module_mod_recipe_table_inverse.data
 
 local function is_category_parallelizable(recipe_name, category)
     if category.parallel_blacklist == true then
@@ -41,6 +37,21 @@ end
 --- CREATE PARALLEL RECIPE PROTOTYPES
 -------------------------------------------------------------------------------
 
+local function has_non_stackable_flag(item_name)
+    for prototype in pairs(defines.prototypes.item) do
+        if data.raw[prototype] and data.raw[prototype][item_name] then
+            if data.raw[prototype][item_name].stack_size == 1 then
+                return true
+            end
+            if utils.table_contains_value(data.raw[prototype][item_name].flags or {}, "not-stackable") then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
 local function can_recipe_be_parallelized(recipe)
     if recipe.hidden then return false end
     if recipe.allow_speed == false then return false end
@@ -53,20 +64,8 @@ local function can_recipe_be_parallelized(recipe)
 
     -- ensure recipes with results with the "non-stackable" flag are not parallelized
     for _, result in pairs(recipe.results) do
-        if result.type == "item" then
-            for prototype in pairs(defines.prototypes.item) do
-                if result.name and data.raw[prototype] and data.raw[prototype][result.name] then
-                    if data.raw[prototype][result.name].stack_size == 1 then
-                        return false
-                    end
-                    local flags = data.raw[prototype][result.name].flags
-                    for _, flag in pairs(flags or {}) do
-                        if flag == "not-stackable" then
-                            return false
-                        end
-                    end
-                end
-            end
+        if result.type == "item" and result.name and has_non_stackable_flag(result.name) then
+            return false
         end
     end
     
@@ -100,16 +99,16 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         crafting_category_to_recipes[category][recipe_name] = true
     end
 
-    base_recipe_to_altered_recipes[recipe_name] = { [tostring(0)] = recipe_name }
-    altered_recipe_to_base_recipe_parallel_pair[recipe_name] = { [tostring(0)] = recipe_name }
-    local total_max_module_value = math.min(parallel_module_mod_data.max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
+    mod_data.recipe_table[recipe_name] = { [tostring(0)] = recipe_name }
+    mod_data.recipe_table_inverse[recipe_name] = { [tostring(0)] = recipe_name }
+    local total_max_module_value = math.min(mod_data.max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
         parallel.max_parallel_per_module * get_max_module_slots_for_recipe(valid_categories))
     
     for scale = 1, utils.round_parallel(total_max_module_value) do
         local scale_str = tostring(scale)
-        local new_recipe_name = string.format("%s__parallel_module_mod__%d", recipe_name, scale_str)
-        base_recipe_to_altered_recipes[recipe_name][scale_str] = new_recipe_name
-        altered_recipe_to_base_recipe_parallel_pair[new_recipe_name] = { [scale_str] = recipe_name }
+        local new_recipe_name = string.format("%s__parallel-module__%d", recipe_name, scale_str)
+        mod_data.recipe_table[recipe_name][scale_str] = new_recipe_name
+        mod_data.recipe_table_inverse[new_recipe_name] = { [scale_str] = recipe_name }
 
         local num_parallels = scale + 1
 
