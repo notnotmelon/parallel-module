@@ -1,7 +1,7 @@
 local pairs = pairs
 local table = table
 
-utils = require("__parallel-module__.utils")
+utils = require "utils"
 
 TOOLTIP_ID = 2453693297
 
@@ -412,22 +412,16 @@ function Public.handle_bplib_extract(event)
     end
 end
 
-function Public.handle_entity_gui_opened(player_index, entity)
-    if not entity then
-        local player = game.players[player_index]
-        if not player or not player.valid then
-            return
-        end
-        entity = player.opened
-    end
+function Public.handle_entity_gui_opened(player, entity)
+    entity = entity or player.opened
 
-    if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or entity == storage.player_to_machine_with_open_gui[player_index] then
+    if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or entity == storage.player_to_machine_with_open_gui[player.index] then
         return
     end
 
     local entity_name = entity.name == "entity-ghost" and entity.ghost_name or entity.name
     if machine_accepts_parallel_modules[entity_name] or entity_to_base_parallel[entity_name] then
-        storage.player_to_machine_with_open_gui[player_index] = entity
+        storage.player_to_machine_with_open_gui[player.index] = entity
     end
 end
 
@@ -439,43 +433,21 @@ function Public.handle_entity_gui_closed(player_index, entity)
     storage.player_to_machine_with_open_gui[player_index] = nil
 end
 
-function Public.handle_player_selection_changed(player_index, last_entity)
-    local player = game.get_player(player_index)
-    local entity = player and player.valid and player.selected or nil
+function Public.handle_player_selection_changed(player)
+    local entity = player.selected
     if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or not utils.table_contains_value(parallel_crafting_machine_types, (entity.type == "entity-ghost" and entity.ghost_type) or entity.type) then
-        storage.player_to_selected_machine[player_index] = nil
+        storage.player_to_selected_machine[player.index] = nil
     else
-        storage.player_to_selected_machine[player_index] = entity
+        storage.player_to_selected_machine[player.index] = entity
     end
 end
 
-function Public.handle_player_joined(player_index, player_name)
-    Public.handle_entity_gui_opened(player_index or player_name)
-    Public.handle_player_selection_changed(player_index or player_name)
+function Public.handle_player_event(player)
+    storage.player_to_machine_with_open_gui[player.index] = nil
+    storage.player_to_selected_machine[player.index] = nil
+    Public.handle_entity_gui_opened(player)
+    Public.handle_player_selection_changed(player)
 end
-
-function Public.handle_player_left(player_index, player_name)
-    if not player_index then
-        local player = game.get_player(player_name)
-        player_index = player and player.valid and player.index
-    end
-    if not player_index then
-        return
-    end
-
-    storage.player_to_machine_with_open_gui[player_index] = nil
-    storage.player_to_selected_machine[player_index] = nil
-end
-
-local inventories_to_copy = {
-    -- TODO: Add check and include these? Or check if this ever returns wrong inventory for crafting machines?
-    -- defines.inventory.fuel,
-    -- defines.inventory.burnt_result,
-    defines.inventory.crafter_input,
-    defines.inventory.crafter_output,
-    defines.inventory.crafter_modules,
-    defines.inventory.crafter_trash,
-}
 
 function Public.set_parallel_recipe(entity, recipe, quality, current_recipe)
     if recipe and recipe == current_recipe then
