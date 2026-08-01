@@ -139,7 +139,7 @@ end
 
 function Public.get_total_machine_parallel_optimized(machine)
     if machine == nil or not machine.valid then
-        return nil, nil, nil
+        return nil, nil
     end
 
     local machine_name = machine.type == "entity-ghost" and machine.ghost_name or machine.name
@@ -150,11 +150,11 @@ function Public.get_total_machine_parallel_optimized(machine)
     elseif machine_base_parallel then
         module_parallel = 0
     else
-        return nil, nil, nil
+        return nil, nil
     end
 
     local parallel = math.min(max_total_parallel, module_parallel + (machine_base_parallel or 0))
-    return parallel, math.ceil(parallel), module_parallel > 0
+    return parallel, module_parallel > 0
 end
 
 function Public.get_latest_recipe_and_parallel(unit_number)
@@ -176,7 +176,7 @@ function Public.update_machine_for_parallel(machine, just_built)
         return
     end
 
-    local current_machine_parallel, rounded_machine_parallel, has_parallel_modules = Public.get_total_machine_parallel_optimized(machine)
+    local current_machine_parallel, has_parallel_modules = Public.get_total_machine_parallel_optimized(machine)
     -- Machine does not support parallel modules
     if current_machine_parallel == nil then
         return
@@ -245,7 +245,7 @@ function Public.update_machine_for_parallel(machine, just_built)
         
         Public.set_parallel_recipe(
             machine,
-            Public.get_parallel_recipe(base_recipe_name, rounded_machine_parallel),
+            Public.get_parallel_recipe(base_recipe_name, utils.round_parallel(current_machine_parallel)),
             quality,
             (recipe and recipe.name) or nil
         )
@@ -280,7 +280,7 @@ function Public.update_machine_info(machine, recipe_name, current_machine_parall
             name = { "mod-tooltip-name.parallel-module-parallel" },
             value = {
                 "mod-tooltip-value.parallel-module-num-parallels",
-                math.ceil(tooltip_machine_parallel + 1),
+                utils.round_parallel(tooltip_machine_parallel) + 1,
                 {
                     tooltip_machine_parallel == max_total_parallel and "mod-tooltip-value.parallel-module-value-max" or "mod-tooltip-value.parallel-module-value",
                     cached_tostring(tooltip_machine_parallel * 100)

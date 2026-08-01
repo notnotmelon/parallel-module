@@ -85,4 +85,8 @@ utils.is_quality_enabled_runtime = function()
     return utils._is_quality_enabled
 end
 
+utils.round_parallel = function(parallel)
+    return math.ceil(parallel)
+end
+
 return utils

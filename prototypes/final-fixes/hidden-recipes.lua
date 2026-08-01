@@ -1,3 +1,4 @@
+local utils = require("__parallel-module__.utils")
 local data_utils = require("__parallel-module__.data-utils")
 local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
 
@@ -104,7 +105,7 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
     local total_max_module_value = math.min(parallel_module_mod_data.max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
         max_parallel_per_module * get_max_module_slots_for_recipe(valid_categories))
     
-    for scale = 1, total_max_module_value do
+    for scale = 1, utils.round_parallel(total_max_module_value) do
         local scale_str = tostring(scale)
         local new_recipe_name = string.format("%s__parallel_module_mod__%d", recipe_name, scale_str)
         base_recipe_to_altered_recipes[recipe_name][scale_str] = new_recipe_name
