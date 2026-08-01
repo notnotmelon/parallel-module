@@ -272,16 +272,19 @@ function Public.update_machine_info(machine, recipe_name, current_machine_parall
     end
     local old_values = storage.machine_to_latest_recipe_and_parallel[machine.unit_number]
     local old_parallel = (old_values and old_values[2]) or nil
-    
-   
+
     local tooltip_machine_parallel = current_machine_parallel
     if old_parallel ~= tooltip_machine_parallel then
         machine.set_tooltip_field({
             id = TOOLTIP_ID,
             name = { "mod-tooltip-name.parallel-module-parallel" },
             value = {
-                tooltip_machine_parallel == max_total_parallel and "mod-tooltip-value.parallel-module-value-max" or "mod-tooltip-value.parallel-module-value",
-                cached_tostring(tooltip_machine_parallel * 100)
+                "mod-tooltip-value.parallel-module-num-parallels",
+                tooltip_machine_parallel + 1,
+                {
+                    tooltip_machine_parallel == max_total_parallel and "mod-tooltip-value.parallel-module-value-max" or "mod-tooltip-value.parallel-module-value",
+                    cached_tostring(tooltip_machine_parallel * 100)
+                }
             },
             order = 90
         })

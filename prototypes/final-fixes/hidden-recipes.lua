@@ -115,7 +115,7 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         local new_recipe = table.deepcopy(base_recipe)
         new_recipe.name = new_recipe_name
         new_recipe.localised_name = {
-            "mod-tooltip-value.parallel-module-num-parallels",
+            "recipe-name.parallel-module-num-parallels",
             data_utils.get_recipe_localised_name(base_recipe),
             tostring(num_parallels)
         }
