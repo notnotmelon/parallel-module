@@ -19,6 +19,9 @@ At runtime, Parallel Module swaps between recipes depending on crafting machines
 Currently, the supported entities are:
 `rocket-silo`
 `assembling-machine`
+`furnace`
+
+For furnaces to function, this mod automatically converts all `furnace` prototypes into `assembling-machine` if the `parallel-module-allow-in-furnaces` setting is enabled.
 
 ## Parallel Module Parameters 
 

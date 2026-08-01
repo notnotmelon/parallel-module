@@ -18,7 +18,8 @@ data:extend({
             -- COMPAT: don't change this unless you really need to
             crafting_machine_types = {
                 "assembling-machine",
-                "rocket-silo"
+                "rocket-silo",
+                "furnace"
             },
 
             -- Module categories to be considered "default", i.e. that should be treated like vanilla module categories

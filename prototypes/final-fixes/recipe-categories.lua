@@ -47,6 +47,7 @@ local function calculate_max_module_slots(machine)
         if data.raw["recipe-category"][category] then
             parallel.crafting_category_to_max_module_slots[category] = math.max(parallel.crafting_category_to_max_module_slots[category], machine_module_slots)
             parallel.crafting_category_to_max_parallel_without_modules[category] = math.max(parallel.crafting_category_to_max_parallel_without_modules[category], base_machine_parallel)
+            parallel.crafting_category_to_should_enable_parallel_effect[category] = true
         end
     end
 end

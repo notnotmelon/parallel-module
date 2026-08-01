@@ -1,3 +1,5 @@
+assert(mods["bplib"])
+
 local utils = require "utils"
 
 local parallel_module_mod_data = data.raw["mod-data"].parallel_module_mod_data.data
@@ -13,7 +15,7 @@ local function try_register_entity_with_bp_lib(machine)
     if machine.hidden then return end
     if machine.type == "furnace" then return end
     if (machine.module_slots or 0) <= 0 and not machine.quality_affects_module_slots then return end
-    if not utils.table_contains_value(machine.allowed_module_categories or {}, "parallel") then return end
+    if not utils.table_contains_value(machine.allowed_effects or {}, "parallel") then return end
 
     for _, category in pairs(machine.crafting_categories) do
         if parallel.crafting_category_to_should_enable_parallel_effect[category] then
