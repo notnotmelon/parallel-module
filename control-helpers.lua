@@ -280,7 +280,7 @@ function Public.update_machine_info(machine, recipe_name, current_machine_parall
             name = { "mod-tooltip-name.parallel-module-parallel" },
             value = {
                 "mod-tooltip-value.parallel-module-num-parallels",
-                tooltip_machine_parallel + 1,
+                math.ceil(tooltip_machine_parallel + 1),
                 {
                     tooltip_machine_parallel == max_total_parallel and "mod-tooltip-value.parallel-module-value-max" or "mod-tooltip-value.parallel-module-value",
                     cached_tostring(tooltip_machine_parallel * 100)

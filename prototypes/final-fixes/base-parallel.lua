@@ -40,7 +40,7 @@ for prototype in pairs(defines.prototypes.item) do
             table.insert(item.custom_tooltip_fields, {
                 name = { "mod-tooltip-name.parallel-module-base-parallel" },
                 value = { "mod-tooltip-value.parallel-module-value", tostring(100 * base_parallel) },
-                order = 100,
+                order = 109,
                 show_in_factoriopedia = true,
                 show_in_tooltip = true
             })
