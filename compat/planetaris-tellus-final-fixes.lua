@@ -1,3 +1,5 @@
+if not mods["planetaris-tellus"] then return end
+
 local bioassembler_dead = data.raw["assembling-machine"]["planetaris-bioassembler-dead"]
 if not bioassembler_dead or not bioassembler_dead.fixed_recipe then
     return

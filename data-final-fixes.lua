@@ -1,7 +1,11 @@
+require("__parallel-module__.compat.virentis-final-fixes")
+require("__parallel-module__.compat.planetaris-tellus-final-fixes")
+
 _G.EFFECT_NAME = "parallel"
 
 local utils = require("__parallel-module__.utils")
 local spoilable_items = require("__item-request-proxy-events__.spoilable-items")
+local get_base_parallel = require("prototypes.final-fixes.base-parallel")
 
 local types_with_allowed_module_categories = { "assembling-machine", "furnace", "beacon", "lab", "mining-drill", "recipe" }
 if data.raw["agricultural-tower"] then
@@ -20,15 +24,6 @@ local original_to_altered_crafting_category = {}
 _G.max_parallel_per_module = 0
 
 local parallel_value_cache = data.raw["mod-data"].parallel_module_mod_parallel_value_cache.data
-local entity_to_base_parallel = data.raw["mod-data"].parallel_module_mod_entity_to_base_parallel.data
-
--- TODO: use space locations
-if mods["virentis"] then
-    require("__parallel-module__.compat.virentis-final-fixes")
-end
-if mods["planetaris-tellus"] then
-    require("__parallel-module__.compat.planetaris-tellus-final-fixes")
-end
 
 -------------------------------------------------------------------------------
 --- MODULES
@@ -168,14 +163,6 @@ do
     end
 end
 
-for _, machine_type in pairs(crafting_machine_types) do
-    for _, machine in pairs(data.raw[machine_type]) do
-        if machine.effect_receiver and machine.base_effect and machine.base_effect.parallel and machine.base_effect.parallel > 0 then
-            entity_to_base_parallel[machine.name] = machine.base_effect.parallel
-        end
-    end
-end
-
 -------------------------------------------------------------------------------
 --- RECIPE CATEGORIES
 -------------------------------------------------------------------------------
@@ -185,16 +172,6 @@ for name, _ in pairs(data.raw["recipe-category"]) do
     crafting_category_to_max_module_slots[name] = 0
     crafting_category_to_max_parallel_without_modules[name] = 0
     crafting_category_to_should_enable_parallel_effect[name] = false
-end
-
-local valid_machines_with_base_parallel = {}
-
-local function max_parallel_without_modules(machine)
-    local base_parallel = machine and machine.type == "assembling-machine" and entity_to_base_parallel[machine.name] or 0
-    if base_parallel > 0 then
-        valid_machines_with_base_parallel[machine.name] = true
-    end
-    return base_parallel
 end
 
 local function calculate_max_module_slots(machines)
@@ -225,7 +202,7 @@ local function calculate_max_module_slots(machines)
             end
             machine_module_slots = machine_module_slots + max_extra_module_slots
         end
-        local base_machine_parallel = max_parallel_without_modules(machine)
+        local base_machine_parallel = get_base_parallel(machine)
         for _, category in pairs(categories) do
             if not data.raw["recipe-category"][category] then
                 goto continue
@@ -241,25 +218,6 @@ end
 for _, machine_type in pairs(crafting_machine_types) do
     calculate_max_module_slots(data.raw[machine_type])
 end
-
-for machine_name, parallel in pairs(entity_to_base_parallel) do
-    if valid_machines_with_base_parallel[machine_name] then
-        local item = data.raw.item[machine_name]
-        if item then
-            item.custom_tooltip_fields = item.custom_tooltip_fields or {}
-            table.insert(item.custom_tooltip_fields, {
-                name = { "mod-tooltip-name.parallel-module-parallel" },
-                value = { "mod-tooltip-value.parallel-module-value", tostring(parallel) },
-                order = 109,
-                show_in_factoriopedia = true,
-                show_in_tooltip = true
-            })
-        end
-    else
-        entity_to_base_parallel[machine_name] = nil
-    end
-end
-
 
 require "prototypes.final-fixes.recipe-productivity-technologies"
 

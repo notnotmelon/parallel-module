@@ -1,9 +1,5 @@
 local base_recipe_to_altered_recipes = data.raw["mod-data"].parallel_module_mod_recipe_table.data
 
--------------------------------------------------------------------------------
---- TECHNOLOGIES
--------------------------------------------------------------------------------
-
 for _, technology in pairs(data.raw.technology) do
     if not technology.effects then
         goto continue
