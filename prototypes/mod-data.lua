@@ -13,15 +13,6 @@ data:extend {
             -- Maximum parallel allowed for any machine; must be an integer
             max_total_parallel = 64, -- +64000% = 64x
 
-
-            -- Which types of crafting machine to consider for parallel modules and relevant recipes
-            -- COMPAT: don't change this unless you really need to
-            crafting_machine_types = {
-                "assembling-machine",
-                "rocket-silo",
-                "furnace",
-            },
-
             -- Module categories to be considered "default", i.e. that should be treated like vanilla module categories
             -- COMPAT: if this mod is removing module categories from crafting machines and/or recipes, adding them here should restore them
             -- NOTE: this is discarded at the end of the data stage and is not available at runtime
@@ -44,12 +35,18 @@ data:extend {
             },
 
             -- internal use only
+            allowed_machines = {},
+            allowed_recipes = {},
             recipe_table = {},
             recipe_table_inverse = {},
             parallel_value_cache = {},
             spoilable_modules = {},
             entity_to_base_parallel = {},
-            allowed_machines = {},
+            crafting_machine_types = {
+                "assembling-machine",
+                "rocket-silo",
+                "furnace",
+            },
         },
     },
 }

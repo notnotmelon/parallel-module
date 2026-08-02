@@ -4,8 +4,7 @@ _G.parallel = {mod_data = mod_data}
 require "compat.virentis-final-fixes"
 require "compat.disallowed-recipe-categories"
 
---require "prototypes.final-fixes.allowed-recipes"
---require "prototypes.final-fixes.allowed-machines"
+require "prototypes.final-fixes.allowed-recipes-and-machines"
 require "prototypes.final-fixes.base-parallel"
 require "prototypes.final-fixes.recipe-categories"
 require "prototypes.final-fixes.convert-furnaces"
