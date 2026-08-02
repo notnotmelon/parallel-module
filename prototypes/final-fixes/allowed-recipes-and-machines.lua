@@ -28,19 +28,23 @@ end
 
 local function can_machine_be_parallelized(machine)
     if machine.hidden then return false end
-    if not utils.table_contains_value(machine.allowed_effects or {}, "parallel") then return false end
-    if not has_parallel_module_category(machine) then return false end
 
     if machine.type == "furnace"
         and not settings.startup["parallel-module-allow-in-furnaces"].value then
         return false
     end
 
-    if not machine.quality_affects_module_slots then
-        if (machine.module_slots or 0) <= 0 then return false end
-    end
+    local has_base_parallel = machine.effect_receiver
+        and machine.effect_receiver.base_effect
+        and type(machine.effect_receiver.base_effect.parallel) == "number"
+        and machine.effect_receiver.base_effect.parallel ~= 0
 
-    return true
+    local can_i_stick_the_module_in_there =
+        has_parallel_module_category(machine)
+        and utils.table_contains_value(machine.allowed_effects or {}, "parallel")
+        and (machine.quality_affects_module_slots or (machine.module_slots or 0) >= 1)
+
+    return has_base_parallel or can_i_stick_the_module_in_there
 end
 
 local machines_that_meet_basic_criteria = {}
