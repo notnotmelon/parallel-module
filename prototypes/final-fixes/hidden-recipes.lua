@@ -68,7 +68,7 @@ local function can_recipe_be_parallelized(recipe)
             return false
         end
     end
-    
+
     local valid_categories = {}
     recipe.categories = recipe.categories or {"crafting"}
     for _, category in pairs(recipe.categories) do
@@ -90,7 +90,7 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
 
     -- explicitly allow parallel modules in recipe.allowed_module_categories
     table.insert(base_recipe.allowed_module_categories, "parallel")
-    
+
     valid_categories = valid_categories or {}
     for _, category in pairs(valid_categories) do
         if not crafting_category_to_recipes[category] then
@@ -99,16 +99,16 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         crafting_category_to_recipes[category][recipe_name] = true
     end
 
-    mod_data.recipe_table[recipe_name] = { [tostring(0)] = recipe_name }
-    mod_data.recipe_table_inverse[recipe_name] = { [tostring(0)] = recipe_name }
+    mod_data.recipe_table[recipe_name] = {[tostring(0)] = recipe_name}
+    mod_data.recipe_table_inverse[recipe_name] = {[tostring(0)] = recipe_name}
     local total_max_module_value = math.min(mod_data.max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
         parallel.max_parallel_per_module * get_max_module_slots_for_recipe(valid_categories))
-    
+
     for scale = 1, utils.round_parallel(total_max_module_value) do
         local scale_str = tostring(scale)
         local new_recipe_name = string.format("%s__parallel-module__%d", recipe_name, scale_str)
         mod_data.recipe_table[recipe_name][scale_str] = new_recipe_name
-        mod_data.recipe_table_inverse[new_recipe_name] = { [scale_str] = recipe_name }
+        mod_data.recipe_table_inverse[new_recipe_name] = {[scale_str] = recipe_name}
 
         local num_parallels = scale + 1
 
@@ -117,7 +117,7 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         new_recipe.localised_name = {
             "recipe-name.parallel-module-num-parallels",
             data_utils.get_recipe_localised_name(base_recipe),
-            tostring(num_parallels)
+            tostring(num_parallels),
         }
         new_recipe.localised_description = data_utils.get_recipe_localised_description(base_recipe)
         data_utils.ensure_recipe_icon_or_icons(new_recipe, base_recipe)
@@ -134,8 +134,8 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         new_recipe.hide_from_signal_gui = true
         new_recipe.auto_recycle = false
         new_recipe.request_paste_multiplier = math.ceil((new_recipe.request_paste_multiplier or 1) / num_parallels)
-        
-        for _, products in pairs{new_recipe.ingredients or {}, new_recipe.results or {}} do
+
+        for _, products in pairs {new_recipe.ingredients or {}, new_recipe.results or {}} do
             for _, product in pairs(products) do
                 if product.amount then
                     product.amount = product.amount * num_parallels
@@ -176,8 +176,8 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
 end
 
 for _, new_category in pairs(new_crafting_categories) do
-    data:extend({ new_category })
+    data:extend {new_category}
 end
 for _, new_recipe in pairs(new_recipes) do
-    data:extend({ new_recipe })
+    data:extend {new_recipe}
 end

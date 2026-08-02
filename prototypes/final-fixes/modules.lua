@@ -21,7 +21,7 @@ end
 local function to_quality_values(module)
     local result = {}
     for name, quality in pairs(data.raw.quality) do
-        result[name] = { "mod-tooltip-value.parallel-module-value", tostring(100 * module_stregth(module, quality)) }
+        result[name] = {"mod-tooltip-value.parallel-module-value", tostring(100 * module_stregth(module, quality))}
     end
     return result
 end
@@ -38,10 +38,10 @@ for module_name, module in pairs(data.raw.module) do
     module.effect.parallel = module.effect.parallel or 0
     parallel.max_parallel_per_module = math.max(parallel.max_parallel_per_module, module.effect.parallel * max_quality_multipler)
     module.custom_tooltip_fields = {{
-        name = { "mod-tooltip-name.parallel-module-parallel" },
-        value = { "mod-tooltip-value.parallel-module-value", tostring(module.effect.parallel), },
+        name = {"mod-tooltip-name.parallel-module-parallel"},
+        value = {"mod-tooltip-value.parallel-module-value", tostring(module.effect.parallel)},
         quality_values = to_quality_values(module),
-        order = 79
+        order = 79,
     }}
     local tier = tostring(module.tier)
     if not mod_data.parallel_value_cache[tier] then

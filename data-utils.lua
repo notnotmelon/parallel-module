@@ -162,7 +162,7 @@ local function get_recipe_main_product(recipe)
     if type(main_product_name) ~= "string" then
         return nil
     end
-    
+
     for prototype in pairs(defines.prototypes.item) do
         if data.raw[prototype] and data.raw[prototype][main_product_name] then
             return data.raw[prototype][main_product_name]

@@ -6,7 +6,7 @@ local hidden_furnace = table.deepcopy(data.raw["furnace"]["stone-furnace"])
 hidden_furnace.name = "hidden-furnace"
 hidden_furnace.hidden = true
 hidden_furnace.next_upgrade = nil
-data:extend{hidden_furnace}
+data:extend {hidden_furnace}
 
 local function can_be_replaced(furnace)
     if furnace.hidden then return false end
@@ -32,7 +32,7 @@ for _, furnace in pairs(data.raw.furnace) do
         furnace.source_inventory_size = nil
         furnace.result_inventory_size = nil
 
-        data:extend{furnace}
+        data:extend {furnace}
         data.raw.furnace[furnace.name] = nil
     end
 end

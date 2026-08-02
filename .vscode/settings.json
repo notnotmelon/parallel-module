@@ -23,5 +23,24 @@
     "Lua.diagnostics.disable": [
         "lowercase-global"
     ],
-    "Lua.runtime.version": "Lua 5.2"
+    "Lua.runtime.version": "Lua 5.2",
+    "Lua.format.defaultConfig": {
+        "indent_style": "space",
+        "indent_size": "4",
+        "quote_style": "double",
+        "call_arg_parentheses": "remove_table_only",
+        "continuation_indent": "4",
+        "max_line_length": "999",
+        "trailing_table_separator": "smart",
+        "insert_final_newline": "true",
+        "align_call_args": "false",
+        "align_function_params": "true",
+        "align_continuous_assign_statement": "true",
+        "align_continuous_rect_table_field": "true",
+        "align_array_table": "true",
+        "end_statement_with_semicolon": "same_line",
+        "space_around_table_field_list": "false",
+        "space_before_function_call_single_arg": "true",
+    },
+    "editor.detectIndentation": false
 }

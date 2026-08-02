@@ -1,6 +1,6 @@
 local item_sounds = require("__base__.prototypes.item_sounds")
 
-data:extend{{
+data:extend {{
     type = "module",
     name = "parallel-module",
     icon = "__parallel-module__/graphics/icons/parallel-module.png",
@@ -17,13 +17,13 @@ data:extend{{
     effect = {
         pollution = 0.25,
         speed = -1.0,
-        parallel = 1.00
+        parallel = 1.00,
     },
     speed_quality_multiplier = 3.0,
     pollution_quality_multiplier = 4.0,
 }}
 
-data:extend{{
+data:extend {{
     type = "module",
     name = "parallel-module-2",
     icon = "__parallel-module__/graphics/icons/parallel-module-2.png",
@@ -40,13 +40,13 @@ data:extend{{
     effect = {
         pollution = 0.5,
         speed = -0.8,
-        parallel = 1.00
+        parallel = 1.00,
     },
     speed_quality_multiplier = 3.0,
     pollution_quality_multiplier = 4.0,
 }}
 
-data:extend{{
+data:extend {{
     type = "module",
     name = "parallel-module-3",
     icon = "__parallel-module__/graphics/icons/parallel-module-3.png",
@@ -63,7 +63,7 @@ data:extend{{
     effect = {
         pollution = 0.75,
         speed = -0.6,
-        parallel = 1.00
+        parallel = 1.00,
     },
     speed_quality_multiplier = 3.0,
     pollution_quality_multiplier = 4.0,

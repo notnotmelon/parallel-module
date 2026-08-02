@@ -16,7 +16,7 @@ end
 -- Call the prototypes_check in advance and cache the results to stop calling prototypes every tick
 local is_parallel_module = {}
 local module_name_to_quality_to_parallel = {}
-for module_name, module in pairs(prototypes.get_item_filtered{{filter = "type", type = "module"}}) do
+for module_name, module in pairs(prototypes.get_item_filtered {{filter = "type", type = "module"}}) do
     if module.category == "parallel" then
         is_parallel_module[module_name] = true
         module_name_to_quality_to_parallel[module_name] = mod_data.parallel_value_cache[tostring(module.tier)]
@@ -24,7 +24,7 @@ for module_name, module in pairs(prototypes.get_item_filtered{{filter = "type", 
 end
 
 for _, type in pairs(mod_data.crafting_machine_types) do
-    for entity_name, entity in pairs(prototypes.get_entity_filtered{{filter = "type", type = type}}) do
+    for entity_name, entity in pairs(prototypes.get_entity_filtered {{filter = "type", type = type}}) do
         if entity.allowed_module_categories and entity.allowed_module_categories.parallel then
             mod_data.allowed_machines[entity_name] = true
         end
@@ -84,7 +84,7 @@ end
 function Public.get_crafting_machines(surface, position, area)
     local result = {}
     local filters = {
-        type = mod_data.crafting_machine_types
+        type = mod_data.crafting_machine_types,
     }
     if position ~= nil then
         filters["position"] = position
@@ -199,7 +199,7 @@ function Public.update_machine_for_parallel(machine, just_built)
             current_machine_parallel = 0
         end
         if not latest_set_recipe or not is_set_recipe then
-            for _, player_to_machine_map in pairs{storage.player_to_selected_machine, storage.player_to_machine_with_open_gui} do
+            for _, player_to_machine_map in pairs {storage.player_to_selected_machine, storage.player_to_machine_with_open_gui} do
                 for player_idx, selected_machine in pairs(player_to_machine_map) do
                     if machine == selected_machine then
                         local player = game.get_player(player_idx)
@@ -207,19 +207,19 @@ function Public.update_machine_for_parallel(machine, just_built)
                             if has_parallel_modules then
                                 player.print({
                                     "mod-tooltip-name.parallel-module-circuit-set-recipe-warning",
-                                    {"gui-control-behavior-modes.set-recipe"}
+                                    {"gui-control-behavior-modes.set-recipe"},
                                 }, {
                                     skip = defines.print_skip.if_visible,
-                                    game_state = false
+                                    game_state = false,
                                 })
                             elseif not has_base_parallel_but_no_connections then
                                 player.print({
                                     "mod-tooltip-name.parallel-module-entity-circuit-set-recipe-warning",
                                     {"gui-control-behavior-modes.set-recipe"},
-                                    {"module-category-name.parallel"}
+                                    {"module-category-name.parallel"},
                                 }, {
                                     skip = defines.print_skip.if_visible,
-                                    game_state = false
+                                    game_state = false,
                                 })
                             end
                         end
@@ -236,7 +236,7 @@ function Public.update_machine_for_parallel(machine, just_built)
         if recipe_name then
             _, base_recipe_name = next(mod_data.recipe_table_inverse[recipe_name] or {})
         end
-        
+
         Public.set_parallel_recipe(
             machine,
             Public.get_parallel_recipe(base_recipe_name, utils.round_parallel(current_machine_parallel)),
@@ -269,22 +269,22 @@ function Public.update_machine_info(machine, recipe_name, current_machine_parall
 
     local tooltip_machine_parallel = current_machine_parallel
     if old_parallel ~= tooltip_machine_parallel then
-        machine.set_tooltip_field({
+        machine.set_tooltip_field {
             id = TOOLTIP_ID,
-            name = { "mod-tooltip-name.parallel-module-parallel" },
+            name = {"mod-tooltip-name.parallel-module-parallel"},
             value = {
                 "mod-tooltip-value.parallel-module-num-parallels",
                 utils.round_parallel(tooltip_machine_parallel) + 1,
                 {
                     tooltip_machine_parallel == mod_data.max_total_parallel and "mod-tooltip-value.parallel-module-value-max" or "mod-tooltip-value.parallel-module-value",
-                    cached_tostring(tooltip_machine_parallel * 100)
-                }
+                    cached_tostring(tooltip_machine_parallel * 100),
+                },
             },
-            order = 90
-        })
+            order = 90,
+        }
     end
-    
-    storage.machine_to_latest_recipe_and_parallel[machine.unit_number] = { recipe_name, current_machine_parallel, is_set_recipe }
+
+    storage.machine_to_latest_recipe_and_parallel[machine.unit_number] = {recipe_name, current_machine_parallel, is_set_recipe}
 
     if machine.type == "entity-ghost" then
         machine.clear_tooltip_field(TOOLTIP_ID)
@@ -345,10 +345,10 @@ end
 function Public.handle_player_cursor_stack_changed(player_index)
     local player = game.get_player(player_index)
     storage.players_holding_cut_paste_tool[player_index] = player
-            and player.valid
-            and player.cursor_stack
-            and player.cursor_stack.valid_for_read
-            and player.cursor_stack.name == "cut-paste-tool"
+        and player.valid
+        and player.cursor_stack
+        and player.cursor_stack.valid_for_read
+        and player.cursor_stack.name == "cut-paste-tool"
     Public.update_selected_machine_for_player(player_index)
 end
 
@@ -458,7 +458,7 @@ function Public.set_parallel_recipe(entity, recipe, quality, current_recipe)
             force = entity.force_index,
             allow_belts = false,
             use_start_position_on_failure = true,
-            drop_full_stack = true
+            drop_full_stack = true,
         }
     end
 end

@@ -1,6 +1,6 @@
 function parallel.get_base_parallel(machine)
     if machine.hidden then return 0 end
-    
+
     if machine.effect_receiver and machine.effect_receiver.base_effect and machine.effect_receiver.base_effect.parallel then
         return math.min(
             mod_data.max_total_parallel,
@@ -36,11 +36,11 @@ for prototype in pairs(defines.prototypes.item) do
         if base_parallel then
             item.custom_tooltip_fields = item.custom_tooltip_fields or {}
             table.insert(item.custom_tooltip_fields, {
-                name = { "mod-tooltip-name.parallel-module-base-parallel" },
-                value = { "mod-tooltip-value.parallel-module-value", tostring(100 * base_parallel) },
+                name = {"mod-tooltip-name.parallel-module-base-parallel"},
+                value = {"mod-tooltip-value.parallel-module-value", tostring(100 * base_parallel)},
                 order = 109,
                 show_in_factoriopedia = true,
-                show_in_tooltip = true
+                show_in_tooltip = true,
             })
         end
     end

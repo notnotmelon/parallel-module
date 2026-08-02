@@ -1,9 +1,7 @@
-data:extend({
-  {
+data:extend {{
     type = "module-category",
-    name = "parallel"
-  }
-})
+    name = "parallel",
+}}
 
 require "prototypes.mod-data"
 require "prototypes.item"

@@ -1,4 +1,4 @@
-data:extend({
+data:extend {
     ---------------------------------------------------------------------------
     --- SETTINGS AND COMPATIBILITY
     ---------------------------------------------------------------------------
@@ -19,16 +19,16 @@ data:extend({
             crafting_machine_types = {
                 "assembling-machine",
                 "rocket-silo",
-                "furnace"
+                "furnace",
             },
 
             -- Module categories to be considered "default", i.e. that should be treated like vanilla module categories
-            -- COMPAT: if this mod is removing module categories from crafting machines and/or recipes, adding them here should restore them 
+            -- COMPAT: if this mod is removing module categories from crafting machines and/or recipes, adding them here should restore them
             -- NOTE: this is discarded at the end of the data stage and is not available at runtime
             -- WARN: append, don't overwrite, to keep values added by other mods
             additional_default_categories = {
                 "arcanyx-curse",
-                "azure-speed"
+                "azure-speed",
             },
 
             -- Crafting categories to explicitly prevent from using parallel
@@ -40,7 +40,7 @@ data:extend({
                 "ammunition",
                 "incineration",
                 "fuel-incineration",
-                "recycling"
+                "recycling",
             },
 
             -- internal use only
@@ -50,6 +50,6 @@ data:extend({
             spoilable_modules = {},
             entity_to_base_parallel = {},
             allowed_machines = {},
-        }
+        },
     },
-})
+}

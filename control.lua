@@ -21,7 +21,7 @@ local function handle_entity_built(machine)
     end
 
     -- TODO: not very optimized
-    for _, map in pairs{storage.player_to_machine_with_open_gui, storage.player_to_selected_machine} do
+    for _, map in pairs {storage.player_to_machine_with_open_gui, storage.player_to_selected_machine} do
         for player_idx in pairs(map) do
             local player = game.get_player(player_idx)
             if player and player.valid then
@@ -31,7 +31,7 @@ local function handle_entity_built(machine)
     end
 end
 
-for _, build_event in pairs{
+for _, build_event in pairs {
     defines.events.on_built_entity,
     defines.events.on_robot_built_entity,
     defines.events.on_space_platform_built_entity,
@@ -40,7 +40,7 @@ for _, build_event in pairs{
 } do
     script.on_event(build_event, function(event)
         handle_entity_built(event.entity)
-    end, { { filter = "crafting-machine" } })
+    end, {{filter = "crafting-machine"}})
 end
 
 script.on_event("item-request-proxy-created", function(event)
@@ -118,5 +118,5 @@ end)
 
 remote.add_interface("parallel-module", {
     get_total_machine_parallel = control_helpers.get_total_machine_parallel_optimized,
-    is_player_holding_cut_paste_tool = control_helpers.is_player_holding_cut_paste_tool
+    is_player_holding_cut_paste_tool = control_helpers.is_player_holding_cut_paste_tool,
 })

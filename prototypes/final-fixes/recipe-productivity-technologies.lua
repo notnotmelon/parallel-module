@@ -17,7 +17,7 @@ for _, technology in pairs(data.raw.technology) do
                     type   = "change-recipe-productivity",
                     recipe = altered_recipe,
                     change = change,
-                    hidden = true
+                    hidden = true,
                 })
             end
         end

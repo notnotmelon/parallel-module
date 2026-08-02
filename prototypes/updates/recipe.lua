@@ -1,4 +1,4 @@
-for _, suffix in pairs { "", "-2", "-3" } do
+for _, suffix in pairs {"", "-2", "-3"} do
     local source = data.raw.recipe["speed-module" .. suffix]
     local destination = data.raw.recipe["parallel-module" .. suffix]
     if source and destination then

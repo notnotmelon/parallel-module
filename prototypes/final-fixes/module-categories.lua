@@ -6,7 +6,7 @@ local types_with_allowed_module_categories = {
     "mining-drill",
     "recipe",
     "rocket-silo",
-    data.raw["agricultural-tower"] and "agricultural-tower" or nil
+    data.raw["agricultural-tower"] and "agricultural-tower" or nil,
 }
 
 -- Update default allowed module categories
@@ -15,7 +15,7 @@ ModuleCategoryDefaults = ModuleCategoryDefaults
 if ModuleCategoryDefaults and ModuleCategoryDefaults.default_categories then
     base_module_categories = ModuleCategoryDefaults.default_categories
 else
-    base_module_categories = { "speed", "efficiency", "productivity" }
+    base_module_categories = {"speed", "efficiency", "productivity"}
     if mods["quality"] then
         table.insert(base_module_categories, "quality")
     end
