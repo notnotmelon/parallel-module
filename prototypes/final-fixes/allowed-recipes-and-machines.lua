@@ -1,4 +1,6 @@
--- step 0: determine module categories that can provide the parallel effect
+local utils = require "utils"
+
+-- step 1: determine module categories that can provide the parallel effect
 
 local module_categories_that_give_parallel = {}
 for _, module in pairs(data.raw.module) do
@@ -24,7 +26,7 @@ local function has_parallel_module_category(recipe_or_machine)
     return false
 end
 
--- step 1: determine machines that meet basic criteria
+-- step 2: determine machines that meet basic criteria
 
 local function can_machine_be_parallelized(machine)
     if machine.hidden then return false end
@@ -56,7 +58,7 @@ for _, prototype in pairs(mod_data.crafting_machine_types) do
     end
 end
 
--- step 2: determine recipes that meet basic criteria
+-- step 3: determine recipes that meet basic criteria
 
 local function has_non_stackable_flag(item_name)
     for prototype in pairs(defines.prototypes.item) do
@@ -101,7 +103,7 @@ for _, recipe in pairs(data.raw.recipe) do
     end
 end
 
--- step 3: find union of recipe categories between recipes and machines
+-- step 4: find union of recipe categories between recipes and machines
 
 local allowed_recipe_categories = {}
 do
@@ -121,11 +123,10 @@ do
     end
 end
 
--- step 4: create final list of allowed recipes and machines
+-- step 5: create final list of allowed recipes and machines
 
 assert(table_size(mod_data.allowed_machines) == 0)
 assert(table_size(mod_data.allowed_recipes) == 0)
-
 
 for _, machine in pairs(machines_that_meet_basic_criteria) do
     for _, category in pairs(machine.crafting_categories or {}) do

@@ -13,15 +13,6 @@ data:extend {
             -- Maximum parallel allowed for any machine; must be an integer
             max_total_parallel = 64, -- +64000% = 64x
 
-            -- Module categories to be considered "default", i.e. that should be treated like vanilla module categories
-            -- COMPAT: if this mod is removing module categories from crafting machines and/or recipes, adding them here should restore them
-            -- NOTE: this is discarded at the end of the data stage and is not available at runtime
-            -- WARN: append, don't overwrite, to keep values added by other mods
-            additional_default_categories = {
-                "arcanyx-curse",
-                "azure-speed",
-            },
-
             -- Crafting categories to explicitly prevent from using parallel
             -- COMPAT: this is the easiest way to exclude a collection of recipes
             -- WARN: append, don't overwrite, to keep values added by other mods

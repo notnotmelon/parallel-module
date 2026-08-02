@@ -9,8 +9,7 @@
     "dependencies": [
         "base",
         "bplib >= 2.1",
-        "item-request-proxy-events >= 0.3.4",
-        "+ module-category-defaults"
+        "item-request-proxy-events >= 0.3.4"
     ],
     "expansion_required": false,
     "quality_required": false,
