@@ -1,6 +1,4 @@
 function parallel.get_base_parallel(machine)
-    if machine.hidden then return 0 end
-
     if machine.effect_receiver and machine.effect_receiver.base_effect and machine.effect_receiver.base_effect.parallel then
         return math.min(
             mod_data.max_total_parallel,
@@ -13,11 +11,10 @@ end
 local function get_all_machines_with_base_parallel()
     local result = {}
 
-    for _, machine_type in pairs(mod_data.crafting_machine_types) do
-        for _, machine in pairs(data.raw[machine_type]) do
-            if parallel.get_base_parallel(machine) ~= 0 then
-                table.insert(result, machine)
-            end
+    for name, type in pairs(mod_data.allowed_machines) do
+        local machine = data.raw[type][name]
+        if parallel.get_base_parallel(machine) ~= 0 then
+            table.insert(result, machine)
         end
     end
 

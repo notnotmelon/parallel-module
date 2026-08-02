@@ -126,18 +126,19 @@ end
 assert(table_size(mod_data.allowed_machines) == 0)
 assert(table_size(mod_data.allowed_recipes) == 0)
 
-for _, recipe in pairs(recipes_that_meet_basic_criteria) do
-    for _, category in pairs(recipe.categories or {"crafting"}) do
-        if allowed_recipe_categories[category] then
-            mod_data.allowed_recipes[recipe.name] = true
-        end
-    end
-end
 
 for _, machine in pairs(machines_that_meet_basic_criteria) do
     for _, category in pairs(machine.crafting_categories or {}) do
         if allowed_recipe_categories[category] then
-            mod_data.allowed_recipes[machine.name] = true
+            mod_data.allowed_machines[machine.name] = machine.type
+        end
+    end
+end
+
+for _, recipe in pairs(recipes_that_meet_basic_criteria) do
+    for _, category in pairs(recipe.categories or {"crafting"}) do
+        if allowed_recipe_categories[category] then
+            mod_data.allowed_recipes[recipe.name] = true
         end
     end
 end
