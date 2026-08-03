@@ -23,7 +23,16 @@ local function has_parallel_module_category(recipe_or_machine)
         end
     end
 
-    return false
+    local default_module_categories = {"speed", "efficiency", "productivity"}
+    for _, module_category in pairs(default_module_categories) do
+        if data.raw["module-category"][module_category] then
+            if not utils.table_contains_value(recipe_or_machine.allowed_module_categories, module_category) then
+                return false
+            end
+        end
+    end
+
+    return true
 end
 
 -- step 2: determine machines that meet basic criteria
@@ -48,7 +57,6 @@ local function can_machine_be_parallelized(machine)
             and utils.table_contains_value(machine.allowed_effects, "productivity")
             and utils.table_contains_value(machine.allowed_effects, "consumption")
             and utils.table_contains_value(machine.allowed_effects, "pollution")
-            and utils.table_contains_value(machine.allowed_effects, "quality")
     end
 
     local can_i_stick_the_module_in_there =

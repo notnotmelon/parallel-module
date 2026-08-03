@@ -33,7 +33,7 @@ For furnaces to function, this mod automatically converts all `furnace` prototyp
 
 #### New `CraftingMachinePrototype` Fields:
 
-* `"allow_parallel"` (`boolean`): Default: Enabled if `allowed_effects` equals `{"speed", "productivity", "consumption", "pollution", "quality"}`. Determines if this machine can accept parallel modules. Overriden if this machine has base parallel.
+* `"allow_parallel"` (`boolean`): Default: Enabled if `allowed_effects` has at least `{"speed", "productivity", "consumption", "pollution"}`. Determines if this machine can accept parallel modules. Overriden if this machine has base parallel.
 
 #### New `EffectReceiver` Fields:
 
