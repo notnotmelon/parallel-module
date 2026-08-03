@@ -2,9 +2,20 @@ local spoilable_items = require("__item-request-proxy-events__.spoilable-items")
 
 parallel.max_parallel_per_module_slot = 0
 
-local function quality_multiplier(module, quality_level)
-    local quality_multiplier = module.parallel_quality_multiplier or 1.0
-    return (quality_level * quality_multiplier) + 1.0
+local function quality_multiplier(module, quality)
+    local module_quality_boost
+    if (module.effect or {}).parallel or 0.0 > 0.0 then
+        module_quality_boost = module.parallel_quality_multiplier or 1.0
+    else
+        module_quality_boost = module.parallel_quality_multiplier or 0.0
+    end
+
+    if quality.module_parallel_multiplier then
+        assert(quality.module_parallel_multiplier >= 0.01, "Must be >= 0.01.")
+        return quality.module_parallel_multiplier * module_quality_boost
+    end
+
+    return (quality.level * module_quality_boost) + 1.0
 end
 
 local function module_strength(module, quality)
@@ -12,11 +23,7 @@ local function module_strength(module, quality)
         return 0.0
     end
 
-    if not quality then
-        return module.effect.parallel
-    end
-
-    return module.effect.parallel * quality_multiplier(module, quality.level)
+    return module.effect.parallel * quality_multiplier(module, quality)
 end
 
 local max_quality_level = data.raw.quality.normal.level

@@ -10,9 +10,6 @@ data:extend {
         name = "parallel-module",
         type = "mod-data",
         data = {
-            -- Maximum parallel allowed for any machine; must be an integer
-            max_total_parallel = 64, -- +64000% = 64x
-
             -- Crafting categories to explicitly prevent from using parallel
             -- COMPAT: this is the easiest way to exclude a collection of recipes
             -- WARN: append, don't overwrite, to keep values added by other mods

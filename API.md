@@ -14,7 +14,7 @@ Any changes made to a prototype after Parallel Module's `data-final-fixes.lua` r
 
 ### Runtime
 
-At runtime, Parallel Module swaps between recipes depending on crafting machines' parallel values; this is mostly straightforward for compatibility.
+At runtime, Parallel Module swaps between recipes depending on crafting machines' parallel values.
 
 Currently, the supported entities are:
 `rocket-silo`
@@ -22,18 +22,6 @@ Currently, the supported entities are:
 `furnace`
 
 For furnaces to function, this mod automatically converts all `furnace` prototypes into `assembling-machine` if the `parallel-module-allow-in-furnaces` setting is enabled.
-
-## Parallel Module Parameters 
-
-Parallel Module has several parameters it uses in its calculations. These can be modified by editing the fields of the `parallel-module` mod data object, i.e. `data.raw['mod-data']["parallel-module"].data`:
-
-* `max_total_parallel` (`double`): Default `64` (`+64000%` = `64x`). Determines the maximum possible parallel value an entity can have (analagous to the 300% productivity maximum for most recipes). Must be an integer.
-
-#### See [`mod-data.lua`](prototypes/mod-data.lua) for more details.
-
-## Recipes
-
-Parallel Module adds several prototype fields for specifying how parallel modules interact with recipes.
 
 #### New `RecipeCategoryPrototype` Fields:
 
@@ -47,6 +35,12 @@ Parallel Module adds several prototype fields for specifying how parallel module
 
 * `effect_receiver.base_effect.parallel` (`double`): Default `0.0`. The base parallel value that will applied to all (valid) recipes made in entities of this prototype. This is analagous to the base productivity of e.g. the foundry. Recipes that do not accept parallel modules can still be made in an entity with a non-zero base parallel, and will be unaffected.
 
-## Other
+#### New `ModulePrototype` Fields:
 
-Module category compatibility should be done through [Module category defaults](https://mods.factorio.com/mod/module-category-defaults).
+* `parallel_quality_multiplier` (`double`): Default `1.0 if the module parallel effect is > 0, otherwise 0.0.`. 0.0 means that no parallel scaling is applied (common for penalties). 1.0 means that the full scaling of the parallel prototype applies.
+
+* `effect.parallel` (`double`): Default `0.0`. Defines how many parallels this module provides.
+
+#### New `QualityPrototype` Fields:
+
+* `module_parallel_multiplier` (`double`): Default: Value of `level`. Must be >= 0.01.
