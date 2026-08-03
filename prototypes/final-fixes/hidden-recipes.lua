@@ -27,13 +27,15 @@ local function get_possible_parallels_for_recipe(recipe)
 
         local possible_parallels_for_this_machine = {[parallel.get_base_parallel(machine)] = true}
         for _ = 1, num_module_slots do
-            for module, module_strength in pairs(somehow) do
-                local possible_parallels_for_this_module = {}
-                for existing in pairs(possible_parallels_for_this_machine) do
-                    table.insert(possible_parallels_for_this_module, existing + module_strength)
-                end
-                for _, possible in pairs(possible_parallels_for_this_module) do
-                    possible_parallels_for_this_machine[possible] = true
+            for _, by_quality in pairs(mod_data.parallel_value_cache) do
+                for _, module_strength in pairs(by_quality) do
+                    local possible_parallels_for_this_module = {}
+                    for existing in pairs(possible_parallels_for_this_machine) do
+                        table.insert(possible_parallels_for_this_module, existing + module_strength)
+                    end
+                    for _, possible in pairs(possible_parallels_for_this_module) do
+                        possible_parallels_for_this_machine[possible] = true
+                    end
                 end
             end
         end
