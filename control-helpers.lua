@@ -137,7 +137,7 @@ function Public.get_total_machine_parallel_optimized(machine)
         return nil, nil
     end
 
-    local parallel = math.min(mod_data.max_total_parallel, module_parallel + (machine_base_parallel or 0))
+    local parallel = module_parallel + (machine_base_parallel or 0)
     return parallel, module_parallel > 0
 end
 
@@ -267,7 +267,7 @@ function Public.update_machine_info(machine, recipe_name, current_machine_parall
                 "mod-tooltip-value.parallel-module-num-parallels",
                 utils.round_parallel(tooltip_machine_parallel) + 1,
                 {
-                    tooltip_machine_parallel == mod_data.max_total_parallel and "mod-tooltip-value.parallel-module-value-max" or "mod-tooltip-value.parallel-module-value",
+                    "mod-tooltip-value.parallel-module-value",
                     cached_tostring(tooltip_machine_parallel * 100),
                 },
             },

@@ -1,9 +1,6 @@
 function parallel.get_base_parallel(machine)
     if machine.effect_receiver and machine.effect_receiver.base_effect and machine.effect_receiver.base_effect.parallel then
-        return math.min(
-            mod_data.max_total_parallel,
-            machine.effect_receiver.base_effect.parallel
-        )
+        return machine.effect_receiver.base_effect.parallel
     end
     return 0
 end

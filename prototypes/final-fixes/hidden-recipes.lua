@@ -101,8 +101,8 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
 
     mod_data.recipe_table[recipe_name] = {[tostring(0)] = recipe_name}
     mod_data.recipe_table_inverse[recipe_name] = {[tostring(0)] = recipe_name}
-    local total_max_module_value = math.min(mod_data.max_total_parallel, get_max_parallel_without_modules_for_recipe(valid_categories) +
-        parallel.max_parallel_per_module_slot * get_max_module_slots_for_recipe(valid_categories))
+    local total_max_module_value = get_max_parallel_without_modules_for_recipe(valid_categories) +
+        parallel.max_parallel_per_module_slot * get_max_module_slots_for_recipe(valid_categories)
 
     for scale = 1, utils.round_parallel(total_max_module_value) do
         local scale_str = tostring(scale)
