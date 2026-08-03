@@ -14,15 +14,6 @@ for base_recipe, recipes in pairs(mod_data.recipe_table) do
 end
 
 -- Call the prototypes_check in advance and cache the results to stop calling prototypes every tick
-local is_parallel_module = {}
-local module_name_to_quality_to_parallel = {}
-for module_name, module in pairs(prototypes.get_item_filtered {{filter = "type", type = "module"}}) do
-    if module.category == "parallel" then
-        is_parallel_module[module_name] = true
-        module_name_to_quality_to_parallel[module_name] = mod_data.parallel_value_cache[tostring(module.tier)]
-    end
-end
-
 for _, type in pairs(mod_data.crafting_machine_types) do
     for entity_name, entity in pairs(prototypes.get_entity_filtered {{filter = "type", type = type}}) do
         if entity.allowed_module_categories and entity.allowed_module_categories.parallel then
@@ -120,11 +111,11 @@ function Public.get_total_parallel_from_module_inventory(entity)
     end
 
     for _, module in pairs(module_inventory) do
-        if module == nil or not is_parallel_module[module.name] then
+        if module == nil or not mod_data.parallel_value_cache[module.name] then
             goto continue
         end
 
-        total_parallel = total_parallel + module.count * module_name_to_quality_to_parallel[module.name][module.quality]
+        total_parallel = total_parallel + module.count * mod_data.parallel_value_cache[module.name][module.quality]
         ::continue::
     end
     return total_parallel
