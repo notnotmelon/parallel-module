@@ -86,6 +86,11 @@ local function can_recipe_be_parallelized(recipe)
     if recipe.name:match("%-barrel$") then return false end
     if not has_parallel_module_category(recipe) then return false end
 
+    for _, category in pairs(recipe.categories or {"crafting"}) do
+        local category = data.raw["recipe-category"][category]
+        if category and category.parallel_blacklist == true then return false end
+    end
+
     -- ensure recipes with results with the "non-stackable" flag are not parallelized
     for _, result in pairs(recipe.results) do
         if result.type == "item" and type(result.name) == "string" and has_non_stackable_flag(result.name) then

@@ -10,18 +10,6 @@ data:extend {
         name = "parallel-module",
         type = "mod-data",
         data = {
-            -- Crafting categories to explicitly prevent from using parallel
-            -- COMPAT: this is the easiest way to exclude a collection of recipes
-            -- WARN: append, don't overwrite, to keep values added by other mods
-            disallowed_crafting_categories = {
-                "tiberium-reprocessing",
-                "cosmic_incubator",
-                "ammunition",
-                "incineration",
-                "fuel-incineration",
-                "recycling",
-            },
-
             -- internal use only
             allowed_machines = {},
             allowed_recipes = {},
