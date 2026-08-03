@@ -1,7 +1,5 @@
 local spoilable_items = require("__item-request-proxy-events__.spoilable-items")
 
-parallel.max_parallel_per_module_slot = 0
-
 local function quality_multiplier(module, quality)
     local module_quality_boost
     if (module.effect or {}).parallel or 0.0 > 0.0 then
@@ -46,11 +44,6 @@ for module_name, module in pairs(data.raw.module) do
     if spoilable_items.register_item_spoiled_event(module) then
         mod_data.spoilable_modules[module_name] = true
     end
-
-    parallel.max_parallel_per_module_slot = math.max(
-        parallel.max_parallel_per_module_slot,
-        module.effect.parallel * quality_multiplier(module, max_quality_level)
-    )
 
     module.custom_tooltip_fields = {{
         name = {"mod-tooltip-name.parallel-module-parallel"},

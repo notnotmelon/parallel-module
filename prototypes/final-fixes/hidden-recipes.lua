@@ -84,6 +84,11 @@ local function can_recipe_be_parallelized(recipe)
     return true, valid_categories
 end
 
+local function get_possible_parallels_for_recipe(recipe)
+    local possible_parallels = {}
+    return possible_parallels
+end
+
 for recipe_name, base_recipe in pairs(data.raw.recipe) do
     local can_be, valid_categories = can_recipe_be_parallelized(base_recipe)
     if not can_be then goto continue end
@@ -101,16 +106,12 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
 
     mod_data.recipe_table[recipe_name] = {[tostring(0)] = recipe_name}
     mod_data.recipe_table_inverse[recipe_name] = {[tostring(0)] = recipe_name}
-    local total_max_module_value = get_max_parallel_without_modules_for_recipe(valid_categories) +
-        parallel.max_parallel_per_module_slot * get_max_module_slots_for_recipe(valid_categories)
 
-    for scale = 1, utils.round_parallel(total_max_module_value) do
-        local scale_str = tostring(scale)
+    for num_parallels in pairs(get_possible_parallels_for_recipe(base_recipe)) do
+        local scale_str = tostring(num_parallels)
         local new_recipe_name = string.format("%s__parallel-module__%d", recipe_name, scale_str)
         mod_data.recipe_table[recipe_name][scale_str] = new_recipe_name
         mod_data.recipe_table_inverse[new_recipe_name] = {[scale_str] = recipe_name}
-
-        local num_parallels = scale + 1
 
         local new_recipe = table.deepcopy(base_recipe)
         new_recipe.name = new_recipe_name
