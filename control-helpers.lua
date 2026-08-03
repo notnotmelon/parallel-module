@@ -5,15 +5,6 @@ utils = require "utils"
 
 TOOLTIP_ID = 2453693297
 
--- Call the prototypes_check in advance and cache the results to stop calling prototypes every tick
-for _, type in pairs(mod_data.crafting_machine_types) do
-    for entity_name, entity in pairs(prototypes.get_entity_filtered {{filter = "type", type = type}}) do
-        if entity.allowed_module_categories and entity.allowed_module_categories.parallel then
-            mod_data.allowed_machines[entity_name] = true
-        end
-    end
-end
-
 local function cached_tostring(x)
     local s = storage.cached_to_string[x]
     if s == nil then
@@ -31,7 +22,7 @@ function Public.ensure_storage_cache_is_setup()
     storage.player_to_selected_machine = storage.player_to_selected_machine or {}
     storage.players_holding_cut_paste_tool = storage.players_holding_cut_paste_tool or {}
     storage.machine_to_latest_recipe_and_parallel = storage.machine_to_latest_recipe_and_parallel or {}
-    if not storage.cached_to_string then storage.cached_to_string = {} end
+    storage.cached_to_string = {}
 end
 
 function Public.update_all_entities()
