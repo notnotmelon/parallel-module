@@ -8,7 +8,7 @@ local PROTOTYPE_LIMIT = 64000
 -------------------------------------------------------------------------------
 
 local function get_possible_parallels_for_recipe(recipe)
-    local possible_parallels = {[1] = true}
+    local possible_parallels = {}
 
     for name, prototype in pairs(mod_data.allowed_machines) do
         local machine = data.raw[prototype][name]
