@@ -10,10 +10,5 @@ data:extend {{
         parallel_value_cache = {},
         spoilable_modules = {},
         entity_to_base_parallel = {},
-        crafting_machine_types = {
-            "assembling-machine",
-            "rocket-silo",
-            "furnace",
-        },
     },
 }}

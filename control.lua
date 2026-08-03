@@ -44,7 +44,7 @@ for _, build_event in pairs {
 end
 
 script.on_event("item-request-proxy-created", function(event)
-    if not event.proxy_target or not event.proxy_target.valid or not utils.table_contains_value(mod_data.crafting_machine_types, event.proxy_target.type) then
+    if not event.proxy_target or not event.proxy_target.valid or not utils.table_contains_value(control_helpers.crafting_machine_types, event.proxy_target.type) then
         return
     end
 

@@ -50,7 +50,11 @@ local function can_machine_be_parallelized(machine)
 end
 
 local machines_that_meet_basic_criteria = {}
-for _, prototype in pairs(mod_data.crafting_machine_types) do
+for _, prototype in pairs {
+    "assembling-machine",
+    "rocket-silo",
+    "furnace",
+} do
     for _, machine in pairs(data.raw[prototype] or {}) do
         if can_machine_be_parallelized(machine) then
             table.insert(machines_that_meet_basic_criteria, machine)

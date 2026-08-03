@@ -62,7 +62,7 @@ end
 function Public.get_crafting_machines(surface, position, area)
     local result = {}
     local filters = {
-        type = mod_data.crafting_machine_types,
+        type = Public.crafting_machine_types,
     }
     if position ~= nil then
         filters["position"] = position
@@ -73,7 +73,7 @@ function Public.get_crafting_machines(surface, position, area)
         table.insert(result, machine)
     end
 
-    filters["ghost_type"] = mod_data.crafting_machine_types
+    filters["ghost_type"] = Public.crafting_machine_types
     filters["type"] = nil
     for _, machine in pairs(surface.find_entities_filtered(filters)) do
         table.insert(result, machine)
@@ -144,7 +144,7 @@ function Public.update_machine_for_parallel(machine, just_built)
     local machine_type = (machine.type == "entity-ghost" and machine.ghost_type) or machine.type
     if machine_type == "furnace" then return end
 
-    if not utils.table_contains_value(mod_data.crafting_machine_types, machine_type) then
+    if not utils.table_contains_value(Public.crafting_machine_types, machine_type) then
         return
     end
 
@@ -399,7 +399,7 @@ end
 
 function Public.handle_player_selection_changed(player)
     local entity = player.selected
-    if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or not utils.table_contains_value(mod_data.crafting_machine_types, (entity.type == "entity-ghost" and entity.ghost_type) or entity.type) then
+    if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or not utils.table_contains_value(Public.crafting_machine_types, (entity.type == "entity-ghost" and entity.ghost_type) or entity.type) then
         storage.player_to_selected_machine[player.index] = nil
     else
         storage.player_to_selected_machine[player.index] = entity
@@ -432,5 +432,10 @@ function Public.set_parallel_recipe(entity, recipe, quality, current_recipe)
         }
     end
 end
+
+Public.crafting_machine_types = {
+    "assembling-machine",
+    "rocket-silo",
+}
 
 return Public
