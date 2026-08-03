@@ -104,14 +104,13 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         crafting_category_to_recipes[category][recipe_name] = true
     end
 
-    mod_data.recipe_table[recipe_name] = {[tostring(0)] = recipe_name}
-    mod_data.recipe_table_inverse[recipe_name] = {[tostring(0)] = recipe_name}
+    mod_data.recipe_table[recipe_name] = {[1] = recipe_name}
+    mod_data.recipe_table_inverse[recipe_name] = recipe_name
 
     for num_parallels in pairs(get_possible_parallels_for_recipe(base_recipe)) do
-        local scale_str = tostring(num_parallels)
-        local new_recipe_name = string.format("%s__parallel-module__%d", recipe_name, scale_str)
-        mod_data.recipe_table[recipe_name][scale_str] = new_recipe_name
-        mod_data.recipe_table_inverse[new_recipe_name] = {[scale_str] = recipe_name}
+        local new_recipe_name = string.format("%s__parallel-module__%d", recipe_name, tostring(num_parallels))
+        mod_data.recipe_table[recipe_name][num_parallels] = new_recipe_name
+        mod_data.recipe_table_inverse[new_recipe_name] = recipe_name
 
         local new_recipe = table.deepcopy(base_recipe)
         new_recipe.name = new_recipe_name

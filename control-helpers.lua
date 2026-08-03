@@ -5,14 +5,6 @@ utils = require "utils"
 
 TOOLTIP_ID = 2453693297
 
-local recipe_table = {}
-for base_recipe, recipes in pairs(mod_data.recipe_table) do
-    recipe_table[base_recipe] = {}
-    for parallel, recipe in pairs(recipes) do
-        recipe_table[base_recipe][tonumber(parallel)] = recipe
-    end
-end
-
 -- Call the prototypes_check in advance and cache the results to stop calling prototypes every tick
 for _, type in pairs(mod_data.crafting_machine_types) do
     for entity_name, entity in pairs(prototypes.get_entity_filtered {{filter = "type", type = type}}) do
@@ -59,17 +51,21 @@ function Public.update_all_entities()
     end
 end
 
-function Public.get_parallel_recipe(base_recipe_name, parallel)
-    if not base_recipe_name or parallel == 0 then
+function Public.get_parallel_recipe(recipe_name, parallel)
+    local base_recipe_name = mod_data.recipe_table_inverse[recipe_name]
+    assert(base_recipe_name)
+
+
+    if parallel == 0 then
         return base_recipe_name
     end
 
-    local parallel_recipes = recipe_table[base_recipe_name]
+    local parallel_recipes = mod_data.recipe_table[base_recipe_name]
     if not parallel_recipes then
         return base_recipe_name
     end
 
-    return parallel_recipes[parallel] or base_recipe_name
+    return parallel_recipes[parallel + 1] or base_recipe_name
 end
 
 function Public.get_crafting_machines(surface, position, area)
@@ -223,14 +219,9 @@ function Public.update_machine_for_parallel(machine, just_built)
     local was_changed = latest_recipe ~= recipe_name or latest_parallel ~= current_machine_parallel
     -- If no change, don't update
     if was_changed or just_built then
-        local base_recipe_name = nil
-        if recipe_name then
-            _, base_recipe_name = next(mod_data.recipe_table_inverse[recipe_name] or {})
-        end
-
         Public.set_parallel_recipe(
             machine,
-            Public.get_parallel_recipe(base_recipe_name, utils.round_parallel(current_machine_parallel)),
+            Public.get_parallel_recipe(recipe_name, utils.round_parallel(current_machine_parallel)),
             quality,
             (recipe and recipe.name) or nil
         )
@@ -346,15 +337,12 @@ end
 function Public.sanitize_bp_entities(bp_entities)
     local was_modified = false
     for _, bp_entity in pairs(bp_entities) do
-        local current_parallel_to_base_recipe_name = bp_entity.recipe and mod_data.recipe_table_inverse[bp_entity.recipe]
+        local base_recipe_name = bp_entity.recipe and mod_data.recipe_table_inverse[bp_entity.recipe]
 
         -- Set blueprint entity's recipe to non-parallel version, if applicable
-        if current_parallel_to_base_recipe_name then
-            local _, base_recipe_name = next(current_parallel_to_base_recipe_name)
-            if base_recipe_name and bp_entity.recipe ~= base_recipe_name then
-                was_modified = true
-                bp_entity.recipe = base_recipe_name
-            end
+        if base_recipe_name and bp_entity.recipe ~= base_recipe_name then
+            was_modified = true
+            bp_entity.recipe = base_recipe_name
         end
     end
 
