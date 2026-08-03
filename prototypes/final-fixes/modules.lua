@@ -24,11 +24,6 @@ local function module_strength(module, quality)
     return module.effect.parallel * quality_multiplier(module, quality)
 end
 
-local max_quality_level = data.raw.quality.normal.level
-for _, quality in pairs(data.raw.quality) do
-    max_quality_level = math.max(max_quality_level, quality.level)
-end
-
 local function to_quality_values(module)
     local result = {}
     for name, quality in pairs(data.raw.quality) do

@@ -252,4 +252,68 @@ function Public.ensure_recipe_icon_or_icons(prototype, base_prototype)
     end
 end
 
+function Public.can_recipe_be_made_in_this_machine(recipe, machine)
+    local function shares_any_crafting_category(recipe, machine)
+        for _, a in pairs(recipe.categories or {"crafting"}) do
+            for _, b in pairs(machine.crafting_categories or {}) do
+                local category = data.raw["recipe-category"][a]
+                if a == b and category and not category.parallel_blacklist then
+                    return true
+                end
+            end
+        end
+        return false
+    end
+
+    if not shares_any_crafting_category(recipe, machine) then return false end
+
+    local num_fluid_ingredients = 0
+    local num_fluid_results = 0
+    local num_item_ingredients = 0
+    local num_item_results = 0
+
+    for _, ingredient in pairs(recipe.ingredients or {}) do
+        if ingredient.type == "fluid" then
+            num_fluid_ingredients = num_fluid_ingredients + 1
+        elseif ingredient.type == "item" then
+            num_item_ingredients = num_item_ingredients + 1
+        end
+    end
+    for _, result in pairs(recipe.results or {}) do
+        if result.type == "fluid" then
+            num_fluid_results = num_fluid_results + 1
+        elseif result.type == "item" then
+            num_item_results = num_item_results + 1
+        end
+    end
+
+    local num_fluid_inputs = 0
+    local num_fluid_outputs = 0
+
+    for _, fluidbox in pairs(machine.fluid_boxes or {}) do
+        if fluidbox.production_type == "input" then
+            num_fluid_inputs = num_fluid_inputs + 1
+        elseif fluidbox.production_type == "output" then
+            num_fluid_outputs = num_fluid_outputs + 1
+        else
+            num_fluid_inputs = num_fluid_inputs + 1
+            num_fluid_outputs = num_fluid_outputs + 1
+        end
+    end
+
+    if num_fluid_ingredients > num_fluid_inputs then return false end
+    if num_fluid_results > num_fluid_outputs then return false end
+
+    local source_inventory_size = machine.ingredient_count or machine.source_inventory_size or 65535
+    local result_inventory_size = machine.max_item_product_count or machine.result_inventory_size or 65535
+    if num_item_ingredients > source_inventory_size then return false end
+    if num_item_results > result_inventory_size then return false end
+
+    if machine.type == "furnace" and num_fluid_ingredients > 1 then return false end
+    if machine.type == "furnace" and num_item_ingredients > 1 then return false end
+    if machine.type == "furnace" and table_size(recipe.ingredients) == 0 then return false end
+
+    return true
+end
+
 return Public

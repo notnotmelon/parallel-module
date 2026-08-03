@@ -5,155 +5,46 @@ local new_recipes = {}
 local crafting_category_to_recipes = {}
 local new_crafting_categories = {}
 
-local function is_category_parallelizable(recipe_name, category)
-    if category.parallel_blacklist == true then
-        return false
-    end
-
-    if (parallel.crafting_category_to_max_module_slots[category] or 0) == 0 then
-        return false
-    end
-
-    return true
-end
-
-local function get_max_module_slots_for_recipe(crafting_categories)
-    local slots = 0
-    for _, category in pairs(crafting_categories) do
-        slots = math.max(slots, parallel.crafting_category_to_max_module_slots[category])
-    end
-    return slots
-end
-
-local function get_max_parallel_without_modules_for_recipe(crafting_categories)
-    local max_parallel = 0
-    for _, category in pairs(crafting_categories) do
-        max_parallel = math.max(max_parallel, parallel.crafting_category_to_max_parallel_without_modules[category])
-    end
-    return max_parallel
-end
+local PROTOTYPE_LIMIT = 64000
 
 -------------------------------------------------------------------------------
 --- CREATE PARALLEL RECIPE PROTOTYPES
 -------------------------------------------------------------------------------
 
-local function has_non_stackable_flag(item_name)
-    for prototype in pairs(defines.prototypes.item) do
-        if data.raw[prototype] and data.raw[prototype][item_name] then
-            if data.raw[prototype][item_name].stack_size == 1 then
-                return true
-            end
-            if utils.table_contains_value(data.raw[prototype][item_name].flags or {}, "not-stackable") then
-                return true
-            end
-        end
-    end
-
-    return false
-end
-
-local function can_recipe_be_parallelized(recipe)
-    if recipe.hidden then return false end
-    if recipe.allow_speed == false then return false end
-    if recipe.allow_parallel == false then return false end
-    if not recipe.ingredients then return false end
-    if not recipe.results then return false end
-    if table_size(recipe.ingredients) == 0 then return false end
-    if table_size(recipe.results) == 0 then return false end
-    if recipe.name:match("%-barrel$") then return false end
-
-    -- ensure recipes with results with the "non-stackable" flag are not parallelized
-    for _, result in pairs(recipe.results) do
-        if result.type == "item" and result.name and has_non_stackable_flag(result.name) then
-            return false
-        end
-    end
-
-    local valid_categories = {}
-    recipe.categories = recipe.categories or {"crafting"}
-    for _, category in pairs(recipe.categories) do
-        if is_category_parallelizable(recipe.name, category) then
-            table.insert(valid_categories, category)
-        end
-    end
-
-    if table_size(valid_categories) == 0 then
-        return false
-    end
-
-    return true, valid_categories
-end
-
 local function get_possible_parallels_for_recipe(recipe)
-    local function can_recipe_be_made_in_this_machine(recipe, machine)
-        local function shares_any_crafting_category(recipe, machine)
-            for _, a in pairs(recipe.categories or {"crafting"}) do
-                for _, b in pairs(machine.crafting_categories or {}) do
-                    local category = data.raw["recipe-category"][a]
-                    if a == b and category and not category.parallel_blacklist then
-                        return true
-                    end
-                end
-            end
-            return false
-        end
-
-        if not shares_any_crafting_category(recipe, machine) then return false end
-
-        local num_fluid_ingredients = 0
-        local num_fluid_results = 0
-        local num_item_ingredients = 0
-        local num_item_results = 0
-
-        for _, ingredient in pairs(recipe.ingredients or {}) do
-            if ingredient.type == "fluid" then
-                num_fluid_ingredients = num_fluid_ingredients + 1
-            elseif ingredient.type == "item" then
-                num_item_ingredients = num_item_ingredients + 1
-            end
-        end
-        for _, result in pairs(recipe.results or {}) do
-            if result.type == "fluid" then
-                num_fluid_results = num_fluid_results + 1
-            elseif result.type == "item" then
-                num_item_results = num_item_results + 1
-            end
-        end
-
-        local num_fluid_inputs = 0
-        local num_fluid_outputs = 0
-
-        for _, fluidbox in pairs(machine.fluid_boxes or {}) do
-            if fluidbox.production_type == "input" then
-                num_fluid_inputs = num_fluid_inputs + 1
-            elseif fluidbox.production_type == "output" then
-                num_fluid_outputs = num_fluid_outputs + 1
-            else
-                num_fluid_inputs = num_fluid_inputs + 1
-                num_fluid_outputs = num_fluid_outputs + 1
-            end
-        end
-
-        if num_fluid_ingredients > num_fluid_inputs then return false end
-        if num_fluid_results > num_fluid_outputs then return false end
-
-        local source_inventory_size = machine.ingredient_count or machine.source_inventory_size or 65535
-        local result_inventory_size = machine.max_item_product_count or machine.result_inventory_size or 65535
-        if num_item_ingredients > source_inventory_size then return false end
-        if num_item_results > result_inventory_size then return false end
-
-        if machine.type == "furnace" and num_fluid_ingredients > 1 then return false end
-        if machine.type == "furnace" and num_item_ingredients > 1 then return false end
-        if machine.type == "furnace" and table_size(recipe.ingredients) == 0 then return false end
-
-        return true
-    end
-
-    local possible_parallels = {}
+    local possible_parallels = {[1] = true}
 
     for name, prototype in pairs(mod_data.allowed_machines) do
         local machine = data.raw[prototype][name]
-        if not can_recipe_be_made_in_this_machine(recipe, machine) then goto continue end
+        if not data_utils.can_recipe_be_made_in_this_machine(recipe, machine) then goto continue end
+
+        local num_module_slots = machine.module_slots or 0
+        if machine.quality_affects_module_slots then
+            for _, quality in pairs(data.raw.quality) do
+                if not quality.hidden then
+                    local bonus = quality.crafting_machine_module_slots_bonus or quality.level
+                    num_module_slots = math.max(num_module_slots, bonus)
+                end
+            end
+        end
+
+
+        local possible_parallels_for_this_machine = {[parallel.get_base_parallel(machine)] = true}
+        for _ = 1, num_module_slots do
+            for module, module_strength in pairs(somehow) do
+                local possible_parallels_for_this_module = {}
+                for existing in pairs(possible_parallels_for_this_machine) do
+                    table.insert(possible_parallels_for_this_module, existing + module_strength)
+                end
+                for _, possible in pairs(possible_parallels_for_this_module) do
+                    possible_parallels_for_this_machine[possible] = true
+                end
+            end
+        end
+
+        for possible in pairs(possible_parallels_for_this_machine) do
+            possible_parallels[utils.round_parallel(possible)] = true
+        end
 
         ::continue::
     end
@@ -161,25 +52,16 @@ local function get_possible_parallels_for_recipe(recipe)
     return possible_parallels
 end
 
-for recipe_name, base_recipe in pairs(data.raw.recipe) do
-    local can_be, valid_categories = can_recipe_be_parallelized(base_recipe)
-    if not can_be then goto continue end
-
-    -- explicitly allow parallel modules in recipe.allowed_module_categories
-    table.insert(base_recipe.allowed_module_categories, "parallel")
-
-    valid_categories = valid_categories or {}
-    for _, category in pairs(valid_categories) do
-        if not crafting_category_to_recipes[category] then
-            crafting_category_to_recipes[category] = {}
-        end
-        crafting_category_to_recipes[category][recipe_name] = true
-    end
+for recipe_name in pairs(mod_data.allowed_recipes) do
+    local base_recipe = data.raw.recipe[recipe_name]
 
     mod_data.recipe_table[recipe_name] = {[1] = recipe_name}
     mod_data.recipe_table_inverse[recipe_name] = recipe_name
 
     for num_parallels in pairs(get_possible_parallels_for_recipe(base_recipe)) do
+        if num_parallels == 1 then goto continue end -- 1x parallel is the same as the base recipe
+        assert(num_parallels > 1)
+
         local new_recipe_name = string.format("%s__parallel-module__%d", recipe_name, tostring(num_parallels))
         mod_data.recipe_table[recipe_name][num_parallels] = new_recipe_name
         mod_data.recipe_table_inverse[new_recipe_name] = recipe_name
@@ -243,8 +125,9 @@ for recipe_name, base_recipe in pairs(data.raw.recipe) do
         end
 
         new_recipes[new_recipe_name] = new_recipe
+
+        ::continue::
     end
-    ::continue::
 end
 
 for _, new_category in pairs(new_crafting_categories) do
