@@ -1,14 +1,10 @@
 local utils = require "utils"
 local data_utils = require "data-utils"
 
-local new_recipes = {}
-local crafting_category_to_recipes = {}
-local new_crafting_categories = {}
-
 local PROTOTYPE_LIMIT = 64000
 
 -------------------------------------------------------------------------------
---- CREATE PARALLEL RECIPE PROTOTYPES
+--- DETERMINE ALL POSSIBLE PARALLEL AMOUNTS
 -------------------------------------------------------------------------------
 
 local function get_possible_parallels_for_recipe(recipe)
@@ -52,6 +48,10 @@ local function get_possible_parallels_for_recipe(recipe)
     return possible_parallels
 end
 
+-------------------------------------------------------------------------------
+--- CREATE PARALLEL RECIPE PROTOTYPES
+-------------------------------------------------------------------------------
+
 for recipe_name in pairs(mod_data.allowed_recipes) do
     local base_recipe = data.raw.recipe[recipe_name]
 
@@ -61,6 +61,8 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
     for num_parallels in pairs(get_possible_parallels_for_recipe(base_recipe)) do
         if num_parallels == 1 then goto continue end -- 1x parallel is the same as the base recipe
         assert(num_parallels > 1)
+
+        if table_size(data.raw.recipe) >= PROTOTYPE_LIMIT then goto continue end
 
         local new_recipe_name = string.format("%s__parallel-module__%d", recipe_name, tostring(num_parallels))
         mod_data.recipe_table[recipe_name][num_parallels] = new_recipe_name
@@ -124,15 +126,8 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
             end
         end
 
-        new_recipes[new_recipe_name] = new_recipe
+        data:extend {new_recipe}
 
         ::continue::
     end
-end
-
-for _, new_category in pairs(new_crafting_categories) do
-    data:extend {new_category}
-end
-for _, new_recipe in pairs(new_recipes) do
-    data:extend {new_recipe}
 end
