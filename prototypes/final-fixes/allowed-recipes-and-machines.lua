@@ -41,9 +41,19 @@ local function can_machine_be_parallelized(machine)
         and type(machine.effect_receiver.base_effect.parallel) == "number"
         and machine.effect_receiver.base_effect.parallel ~= 0
 
+    local allow_parallel = machine.allow_parallel
+    if allow_parallel == nil then
+        allow_parallel = type(machine.allowed_effects) == "table"
+            and utils.table_contains_value(machine.allowed_effects, "speed")
+            and utils.table_contains_value(machine.allowed_effects, "productivity")
+            and utils.table_contains_value(machine.allowed_effects, "consumption")
+            and utils.table_contains_value(machine.allowed_effects, "pollution")
+            and utils.table_contains_value(machine.allowed_effects, "quality")
+    end
+
     local can_i_stick_the_module_in_there =
         has_parallel_module_category(machine)
-        and utils.table_contains_value(machine.allowed_effects or {}, "parallel")
+        and allow_parallel
         and (machine.quality_affects_module_slots or (machine.module_slots or 0) >= 1)
 
     return has_base_parallel or can_i_stick_the_module_in_there

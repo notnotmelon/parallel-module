@@ -31,6 +31,10 @@ For furnaces to function, this mod automatically converts all `furnace` prototyp
 
 * `allow_parallel` (`boolean`): Default `true`. If set to `false`, parallel modules will be disabled for this recipe. Overrides any other considerations.
 
+#### New `CraftingMachinePrototype` Fields:
+
+* `"allow_parallel"` (`boolean`): Default: Enabled if `allowed_effects` equals `{"speed", "productivity", "consumption", "pollution", "quality"}`. Determines if this machine can accept parallel modules. Overriden if this machine has base parallel.
+
 #### New `EffectReceiver` Fields:
 
 * `effect_receiver.base_effect.parallel` (`double`): Default `0.0`. The base parallel value that will applied to all (valid) recipes made in entities of this prototype. This is analagous to the base productivity of e.g. the foundry. Recipes that do not accept parallel modules can still be made in an entity with a non-zero base parallel, and will be unaffected.
