@@ -41,16 +41,6 @@ utils.table_contains_value = function(table, value)
     return false
 end
 
-utils.round = function(value, scale)
-    if scale <= 0 or value == 0 then
-        return value
-    elseif value < 0 then
-        return math.floor(value / scale - 0.5) * scale
-    else
-        return math.floor(value / scale + 0.5) * scale
-    end
-end
-
 utils.clamp = function(value, min, max)
     if value < min then
         return min
