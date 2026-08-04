@@ -61,16 +61,6 @@ utils.clamp = function(value, min, max)
     end
 end
 
---- Convert a probability to odds, scale the odds, then convert back to probability, e.g.:
---- scale_probability_as_odds(0.5, 3.0) => 0.75
----     [prob] 0.5 => [odds] 1:1
----     [odds] 1:1 * [scale] 3.0 => [odds] 3:1
----     [odds] 3:1 => [prob] 75%
-utils.scale_probability_as_odds = function(prob, scale)
-    prob = utils.clamp(prob, 0.0, 1.0)
-    return (scale * prob) / (scale * prob - prob + 1)
-end
-
 utils.is_quality_enabled = function()
     if utils._is_quality_enabled == nil then
         utils._is_quality_enabled = mods["quality"] and data.raw.quality and table_size(data.raw.quality) > 1
