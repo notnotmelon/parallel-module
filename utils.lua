@@ -41,13 +41,6 @@ utils.table_contains_value = function(table, value)
     return false
 end
 
-utils.is_quality_enabled = function()
-    if utils._is_quality_enabled == nil then
-        utils._is_quality_enabled = mods["quality"] and data.raw.quality and table_size(data.raw.quality) > 1
-    end
-    return utils._is_quality_enabled
-end
-
 utils.round_parallel = function(parallel)
     return math.ceil(parallel)
 end
