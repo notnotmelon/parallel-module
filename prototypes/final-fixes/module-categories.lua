@@ -42,18 +42,3 @@ for _, prototype in pairs(prototypes_with_allowed_module_categories) do
         end
     end
 end
-
--- remove the parallel module category for allowed machines
-
-local function add_parallel_to_allowed_categories(recipe_or_machine)
-    if not parallel.has_parallel_module_category(recipe_or_machine) then
-        table.insert(recipe_or_machine.allowed_module_categories, "parallel")
-    end
-end
-
-for name, prototype in pairs(mod_data.allowed_machines) do
-    add_parallel_to_allowed_categories(data.raw[prototype][name])
-end
-for name in pairs(mod_data.allowed_recipes) do
-    add_parallel_to_allowed_categories(data.raw.recipe[name])
-end

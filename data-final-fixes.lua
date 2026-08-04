@@ -1,3 +1,6 @@
+ModuleCategoryDefaults.process_entity_prototypes()
+ModuleCategoryDefaults.process_recipe_prototypes()
+
 _G.mod_data = data.raw["mod-data"]["parallel-module"].data
 _G.parallel = {mod_data = mod_data}
 
@@ -12,7 +15,3 @@ require "prototypes.final-fixes.module-categories"
 require "prototypes.final-fixes.hidden-recipes"
 require "prototypes.final-fixes.recipe-productivity-technologies"
 require "compat.bplib"
-
---error(serpent.block(mod_data.allowed_recipes))
---error(serpent.block(data.raw.recipe["rocket-part"]))
---error(serpent.block(data.raw["rocket-silo"]["rocket-silo"]))

@@ -18,29 +18,12 @@ function parallel.has_parallel_module_category(recipe_or_machine)
     end
 
     for _, category in pairs(recipe_or_machine.allowed_module_categories) do
-        if utils.table_contains_value(parallel.module_categories_that_give_parallel, category) then
+        if parallel.module_categories_that_give_parallel[category] then
             return true
         end
     end
 
     return false
-end
-
--- fallback: if the machine has the default vanilla module categories
--- we can assume the machine should probably accept parallel modules aswell
-local function has_default_module_categories(recipe_or_machine)
-    do return false end
-
-    local default_module_categories = {"speed", "efficiency", "productivity"}
-    for _, module_category in pairs(default_module_categories) do
-        if data.raw["module-category"][module_category] then
-            if not utils.table_contains_value(recipe_or_machine.allowed_module_categories, module_category) then
-                return false
-            end
-        end
-    end
-
-    return true
 end
 
 -- step 2: determine machines that meet basic criteria
@@ -69,7 +52,7 @@ local function can_machine_be_parallelized(machine)
     end
 
     local can_i_stick_the_module_in_there =
-        (parallel.has_parallel_module_category(machine) or has_default_module_categories(machine))
+        parallel.has_parallel_module_category(machine)
         and allow_parallel
         and (machine.quality_affects_module_slots or (machine.module_slots or 0) >= 1)
 
@@ -116,7 +99,7 @@ local function can_recipe_be_parallelized(recipe)
     if recipe.allow_parallel == false then return false end
     if recipe.name:match("%-barrel$") then return false end
 
-    if not parallel.has_parallel_module_category(recipe) and not has_default_module_categories(recipe) then
+    if not parallel.has_parallel_module_category(recipe) then
         return false
     end
 

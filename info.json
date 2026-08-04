@@ -9,7 +9,8 @@
     "dependencies": [
         "base",
         "bplib >= 2.1",
-        "item-request-proxy-events >= 0.3.4",
+        "item-request-proxy-events >= 0.3.5",
+        "module-category-defaults >= 2.2.0",
         "(?) rigor-module"
     ],
     "expansion_required": false,
