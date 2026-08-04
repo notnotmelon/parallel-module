@@ -23,7 +23,11 @@ local function has_parallel_module_category(recipe_or_machine)
         end
     end
 
-    -- fallback: if the machine has the "default" vanilla module categories, we can just add ours
+    return true
+end
+
+-- fallback: if the machine has the "default" vanilla module categories, we can just add ours
+local function add_parallel_module_category_if_default(recipe_or_machine)
     local default_module_categories = {"speed", "efficiency", "productivity"}
     for _, module_category in pairs(default_module_categories) do
         if data.raw["module-category"][module_category] then
@@ -32,6 +36,8 @@ local function has_parallel_module_category(recipe_or_machine)
             end
         end
     end
+
+    table.insert(recipe_or_machine.allowed_module_categories, "parallel")
 
     return true
 end
@@ -61,7 +67,7 @@ local function can_machine_be_parallelized(machine)
     end
 
     local can_i_stick_the_module_in_there =
-        has_parallel_module_category(machine)
+        (has_parallel_module_category(machine) or add_parallel_module_category_if_default(machine))
         and allow_parallel
         and (machine.quality_affects_module_slots or (machine.module_slots or 0) >= 1)
 
@@ -107,7 +113,13 @@ local function can_recipe_be_parallelized(recipe)
     if recipe.allow_speed == false then return false end
     if recipe.allow_parallel == false then return false end
     if recipe.name:match("%-barrel$") then return false end
-    if not has_parallel_module_category(recipe) then return false end
+
+    if not (
+            has_parallel_module_category(recipe)
+            or add_parallel_module_category_if_default(recipe)
+        ) then
+        return false
+    end
 
     for _, category in pairs(recipe.categories or {"crafting"}) do
         local category = data.raw["recipe-category"][category]
