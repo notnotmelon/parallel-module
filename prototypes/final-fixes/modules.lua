@@ -4,7 +4,7 @@ local spoilable_items = require("__item-request-proxy-events__.spoilable-items")
 
 local function quality_multiplier(module, quality)
     local module_quality_boost
-    if (module.effect or {}).parallel or 0.0 > 0.0 then
+    if ((module.effect or {}).parallel or 0.0) > 0.0 then
         module_quality_boost = module.parallel_quality_multiplier or 1.0
     else
         module_quality_boost = module.parallel_quality_multiplier or 0.0
@@ -26,7 +26,7 @@ local function module_strength(module, quality)
     return module.effect.parallel * quality_multiplier(module, quality)
 end
 
-local function to_quality_values(module)
+local function generate_quality_tooltip(module)
     local result = {}
     for name, quality in pairs(data.raw.quality) do
         result[name] = utils.parallel_tooltip(module_strength(module, quality))
@@ -45,7 +45,7 @@ for module_name, module in pairs(data.raw.module) do
     module.custom_tooltip_fields = {{
         name = {"mod-tooltip-name.parallel-module-parallel"},
         value = utils.parallel_tooltip(module_strength(module, data.raw.quality.normal)),
-        quality_values = to_quality_values(module),
+        quality_values = generate_quality_tooltip(module),
         order = 79,
     }}
 
