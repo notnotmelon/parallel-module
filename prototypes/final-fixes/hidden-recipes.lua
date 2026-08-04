@@ -65,8 +65,7 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
     mod_data.recipe_table_inverse[recipe_name] = recipe_name
 
     for _, num_parallels in pairs(get_possible_parallels_for_recipe(base_recipe)) do
-        if num_parallels == 1 then goto continue end -- 1x parallel is the same as the base recipe
-        assert(num_parallels > 1, recipe_name)
+        if num_parallels <= 1 then goto continue end -- 1x parallel is the same as the base recipe
 
         if table_size(data.raw.recipe) >= PROTOTYPE_LIMIT then goto continue end
 

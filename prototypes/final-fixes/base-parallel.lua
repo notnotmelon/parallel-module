@@ -1,3 +1,5 @@
+local utils = require "utils"
+
 function parallel.get_base_parallel(machine)
     if machine.effect_receiver and machine.effect_receiver.base_effect and machine.effect_receiver.base_effect.parallel then
         return machine.effect_receiver.base_effect.parallel
@@ -31,7 +33,7 @@ for prototype in pairs(defines.prototypes.item) do
             item.custom_tooltip_fields = item.custom_tooltip_fields or {}
             table.insert(item.custom_tooltip_fields, {
                 name = {"mod-tooltip-name.parallel-module-base-parallel"},
-                value = {"mod-tooltip-value.parallel-module-value", tostring(100 * base_parallel)},
+                value = utils.parallel_tooltip(base_parallel),
                 order = 109,
                 show_in_factoriopedia = true,
                 show_in_tooltip = true,

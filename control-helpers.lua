@@ -5,10 +5,11 @@ utils = require "utils"
 
 TOOLTIP_ID = 2453693297
 
-local function cached_tostring(x)
+local inner_tostring = tostring
+function tostring(x)
     local s = storage.cached_to_string[x]
     if s == nil then
-        s = tostring(x)
+        s = inner_tostring(x)
         storage.cached_to_string[x] = s
     end
     return s
@@ -55,7 +56,7 @@ function Public.get_parallel_recipe(recipe_name, parallel)
         return base_recipe_name
     end
 
-    return parallel_recipes[cached_tostring(parallel + 1)] or base_recipe_name
+    return parallel_recipes[tostring(parallel + 1)] or base_recipe_name
 end
 
 function Public.get_crafting_machines(surface, position, area)
@@ -247,10 +248,7 @@ function Public.update_machine_info(machine, recipe_name, current_machine_parall
             value = {
                 "mod-tooltip-value.parallel-module-num-parallels",
                 utils.round_parallel(tooltip_machine_parallel) + 1,
-                {
-                    "mod-tooltip-value.parallel-module-value",
-                    cached_tostring(tooltip_machine_parallel * 100),
-                },
+                utils.parallel_tooltip(tooltip_machine_parallel),
             },
             order = 90,
         }

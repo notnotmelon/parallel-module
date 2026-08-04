@@ -14,4 +14,4 @@ require "prototypes.achievement"
 
 require "compat.secretas"
 
--- data.raw["assembling-machine"]["chemical-plant"].effect_receiver = {base_effect = {speed = 0.5, parallel = 0.5, pollution = 0.5}}
+-- data.raw["assembling-machine"]["chemical-plant"].effect_receiver = {base_effect = {speed = 0.5, parallel = -1, pollution = 0.5}}
