@@ -55,7 +55,7 @@ function Public.get_parallel_recipe(recipe_name, parallel)
         return base_recipe_name
     end
 
-    return parallel_recipes[parallel + 1] or base_recipe_name
+    return parallel_recipes[cached_tostring(parallel + 1)] or base_recipe_name
 end
 
 function Public.get_crafting_machines(surface, position, area)
