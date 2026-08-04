@@ -103,6 +103,9 @@ local function can_recipe_be_parallelized(recipe)
         return false
     end
 
+    local allows_rigor = recipe.allow_rigor == true or type(recipe.allowed_module_categories) ~= "table" or utils.table_contains_value(recipe.allowed_module_categories, "rigor")
+    if mods["rigor-module"] and allows_rigor then return false end
+
     for _, category in pairs(recipe.categories or {"crafting"}) do
         local category = data.raw["recipe-category"][category]
         if category and category.parallel_blacklist == true then return false end
