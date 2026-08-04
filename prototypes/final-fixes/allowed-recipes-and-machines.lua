@@ -2,11 +2,11 @@ local utils = require "utils"
 
 -- step 1: determine module categories that can provide the parallel effect
 
-local module_categories_that_give_parallel = {}
+parallel.module_categories_that_give_parallel = {}
 for _, module in pairs(data.raw.module) do
     if type(module.category) == "string" and type(module.effect) == "table" then
         if (module.effect.parallel or 0) ~= 0 then
-            module_categories_that_give_parallel[module.category] = true
+            parallel.module_categories_that_give_parallel[module.category] = true
         end
     end
 end
@@ -18,7 +18,7 @@ local function has_parallel_module_category(recipe_or_machine)
     end
 
     for _, category in pairs(recipe_or_machine.allowed_module_categories) do
-        if utils.table_contains_value(module_categories_that_give_parallel, category) then
+        if utils.table_contains_value(parallel.module_categories_that_give_parallel, category) then
             return true
         end
     end
