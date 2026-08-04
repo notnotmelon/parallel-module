@@ -41,16 +41,6 @@ utils.table_contains_value = function(table, value)
     return false
 end
 
-utils.clamp = function(value, min, max)
-    if value < min then
-        return min
-    elseif value > max then
-        return max
-    else
-        return value
-    end
-end
-
 utils.is_quality_enabled = function()
     if utils._is_quality_enabled == nil then
         utils._is_quality_enabled = mods["quality"] and data.raw.quality and table_size(data.raw.quality) > 1
