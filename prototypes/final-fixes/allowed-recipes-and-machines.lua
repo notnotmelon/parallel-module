@@ -5,13 +5,13 @@ local utils = require "utils"
 parallel.module_categories_that_give_parallel = {}
 for _, module in pairs(data.raw.module) do
     if type(module.category) == "string" and type(module.effect) == "table" then
-        if (module.effect.parallel or 0) ~= 0 then
+        if (module.effect.parallel or 0) > 0 then
             parallel.module_categories_that_give_parallel[module.category] = true
         end
     end
 end
 
-local function has_parallel_module_category(recipe_or_machine)
+function parallel.has_parallel_module_category(recipe_or_machine)
     if type(recipe_or_machine.allowed_module_categories) ~= "table" then
         -- by default, all module categories are allowed
         return true
@@ -23,11 +23,14 @@ local function has_parallel_module_category(recipe_or_machine)
         end
     end
 
-    return true
+    return false
 end
 
--- fallback: if the machine has the "default" vanilla module categories, we can just add ours
-local function add_parallel_module_category_if_default(recipe_or_machine)
+-- fallback: if the machine has the default vanilla module categories
+-- we can assume the machine should probably accept parallel modules aswell
+local function has_default_module_categories(recipe_or_machine)
+    do return false end
+
     local default_module_categories = {"speed", "efficiency", "productivity"}
     for _, module_category in pairs(default_module_categories) do
         if data.raw["module-category"][module_category] then
@@ -36,8 +39,6 @@ local function add_parallel_module_category_if_default(recipe_or_machine)
             end
         end
     end
-
-    table.insert(recipe_or_machine.allowed_module_categories, "parallel")
 
     return true
 end
@@ -55,7 +56,7 @@ local function can_machine_be_parallelized(machine)
     local has_base_parallel = machine.effect_receiver
         and machine.effect_receiver.base_effect
         and type(machine.effect_receiver.base_effect.parallel) == "number"
-        and machine.effect_receiver.base_effect.parallel ~= 0
+        and machine.effect_receiver.base_effect.parallel > 0
 
     local allow_parallel = machine.allow_parallel
     if allow_parallel == nil then
@@ -67,7 +68,7 @@ local function can_machine_be_parallelized(machine)
     end
 
     local can_i_stick_the_module_in_there =
-        (has_parallel_module_category(machine) or add_parallel_module_category_if_default(machine))
+        (parallel.has_parallel_module_category(machine) or has_default_module_categories(machine))
         and allow_parallel
         and (machine.quality_affects_module_slots or (machine.module_slots or 0) >= 1)
 
@@ -114,10 +115,7 @@ local function can_recipe_be_parallelized(recipe)
     if recipe.allow_parallel == false then return false end
     if recipe.name:match("%-barrel$") then return false end
 
-    if not (
-            has_parallel_module_category(recipe)
-            or add_parallel_module_category_if_default(recipe)
-        ) then
+    if not parallel.has_parallel_module_category(recipe) and not has_default_module_categories(recipe) then
         return false
     end
 

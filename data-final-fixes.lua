@@ -8,7 +8,11 @@ require "prototypes.final-fixes.allowed-recipes-and-machines"
 require "prototypes.final-fixes.convert-furnaces"
 require "prototypes.final-fixes.base-parallel"
 require "prototypes.final-fixes.modules"
+require "prototypes.final-fixes.module-categories"
 require "prototypes.final-fixes.hidden-recipes"
 require "prototypes.final-fixes.recipe-productivity-technologies"
-require "prototypes.final-fixes.module-categories"
 require "compat.bplib"
+
+--error(serpent.block(mod_data.allowed_recipes))
+--error(serpent.block(data.raw.recipe["rocket-part"]))
+--error(serpent.block(data.raw["rocket-silo"]["rocket-silo"]))
