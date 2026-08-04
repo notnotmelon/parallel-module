@@ -23,15 +23,6 @@ utils.split_pair = function(s, delimiter)
     return prefix, suffix
 end
 
-utils.split_pairs = function(s, list_delimiter, pair_delimiter)
-    local results = {}
-    for _, part in pairs(utils.split(s, list_delimiter)) do
-        local k, v = utils.split_pair(part, pair_delimiter)
-        results[k] = v
-    end
-    return results
-end
-
 utils.table_contains_value = function(table, value)
     for _, v in pairs(table) do
         if v == value then
