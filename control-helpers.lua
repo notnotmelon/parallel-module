@@ -44,8 +44,7 @@ end
 
 function Public.get_parallel_recipe(recipe_name, parallel)
     local base_recipe_name = mod_data.recipe_table_inverse[recipe_name]
-    assert(base_recipe_name)
-
+    if not base_recipe_name then return recipe_name end
 
     if parallel == 0 then
         return base_recipe_name

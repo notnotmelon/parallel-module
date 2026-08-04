@@ -23,6 +23,7 @@ local function has_parallel_module_category(recipe_or_machine)
         end
     end
 
+    -- fallback: if the machine has the "default" vanilla module categories, we can just add ours
     local default_module_categories = {"speed", "efficiency", "productivity"}
     for _, module_category in pairs(default_module_categories) do
         if data.raw["module-category"][module_category] then

@@ -25,18 +25,18 @@ local function get_possible_parallels_for_recipe(recipe)
         end
 
 
-        local possible_parallels_for_this_machine = {[parallel.get_base_parallel(machine)] = true}
+        local possible_parallels_for_this_machine = {[parallel.get_base_parallel(machine) + 1] = true}
         for _ = 1, num_module_slots do
+            local possible_parallels_for_this_module = {}
             for _, by_quality in pairs(mod_data.parallel_value_cache) do
                 for _, module_strength in pairs(by_quality) do
-                    local possible_parallels_for_this_module = {}
                     for existing in pairs(possible_parallels_for_this_machine) do
                         table.insert(possible_parallels_for_this_module, existing + module_strength)
                     end
-                    for _, possible in pairs(possible_parallels_for_this_module) do
-                        possible_parallels_for_this_machine[possible] = true
-                    end
                 end
+            end
+            for _, possible in pairs(possible_parallels_for_this_module) do
+                possible_parallels_for_this_machine[possible] = true
             end
         end
 
@@ -47,7 +47,11 @@ local function get_possible_parallels_for_recipe(recipe)
         ::continue::
     end
 
-    return possible_parallels
+    local set = {}
+    for v in pairs(possible_parallels) do
+        table.insert(set, v)
+    end
+    return set
 end
 
 -------------------------------------------------------------------------------
@@ -60,9 +64,9 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
     mod_data.recipe_table[recipe_name] = {[1] = recipe_name}
     mod_data.recipe_table_inverse[recipe_name] = recipe_name
 
-    for num_parallels in pairs(get_possible_parallels_for_recipe(base_recipe)) do
+    for _, num_parallels in pairs(get_possible_parallels_for_recipe(base_recipe)) do
         if num_parallels == 1 then goto continue end -- 1x parallel is the same as the base recipe
-        assert(num_parallels > 1)
+        assert(num_parallels > 1, recipe_name)
 
         if table_size(data.raw.recipe) >= PROTOTYPE_LIMIT then goto continue end
 
