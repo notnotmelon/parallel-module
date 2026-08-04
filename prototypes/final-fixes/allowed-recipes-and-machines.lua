@@ -47,6 +47,7 @@ end
 
 local function can_machine_be_parallelized(machine)
     if machine.hidden then return false end
+    if machine.fixed_recipe then return false end
 
     if machine.type == "furnace"
         and not settings.startup["parallel-module-allow-in-furnaces"].value then
