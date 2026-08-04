@@ -48,13 +48,6 @@ utils.is_quality_enabled = function()
     return utils._is_quality_enabled
 end
 
-utils.is_quality_enabled_runtime = function()
-    if utils._is_quality_enabled == nil then
-        utils._is_quality_enabled = script.active_mods["quality"] and prototypes.quality and #prototypes.quality > 1
-    end
-    return utils._is_quality_enabled
-end
-
 utils.round_parallel = function(parallel)
     return math.ceil(parallel)
 end
