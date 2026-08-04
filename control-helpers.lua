@@ -247,7 +247,7 @@ function Public.update_machine_info(machine, recipe_name, current_machine_parall
             name = {"mod-tooltip-name.parallel-module-parallel"},
             value = {
                 "mod-tooltip-value.parallel-module-num-parallels",
-                utils.round_parallel(tooltip_machine_parallel) + 1,
+                math.max(1, utils.round_parallel(tooltip_machine_parallel) + 1),
                 utils.parallel_tooltip(tooltip_machine_parallel),
             },
             order = 90,
