@@ -7,12 +7,21 @@ local crafting_machine_types = {
 }
 
 parallel.on_event(parallel.events.on_init(), function()
+    storage.machines_waiting_for_parallel_module = storage.machines_waiting_for_parallel_module or {}
+    storage.player_to_machine_with_open_gui = storage.player_to_machine_with_open_gui or {}
+    storage.player_to_selected_machine = storage.player_to_selected_machine or {}
+
     -- update all entities
     for _, surface in pairs(game.surfaces) do
-        for _, entity in pairs(surface.find_entities()) do
-            if not entity or not entity.valid then goto continue end
-            parallel.update_machine_for_parallel(entity, true)
-            ::continue::
+        for _, entity in pairs(surface.find_entities_filtered {
+            type = crafting_machine_types,
+        }) do
+            parallel.update_machine(entity, true)
+        end
+        for _, entity in pairs(surface.find_entities_filtered {
+            ghost_type = crafting_machine_types,
+        }) do
+            parallel.update_machine(entity, true)
         end
     end
 end)
@@ -20,19 +29,19 @@ end)
 parallel.on_event(defines.events.on_tick, function()
     if next(storage.player_to_machine_with_open_gui) then
         for _, opened_machine in pairs(storage.player_to_machine_with_open_gui) do
-            parallel.update_machine_for_parallel(opened_machine)
+            parallel.update_machine(opened_machine)
         end
     end
     if next(storage.machines_waiting_for_parallel_module) then
         for _, machine in pairs(storage.machines_waiting_for_parallel_module) do
-            parallel.update_machine_for_parallel(machine, true)
+            parallel.update_machine(machine, true)
         end
         storage.machines_waiting_for_parallel_module = {}
     end
 end)
 
 parallel.on_event(defines.events.on_entity_settings_pasted, function(event)
-    parallel.update_machine_for_parallel(event.destination, true)
+    parallel.update_machine(event.destination, true)
 end)
 
 parallel.on_event("item-request-proxy-created", function(event)
@@ -47,7 +56,7 @@ parallel.on_event({
     "item-request-proxy-updated",
     "item-request-proxy-removed",
 }, function(event)
-    parallel.update_machine_for_parallel(event.proxy_target, true)
+    parallel.update_machine(event.proxy_target, true)
 end)
 
 if next(mod_data.spoilable_modules) then
@@ -71,14 +80,14 @@ parallel.on_event({defines.events.on_undo_applied, defines.events.on_redo_applie
                 type = crafting_machine_types,
                 position = position,
             }) do
-                parallel.update_machine_for_parallel(machine, true)
+                parallel.update_machine(machine, true)
             end
 
             for _, ghost in pairs(surface.find_entities_filtered {
                 ghost_type = crafting_machine_types,
                 position = position,
             }) do
-                parallel.update_machine_for_parallel(ghost, true)
+                parallel.update_machine(ghost, true)
             end
         end
     end
@@ -89,14 +98,7 @@ parallel.on_event({
     defines.events.on_player_dropped_item_into_entity,
     defines.events.on_player_cursor_stack_changed,
 }, function(event)
-    local player_index = event.player_index
-    local player = game.get_player(player_index)
-    storage.players_holding_cut_paste_tool[player_index] = player
-        and player.valid
-        and player.cursor_stack
-        and player.cursor_stack.valid_for_read
-        and player.cursor_stack.name == "cut-paste-tool"
-    parallel.update_machine_for_parallel(storage.player_to_selected_machine[player_index])
+    parallel.update_machine(storage.player_to_selected_machine[event.player_index])
 end)
 
 local function handle_entity_gui_opened(player, entity)
@@ -129,7 +131,7 @@ parallel.on_event(parallel.events.on_built(), function(event)
     local entity_name = entity.type == "entity-ghost" and entity.ghost_name or entity.name
     if not mod_data.allowed_machines[entity_name] then return end
 
-    parallel.update_machine_for_parallel(event.entity, true)
+    parallel.update_machine(event.entity, true)
 
     -- TODO: not very optimized
     for _, map in pairs {storage.player_to_machine_with_open_gui, storage.player_to_selected_machine} do

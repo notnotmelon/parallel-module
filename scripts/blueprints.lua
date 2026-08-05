@@ -8,6 +8,24 @@ parallel.on_event("bplib-overlaps", function(event)
     end
 end)
 
+parallel.on_event(parallel.events.on_init(), function()
+    storage.players_holding_cut_paste_tool = storage.players_holding_cut_paste_tool or {}
+end)
+
+parallel.on_event({
+    defines.events.on_player_fast_transferred,
+    defines.events.on_player_dropped_item_into_entity,
+    defines.events.on_player_cursor_stack_changed,
+}, function(event)
+    local player_index = event.player_index
+    local player = game.get_player(player_index)
+    storage.players_holding_cut_paste_tool[player_index] = player
+        and player.valid
+        and player.cursor_stack
+        and player.cursor_stack.valid_for_read
+        and player.cursor_stack.name == "cut-paste-tool"
+end)
+
 local function is_player_holding_cut_paste_tool(player)
     if not player then
         return false
