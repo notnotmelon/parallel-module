@@ -15,10 +15,10 @@ function parallel.get_machine_parallel(machine)
     if not mod_data.allowed_machines[machine_name] then return nil, nil end
 
     local module_inventory
-    if entity.type == "entity-ghost" then
-        module_inventory = entity.item_requests
+    if machine.type == "entity-ghost" then
+        module_inventory = machine.item_requests
     else
-        module_inventory = entity.get_module_inventory()
+        module_inventory = machine.get_module_inventory()
         if module_inventory then module_inventory = module_inventory.get_contents() end
     end
 
@@ -149,7 +149,7 @@ function parallel.update_machine_for_parallel(machine, just_built)
                 for player_idx, selected_machine in pairs(player_to_machine_map) do
                     if machine == selected_machine then
                         local player = game.get_player(player_idx)
-                        if player and player.valid and settings.get_player_settings(player_idx)["parallel-module-show-set-recipe-messages"].value then
+                        if player and player.valid then
                             if has_parallel_modules then
                                 player.print({
                                     "mod-tooltip-name.parallel-module-circuit-set-recipe-warning",
