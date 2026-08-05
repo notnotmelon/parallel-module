@@ -49,7 +49,7 @@ local function get_parallel_recipe(recipe_name, parallel)
         return base_recipe_name
     end
 
-    return parallel_recipes[tostring(parallel + 1)] or base_recipe_name
+    return parallel_recipes[cached_tostring(parallel + 1)] or base_recipe_name
 end
 
 local function set_parallel_recipe(entity, recipe, quality, current_recipe)
@@ -158,3 +158,5 @@ function parallel.update_machine(machine, just_built)
 
     script.register_on_object_destroyed(machine)
 end
+
+parallel.register_delayed_function("update_machine", parallel.update_machine)

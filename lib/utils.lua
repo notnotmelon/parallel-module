@@ -13,11 +13,12 @@ utils.round_parallel = function(parallel)
     return math.ceil(parallel)
 end
 
+if data and data.raw then cached_tostring = tostring end
 utils.parallel_tooltip = function(parallel)
     if parallel >= 0 then
-        return {"mod-tooltip-value.parallel-module-value-positive", tostring(100 * parallel)}
+        return {"mod-tooltip-value.parallel-module-value-positive", cached_tostring(100 * parallel)}
     else
-        return {"mod-tooltip-value.parallel-module-value-negative", tostring(100 * parallel)}
+        return {"mod-tooltip-value.parallel-module-value-negative", cached_tostring(100 * parallel)}
     end
 end
 

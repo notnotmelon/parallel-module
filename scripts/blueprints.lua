@@ -4,7 +4,7 @@ parallel.on_event("bplib-overlaps", function(event)
     end
 
     for _, entity in pairs(event.overlaps) do
-        storage.machines_waiting_for_parallel_module[entity.unit_number] = entity
+        parallel.execute_later("update_machine", 1, entity, true)
     end
 end)
 

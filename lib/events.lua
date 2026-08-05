@@ -4,7 +4,7 @@ local events = {}
 ---@param f function
 parallel.on_event = function(event, f)
     for _, event in pairs(type(event) == "table" and event or {event}) do
-        event = _tostring(event)
+        event = tostring(event)
         events[event] = events[event] or {}
         table.insert(events[event], f)
     end
@@ -93,3 +93,42 @@ parallel.events = {
         return "build"
     end,
 }
+
+local delayed_functions = {}
+---use this to execute a script after a delay
+---example:
+---parallel.register_delayed_function('my_delayed_func', function(param1, param2, param3) ... end)
+---parallel.execute_later('my_delayed_func', 60, param1, param2, param3)
+---The above code will execute my_delayed_func after waiting for 60 ticks
+---@param function_key string
+---@param ticks integer
+---@param ... any
+function parallel.execute_later(function_key, ticks, ...)
+    local marked_for_death_render_object = rendering.draw_line {
+        color = {0, 0, 0, 0},
+        width = 0,
+        filled = false,
+        from = {0, 0},
+        to = {0, 0},
+        create_build_effect_smoke = false,
+        surface = "nauvis",
+        time_to_live = ticks,
+    }
+    storage._delayed_functions = storage._delayed_functions or {}
+    storage._delayed_functions[script.register_on_object_destroyed(marked_for_death_render_object)] = {function_key, {...}}
+end
+
+parallel.on_event(defines.events.on_object_destroyed, function(event)
+    if not storage._delayed_functions then return end
+    local registration_number = event.registration_number
+    local data = storage._delayed_functions[registration_number]
+    if not data then return end
+    storage._delayed_functions[registration_number] = nil
+
+    local f = delayed_functions[data[1]]
+    f(table.unpack(data[2]))
+end)
+
+function parallel.register_delayed_function(key, func)
+    delayed_functions[key] = func
+end

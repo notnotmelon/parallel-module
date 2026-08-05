@@ -8,7 +8,6 @@ local crafting_machine_types = {
 }
 
 parallel.on_event(parallel.events.on_init(), function()
-    storage.machines_waiting_for_parallel_module = storage.machines_waiting_for_parallel_module or {}
     storage.player_to_machine_with_open_gui = storage.player_to_machine_with_open_gui or {}
     storage.player_to_selected_machine = storage.player_to_selected_machine or {}
 
@@ -32,12 +31,6 @@ parallel.on_event(defines.events.on_tick, function()
         for _, opened_machine in pairs(storage.player_to_machine_with_open_gui) do
             parallel.update_machine(opened_machine)
         end
-    end
-    if next(storage.machines_waiting_for_parallel_module) then
-        for _, machine in pairs(storage.machines_waiting_for_parallel_module) do
-            parallel.update_machine(machine, true)
-        end
-        storage.machines_waiting_for_parallel_module = {}
     end
 end)
 
@@ -64,7 +57,7 @@ if next(mod_data.spoilable_modules) then
     parallel.on_event("item-spoiled", function(event)
         local entity = event.entity
         if entity and entity.valid and entity.unit_number then
-            storage.machines_waiting_for_parallel_module[entity.unit_number] = entity
+            parallel.execute_later("update_machine", 1, entity, true)
         end
     end)
 end
@@ -105,6 +98,7 @@ end)
 
 local function handle_entity_gui_opened(player)
     local entity = player.opened
+    if not entity then return end
     if entity.object_name ~= "LuaEntity" then return end
     if entity == storage.player_to_machine_with_open_gui[player.index] then return end
 
