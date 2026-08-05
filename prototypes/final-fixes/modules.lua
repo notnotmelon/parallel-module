@@ -1,4 +1,4 @@
-local utils = require "utils"
+local utils = require "lib.utils"
 
 local spoilable_items = require("__item-request-proxy-events__.spoilable-items")
 

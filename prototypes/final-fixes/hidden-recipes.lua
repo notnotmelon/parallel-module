@@ -1,5 +1,5 @@
-local utils = require "utils"
-local data_utils = require "data-utils"
+local utils = require "lib.utils"
+local data_utils = require "lib.data-utils"
 
 local PROTOTYPE_LIMIT = 64000
 

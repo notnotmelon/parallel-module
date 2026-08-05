@@ -1,4 +1,4 @@
-local utils = require "utils"
+local utils = require "lib.utils"
 
 -- step 1: determine module categories that can provide the parallel effect
 

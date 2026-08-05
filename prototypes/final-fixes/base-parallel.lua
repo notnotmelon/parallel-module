@@ -1,4 +1,4 @@
-local utils = require "utils"
+local utils = require "lib.utils"
 
 function parallel.get_base_parallel(machine)
     if machine.effect_receiver and machine.effect_receiver.base_effect and machine.effect_receiver.base_effect.parallel then

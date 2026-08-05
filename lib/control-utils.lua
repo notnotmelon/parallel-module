@@ -1,7 +1,7 @@
 local pairs = pairs
 local table = table
 
-utils = require "utils"
+utils = require "lib.utils"
 
 TOOLTIP_ID = 2453693297
 
