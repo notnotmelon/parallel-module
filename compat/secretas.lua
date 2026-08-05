@@ -83,7 +83,7 @@ data:extend {
         effect = {
             pollution = 1.0,
             speed = -0.4,
-            parallel = 1.00,
+            parallel = mods.quality and 1.00 or 4.00,
         },
         speed_quality_multiplier = 3.0,
         pollution_quality_multiplier = 4.0,

@@ -40,7 +40,7 @@ data:extend {{
     effect = {
         pollution = 0.5,
         speed = -0.8,
-        parallel = 1.00,
+        parallel = mods.quality and 1.00 or 2.00,
     },
     speed_quality_multiplier = 3.0,
     pollution_quality_multiplier = 4.0,
@@ -63,7 +63,7 @@ data:extend {{
     effect = {
         pollution = 0.75,
         speed = -0.6,
-        parallel = 1.00,
+        parallel = mods.quality and 1.00 or 3.00,
     },
     speed_quality_multiplier = 3.0,
     pollution_quality_multiplier = 4.0,
