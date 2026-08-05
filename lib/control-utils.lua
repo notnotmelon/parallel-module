@@ -108,7 +108,7 @@ function Public.get_total_parallel_from_module_inventory(entity)
     return total_parallel
 end
 
-function Public.get_total_machine_parallel_optimized(machine)
+function Public.get_total_machine_parallel(machine)
     if machine == nil or not machine.valid then
         return nil, nil
     end
@@ -148,7 +148,7 @@ function Public.update_machine_for_parallel(machine, just_built)
         return
     end
 
-    local current_machine_parallel, has_parallel_modules = Public.get_total_machine_parallel_optimized(machine)
+    local current_machine_parallel, has_parallel_modules = Public.get_total_machine_parallel(machine)
     -- Machine does not support parallel modules
     if current_machine_parallel == nil then
         return

@@ -117,6 +117,6 @@ script.on_event({
 end)
 
 remote.add_interface("parallel-module", {
-    get_total_machine_parallel = parallel.get_total_machine_parallel_optimized,
+    get_total_machine_parallel = parallel.get_total_machine_parallel,
     is_player_holding_cut_paste_tool = parallel.is_player_holding_cut_paste_tool,
 })
