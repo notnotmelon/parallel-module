@@ -1,18 +1,133 @@
 local utils = require "lib.utils"
-local data_utils = require "lib.data-utils"
 
 local PROTOTYPE_LIMIT = 64000
 
--------------------------------------------------------------------------------
---- DETERMINE ALL POSSIBLE PARALLEL AMOUNTS
--------------------------------------------------------------------------------
+local function get_recipe_main_product(recipe)
+    local main_product_name = recipe.main_product
 
+    if not main_product_name or type(main_product_name) ~= "string" then
+        if type(recipe.results) == "table" and table_size(recipe.results) == 1 and type(recipe.results[1]) == "table" then
+            main_product_name = recipe.results[1].name
+        end
+    end
+
+    if type(main_product_name) ~= "string" then
+        return nil
+    end
+
+    for prototype in pairs(defines.prototypes.item) do
+        if data.raw[prototype] and data.raw[prototype][main_product_name] then
+            return data.raw[prototype][main_product_name]
+        end
+    end
+
+    return data.raw.fluid[main_product_name]
+end
+
+local function get_recipe_localised_name(recipe)
+    local fallback = recipe.localised_name or {"recipe-name." .. recipe.name}
+    local main_product = get_recipe_main_product(recipe)
+    if not main_product then return fallback end
+
+    return {
+        "?",
+        fallback,
+        main_product.localised_name or {"item-name." .. main_product.name},
+        {"entity-name." .. main_product.name},
+        {"fluid-name." .. main_product.name},
+        {"equipment-name." .. main_product.name},
+        {"tile-name." .. main_product.name},
+    }
+end
+
+local function get_recipe_localised_description(recipe)
+    local fallback = recipe.localised_description or {"recipe-description." .. recipe.name}
+    local main_product = get_recipe_main_product(recipe)
+    if not main_product then return fallback end
+
+    return {
+        "?",
+        fallback,
+        main_product.localised_description or {"item-description." .. main_product.name},
+        {"entity-description." .. main_product.name},
+        {"fluid-description." .. main_product.name},
+        {"equipment-description." .. main_product.name},
+        {"tile-description." .. main_product.name},
+    }
+end
+
+local function can_recipe_be_made_in_this_machine(recipe, machine)
+    local function shares_any_crafting_category(recipe, machine)
+        for _, a in pairs(recipe.categories or {"crafting"}) do
+            for _, b in pairs(machine.crafting_categories or {}) do
+                local category = data.raw["recipe-category"][a]
+                if a == b and category and not category.parallel_blacklist then
+                    return true
+                end
+            end
+        end
+        return false
+    end
+
+    if not shares_any_crafting_category(recipe, machine) then return false end
+
+    local num_fluid_ingredients = 0
+    local num_fluid_results = 0
+    local num_item_ingredients = 0
+    local num_item_results = 0
+
+    for _, ingredient in pairs(recipe.ingredients or {}) do
+        if ingredient.type == "fluid" then
+            num_fluid_ingredients = num_fluid_ingredients + 1
+        elseif ingredient.type == "item" then
+            num_item_ingredients = num_item_ingredients + 1
+        end
+    end
+    for _, result in pairs(recipe.results or {}) do
+        if result.type == "fluid" then
+            num_fluid_results = num_fluid_results + 1
+        elseif result.type == "item" then
+            num_item_results = num_item_results + 1
+        end
+    end
+
+    local num_fluid_inputs = 0
+    local num_fluid_outputs = 0
+
+    for _, fluidbox in pairs(machine.fluid_boxes or {}) do
+        if fluidbox.production_type == "input" then
+            num_fluid_inputs = num_fluid_inputs + 1
+        elseif fluidbox.production_type == "output" then
+            num_fluid_outputs = num_fluid_outputs + 1
+        else
+            num_fluid_inputs = num_fluid_inputs + 1
+            num_fluid_outputs = num_fluid_outputs + 1
+        end
+    end
+
+    if num_fluid_ingredients > num_fluid_inputs then return false end
+    if num_fluid_results > num_fluid_outputs then return false end
+
+    local source_inventory_size = machine.ingredient_count or machine.source_inventory_size or 65535
+    local result_inventory_size = machine.max_item_product_count or machine.result_inventory_size or 65535
+    if num_item_ingredients > source_inventory_size then return false end
+    if num_item_results > result_inventory_size then return false end
+
+    if machine.type == "furnace" and num_fluid_ingredients > 1 then return false end
+    if machine.type == "furnace" and num_item_ingredients > 1 then return false end
+    if machine.type == "furnace" and table_size(recipe.ingredients) == 0 then return false end
+
+    return true
+end
+
+-- simulate putting all combinations of modules inside this machine
+-- in order to determine all possible parallel amounts
 local function get_possible_parallels_for_recipe(recipe)
     local possible_parallels = {}
 
     for name, prototype in pairs(mod_data.allowed_machines) do
         local machine = data.raw[prototype][name]
-        if not data_utils.can_recipe_be_made_in_this_machine(recipe, machine) then goto continue end
+        if not can_recipe_be_made_in_this_machine(recipe, machine) then goto continue end
 
         local num_module_slots = machine.module_slots or 0
         if machine.quality_affects_module_slots then
@@ -23,7 +138,6 @@ local function get_possible_parallels_for_recipe(recipe)
                 end
             end
         end
-
 
         local possible_parallels_for_this_machine = {[parallel.get_base_parallel(machine) + 1] = true}
         for _ = 1, num_module_slots do
@@ -77,11 +191,10 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
         new_recipe.name = new_recipe_name
         new_recipe.localised_name = {
             "recipe-name.parallel-module-num-parallels",
-            data_utils.get_recipe_localised_name(base_recipe),
+            get_recipe_localised_name(base_recipe),
             tostring(num_parallels),
         }
-        new_recipe.localised_description = data_utils.get_recipe_localised_description(base_recipe)
-        data_utils.ensure_recipe_icon_or_icons(new_recipe, base_recipe)
+        new_recipe.localised_description = get_recipe_localised_description(base_recipe)
         new_recipe.factoriopedia_alternative = base_recipe.factoriopedia_alternative or recipe_name
         new_recipe.hidden = true
         -- new_recipe.hidden_in_factoriopedia = true
