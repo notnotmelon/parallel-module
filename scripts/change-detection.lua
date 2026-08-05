@@ -1,5 +1,6 @@
 local utils = require "lib.utils"
 local pairs = pairs
+local next = next
 
 local crafting_machine_types = {
     "assembling-machine",
@@ -61,8 +62,9 @@ end)
 
 if next(mod_data.spoilable_modules) then
     parallel.on_event("item-spoiled", function(event)
-        if event.entity and event.entity.valid and event.entity.unit_number then
-            storage.machines_waiting_for_parallel_module[event.entity.unit_number] = event.entity
+        local entity = event.entity
+        if entity and entity.valid and entity.unit_number then
+            storage.machines_waiting_for_parallel_module[entity.unit_number] = entity
         end
     end)
 end
@@ -101,9 +103,8 @@ parallel.on_event({
     parallel.update_machine(storage.player_to_selected_machine[event.player_index])
 end)
 
-local function handle_entity_gui_opened(player, entity)
-    entity = entity or player.opened
-    if not entity or not entity.valid then return end
+local function handle_entity_gui_opened(player)
+    local entity = player.opened
     if entity.object_name ~= "LuaEntity" then return end
     if entity == storage.player_to_machine_with_open_gui[player.index] then return end
 
@@ -116,12 +117,12 @@ end
 parallel.on_event(defines.events.on_gui_opened, function(event)
     if event.gui_type ~= defines.gui_type.entity then return end
     local player = game.get_player(event.player_index)
-    handle_entity_gui_opened(player, event.entity)
+    handle_entity_gui_opened(player)
 end)
 
 parallel.on_event(defines.events.on_gui_closed, function(event)
     if event.gui_type ~= defines.gui_type.entity then return end
-    if entity ~= storage.player_to_machine_with_open_gui[event.player_index] then return end
+    if event.entity ~= storage.player_to_machine_with_open_gui[event.player_index] then return end
     storage.player_to_machine_with_open_gui[event.player_index] = nil
 end)
 

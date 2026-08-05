@@ -122,10 +122,8 @@ local function clear_circuit_set_recipe(machine)
 end
 
 function parallel.update_machine(machine, just_built)
-    if not machine then return end
-    if not machine.valid then return end
-    if machine.prototype.hidden then return end
-    local machine_name = (machine.type == "entity-ghost" and machine.ghost_name) or machine.name
+    if not machine or not machine.valid then return end
+    local machine_name = machine.type == "entity-ghost" and machine.ghost_name or machine.name
     if not mod_data.allowed_machines[machine_name] then return end
 
     local current_parallel_amount = parallel.get_machine_parallel(machine)
