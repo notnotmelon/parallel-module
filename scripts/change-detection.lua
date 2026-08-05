@@ -1,3 +1,6 @@
+local utils = require "lib.utils"
+local pairs = pairs
+
 parallel.on_event(parallel.events.on_init(), function()
     -- update all entities
     for _, surface in pairs(game.surfaces) do
@@ -9,7 +12,6 @@ parallel.on_event(parallel.events.on_init(), function()
     end
 end)
 
-local pairs = pairs
 parallel.on_event(defines.events.on_tick, function()
     if next(storage.player_to_machine_with_open_gui) then
         for _, opened_machine in pairs(storage.player_to_machine_with_open_gui) do
