@@ -2,11 +2,6 @@ local utils = require "lib.utils"
 local pairs = pairs
 local TOOLTIP_ID = 42005542
 
-parallel.crafting_machine_types = {
-    "assembling-machine",
-    "rocket-silo",
-}
-
 parallel.on_event(parallel.events.on_init(), function()
     storage.machines_waiting_for_parallel_module = storage.machines_waiting_for_parallel_module or {}
     storage.player_to_machine_with_open_gui = storage.player_to_machine_with_open_gui or {}
@@ -122,24 +117,16 @@ function parallel.update_machine_for_parallel(machine, just_built)
     if not machine then return end
     if not machine.valid then return end
     if machine.prototype.hidden then return end
-    local machine_type = (machine.type == "entity-ghost" and machine.ghost_type) or machine.type
-    if machine_type == "furnace" then return end
-
-    if not utils.table_contains_value(parallel.crafting_machine_types, machine_type) then
-        return
-    end
+    local machine_name = (machine.type == "entity-ghost" and machine.ghost_name) or machine.name
+    if not mod_data.allowed_machines[machine_name] then return end
 
     local current_machine_parallel, has_parallel_modules = parallel.get_machine_parallel(machine)
     -- Machine does not support parallel modules
-    if current_machine_parallel == nil then
-        return
-    end
+    if not current_machine_parallel then return end
 
     -- Machine has no parallel and is not dirty
     local latest_recipe, latest_parallel, latest_set_recipe = get_latest_recipe_and_parallel(machine.unit_number)
-    if not just_built and (not latest_parallel or latest_parallel == 0) and current_machine_parallel == 0 then
-        return machine
-    end
+    if not just_built and (not latest_parallel or latest_parallel == 0) and current_machine_parallel == 0 then return end
 
     local recipe, quality = machine.get_recipe()
     if recipe then
@@ -202,8 +189,5 @@ function parallel.update_machine_for_parallel(machine, just_built)
         update_machine_info(machine, recipe_name, current_machine_parallel, is_set_recipe)
     end
 
-    if just_built then
-        script.register_on_object_destroyed(machine)
-    end
-    return machine
+    script.register_on_object_destroyed(machine)
 end
