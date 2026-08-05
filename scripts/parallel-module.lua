@@ -15,50 +15,27 @@ parallel.on_event(parallel.events.on_init(), function()
     storage.machine_to_latest_recipe_and_parallel = storage.machine_to_latest_recipe_and_parallel or {}
 end)
 
-local function get_total_parallel_from_module_inventory(entity)
+function parallel.get_machine_parallel(machine)
+    local machine_name = machine.type == "entity-ghost" and machine.ghost_name or machine.name
+    if not mod_data.allowed_machines[machine_name] then return nil, nil end
+
     local module_inventory
     if entity.type == "entity-ghost" then
         module_inventory = entity.item_requests
     else
         module_inventory = entity.get_module_inventory()
-        if module_inventory then
-            module_inventory = module_inventory.get_contents()
+        if module_inventory then module_inventory = module_inventory.get_contents() end
+    end
+
+    local module_parallel = 0.0
+    for _, module in pairs(module_inventory or {}) do
+        if module and mod_data.parallel_value_cache[module.name] then
+            module_parallel = module_parallel + module.count * mod_data.parallel_value_cache[module.name][module.quality]
         end
     end
 
-    local total_parallel = 0.0
-    if not module_inventory then
-        return total_parallel
-    end
-
-    for _, module in pairs(module_inventory) do
-        if module == nil or not mod_data.parallel_value_cache[module.name] then
-            goto continue
-        end
-
-        total_parallel = total_parallel + module.count * mod_data.parallel_value_cache[module.name][module.quality]
-        ::continue::
-    end
-    return total_parallel
-end
-
-function parallel.get_total_machine_parallel(machine)
-    if machine == nil or not machine.valid then
-        return nil, nil
-    end
-
-    local machine_name = machine.type == "entity-ghost" and machine.ghost_name or machine.name
-    local machine_base_parallel = mod_data.entity_to_base_parallel[machine_name]
-    local module_parallel
-    if mod_data.allowed_machines[machine_name] then
-        module_parallel = get_total_parallel_from_module_inventory(machine)
-    elseif machine_base_parallel then
-        module_parallel = 0
-    else
-        return nil, nil
-    end
-
-    local parallel = module_parallel + (machine_base_parallel or 0)
+    local base_parallel = mod_data.entity_to_base_parallel[machine_name]
+    local parallel = (module_parallel or 0) + (base_parallel or 0)
     return parallel, module_parallel > 0
 end
 
@@ -152,7 +129,7 @@ function parallel.update_machine_for_parallel(machine, just_built)
         return
     end
 
-    local current_machine_parallel, has_parallel_modules = parallel.get_total_machine_parallel(machine)
+    local current_machine_parallel, has_parallel_modules = parallel.get_machine_parallel(machine)
     -- Machine does not support parallel modules
     if current_machine_parallel == nil then
         return

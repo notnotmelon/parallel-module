@@ -8,7 +8,7 @@ require "scripts.change-detection"
 require "scripts.blueprints"
 
 remote.add_interface("parallel-module", {
-    get_total_machine_parallel = parallel.get_total_machine_parallel,
+    get_machine_parallel = parallel.get_machine_parallel,
 })
 
 parallel.finalize_events()

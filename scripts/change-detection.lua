@@ -96,13 +96,12 @@ end)
 
 local function handle_entity_gui_opened(player, entity)
     entity = entity or player.opened
-
-    if not entity or entity.object_name ~= "LuaEntity" or not entity.valid or entity == storage.player_to_machine_with_open_gui[player.index] then
-        return
-    end
+    if not entity or not entity.valid then return end
+    if entity.object_name ~= "LuaEntity" then return end
+    if entity == storage.player_to_machine_with_open_gui[player.index] then return end
 
     local entity_name = entity.name == "entity-ghost" and entity.ghost_name or entity.name
-    if mod_data.allowed_machines[entity_name] or mod_data.entity_to_base_parallel[entity_name] then
+    if mod_data.allowed_machines[entity_name] then
         storage.player_to_machine_with_open_gui[player.index] = entity
     end
 end
