@@ -95,7 +95,6 @@ local function update_machine_info(machine, recipe_name, current_parallel_amount
     if previous_parallel_amount ~= current_parallel_amount then
         local num_parallels = get_num_parallels_from_module_effect(current_parallel_amount)
 
-
         local tooltip = {
             id = TOOLTIP_ID,
             name = {"mod-tooltip-name.parallel-module-parallel"},
@@ -113,7 +112,7 @@ local function update_machine_info(machine, recipe_name, current_parallel_amount
             tooltip.value = {
                 "mod-tooltip-value.parallel-module-num-parallels-limit",
                 limit,
-                utils.parallel_tooltip(limit - 1),
+                utils.parallel_tooltip(math.min(current_parallel_amount, limit - 1)),
             }
         elseif current_parallel_amount < 0 then
             tooltip.value = {
