@@ -250,7 +250,7 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
             break
         else
             if num_recipes >= PROTOTYPE_LIMIT then return end
-            mod_data.recipe_table[recipe_name][num_parallels] = new_recipe.name
+            mod_data.recipe_table[recipe_name][tostring(num_parallels)] = new_recipe.name
             mod_data.recipe_table_inverse[new_recipe.name] = recipe_name
             data:extend {new_recipe}
             num_recipes = num_recipes + 1
