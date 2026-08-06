@@ -77,6 +77,7 @@ data:extend {
         name = "parallel-module-3",
         prerequisites = {
             "parallel-module-2",
+            "production-science-pack",
         },
         type = "technology",
         unit = {
@@ -94,6 +95,10 @@ data:extend {
                     "chemical-science-pack",
                     1,
                 },
+                {
+                    "production-science-pack",
+                    1,
+                },
             },
             time = 60,
         },
@@ -107,10 +112,6 @@ if is_space_age then
 
     table.insert(data.raw.technology["parallel-module-3"].prerequisites, "quantum-processor")
     table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"space-science-pack", 1})
-    table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"production-science-pack", 1})
     table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"utility-science-pack", 1})
     table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"cryogenic-science-pack", 1})
-else
-    table.insert(data.raw.technology["parallel-module-3"].prerequisites, "production-science-pack")
-    table.insert(data.raw.technology["parallel-module-3"].unit.ingredients, {"production-science-pack", 1})
 end
