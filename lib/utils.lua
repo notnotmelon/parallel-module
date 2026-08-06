@@ -20,7 +20,7 @@ utils.round_parallel = function(parallel)
     end
 
     if parallel <= 96 then
-        return math.ceil(parallel / 5) * 5
+        return math.ceil(parallel / 4) * 4
     end
 
     local step = 10 ^ math.floor(math.log(parallel, 10) - 1)
