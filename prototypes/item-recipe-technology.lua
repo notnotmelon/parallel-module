@@ -63,6 +63,13 @@ for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S"} do
         assert(new_recipe)
 
         new_recipe.name = "parallel-module" .. suffix
+        new_recipe.localised_name = nil
+        new_recipe.localised_description = nil
+        new_recipe.icon = nil
+        new_recipe.icon_size = nil
+        new_recipe.icons = nil
+
+        new_recipe.main_product = "parallel-module" .. suffix
         new_recipe.results = {
             {
                 amount = 1,
@@ -70,10 +77,6 @@ for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S"} do
                 type = "item",
             },
         }
-        new_recipe.main_product = "parallel-module" .. suffix
-        new_recipe.icon = nil
-        new_recipe.icon_size = nil
-        new_recipe.icons = nil
 
         for _, ingredient in pairs(new_recipe.ingredients) do
             if ingredient.name == "speed-module" then
@@ -99,16 +102,18 @@ for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S"} do
         assert(new_technology)
 
         new_technology.name = "parallel-module" .. suffix
+        new_technology.localised_name = nil
         new_technology.localised_description = {"technology-description.parallel-module"}
+        new_technology.icon = "__parallel-module__/graphics/technology/parallel-module" .. suffix .. ".png"
+        new_technology.icon_size = 256
+        new_technology.icons = nil
+
         new_technology.effects = {
             {
                 recipe = "parallel-module" .. suffix,
                 type = "unlock-recipe",
             },
         }
-        new_technology.icon = "__parallel-module__/graphics/technology/parallel-module" .. suffix .. ".png"
-        new_technology.icon_size = 256
-        new_technology.icons = nil
 
         for i, prerequisite in pairs(new_technology.prerequisites) do
             if prerequisite == "speed-module" then
