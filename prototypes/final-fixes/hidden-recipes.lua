@@ -204,7 +204,7 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
         new_recipe.auto_recycle = false
         new_recipe.request_paste_multiplier = math.ceil((new_recipe.request_paste_multiplier or 1) / num_parallels)
 
-        local any_over_65535 = false
+        local any_product_over_limit = false
         for _, products in pairs {new_recipe.ingredients or {}, new_recipe.results or {}} do
             for _, product in pairs(products) do
                 if product.amount then
@@ -238,14 +238,15 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
                     end
                 end
 
-                if product.amount and product.amount > 65535 then any_over_65535 = true end
-                if product.ignored_by_stats and product.ignored_by_stats > 65535 then any_over_65535 = true end
-                if product.amount_min and product.amount_min > 65535 then any_over_65535 = true end
-                if product.amount_max and product.amount_max > 65535 then any_over_65535 = true end
+                local limit = settings.startup["parallel-module-max-ingredient-product-amount"].value
+                if product.amount and product.amount > limit then any_product_over_limit = true end
+                if product.ignored_by_stats and product.ignored_by_stats > limit then any_product_over_limit = true end
+                if product.amount_min and product.amount_min > limit then any_product_over_limit = true end
+                if product.amount_max and product.amount_max > limit then any_product_over_limit = true end
             end
         end
 
-        if any_over_65535 then
+        if any_product_over_limit then
             break
         else
             if num_recipes >= PROTOTYPE_LIMIT then return end
