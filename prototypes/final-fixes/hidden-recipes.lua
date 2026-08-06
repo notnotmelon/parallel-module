@@ -238,11 +238,13 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
                     end
                 end
 
-                local limit = settings.startup["parallel-module-max-ingredient-product-amount"].value
-                if product.amount and product.amount > limit then any_product_over_limit = true end
-                if product.ignored_by_stats and product.ignored_by_stats > limit then any_product_over_limit = true end
-                if product.amount_min and product.amount_min > limit then any_product_over_limit = true end
-                if product.amount_max and product.amount_max > limit then any_product_over_limit = true end
+                if product.type == "item" then
+                    local limit = settings.startup["parallel-module-max-ingredient-product-amount"].value
+                    if product.amount and product.amount > limit then any_product_over_limit = true end
+                    if product.ignored_by_stats and product.ignored_by_stats > limit then any_product_over_limit = true end
+                    if product.amount_min and product.amount_min > limit then any_product_over_limit = true end
+                    if product.amount_max and product.amount_max > limit then any_product_over_limit = true end
+                end
             end
         end
 
