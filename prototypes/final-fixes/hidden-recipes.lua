@@ -179,7 +179,7 @@ end
 for recipe_name in pairs(mod_data.allowed_recipes) do
     local base_recipe = data.raw.recipe[recipe_name]
 
-    mod_data.recipe_table[recipe_name] = {[1] = recipe_name}
+    mod_data.recipe_table[recipe_name] = {["1"] = recipe_name}
     mod_data.recipe_table_inverse[recipe_name] = recipe_name
     mod_data.module_effect_limits[recipe_name] = 1
 
