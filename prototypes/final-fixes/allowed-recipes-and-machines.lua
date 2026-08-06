@@ -103,6 +103,15 @@ local function can_recipe_be_parallelized(recipe)
         return false
     end
 
+    if settings.startup["parallel-module-exclude-fluid-recipes"].value then
+        for _, result in pairs(recipe.results or {}) do
+            if result.type == "fluid" then return false end
+        end
+        for _, ingredient in pairs(recipe.ingredients or {}) do
+            if ingredient.type == "fluid" then return false end
+        end
+    end
+
     local allows_rigor = recipe.allow_rigor == true or type(recipe.allowed_module_categories) ~= "table" or utils.table_contains_value(recipe.allowed_module_categories, "rigor")
     if mods["rigor-module"] and allows_rigor then return false end
 

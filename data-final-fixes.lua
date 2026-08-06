@@ -4,6 +4,8 @@ ModuleCategoryDefaults.process_recipe_prototypes()
 _G.mod_data = data.raw["mod-data"]["parallel-module"].data
 _G.parallel = {mod_data = mod_data}
 
+if mods.pypostprocessing then require "prototypes.item-recipe-technology" end
+
 require "compat.virentis-final-fixes"
 require "compat.disallowed-recipe-categories"
 

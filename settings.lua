@@ -15,3 +15,11 @@ data:extend {{
     maximum_value = 65535,
     order = "b",
 }}
+
+data:extend {{
+    type = "bool-setting",
+    name = "parallel-module-exclude-fluid-recipes",
+    setting_type = "startup",
+    default_value = false,
+    order = "c",
+}}

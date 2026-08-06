@@ -12,9 +12,10 @@
         "bplib >= 2.1",
         "item-request-proxy-events >= 0.3.5",
         "module-category-defaults >= 2.2.0",
-        "? rigor-module",
         "? modules-t4",
-        "? secretas"
+        "? pypostprocessing",
+        "(?) rigor-module",
+        "(?) secretas"
     ],
     "expansion_required": false,
     "quality_required": false,

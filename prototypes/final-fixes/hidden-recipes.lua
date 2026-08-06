@@ -266,5 +266,7 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
 
     local limit_recipe_name = to_hidden_recipe_name(recipe_name, mod_data.module_effect_limits[recipe_name])
     local limit_recipe = data.raw.recipe[limit_recipe_name]
-    limit_recipe.localised_name[1] = "recipe-name.parallel-module-num-parallels-limit"
+    if limit_recipe then
+        limit_recipe.localised_name[1] = "recipe-name.parallel-module-num-parallels-limit"
+    end
 end
