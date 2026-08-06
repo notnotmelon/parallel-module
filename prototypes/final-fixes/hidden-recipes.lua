@@ -176,6 +176,10 @@ end
 --- CREATE PARALLEL RECIPE PROTOTYPES
 -------------------------------------------------------------------------------
 
+local function to_hidden_recipe_name(recipe_name, num_parallels)
+    return string.format("%s__parallel-module__%d", recipe_name, tostring(num_parallels))
+end
+
 for recipe_name in pairs(mod_data.allowed_recipes) do
     local base_recipe = data.raw.recipe[recipe_name]
 
@@ -185,7 +189,7 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
 
     for _, num_parallels in pairs(get_possible_parallels_for_recipe(base_recipe)) do
         local new_recipe = table.deepcopy(base_recipe)
-        new_recipe.name = string.format("%s__parallel-module__%d", recipe_name, tostring(num_parallels))
+        new_recipe.name = to_hidden_recipe_name(recipe_name, num_parallels)
         new_recipe.localised_name = {
             "recipe-name.parallel-module-num-parallels",
             get_recipe_localised_name(base_recipe),
@@ -259,4 +263,8 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
             mod_data.module_effect_limits[recipe_name] = math.max(num_parallels, mod_data.module_effect_limits[recipe_name])
         end
     end
+
+    local limit_recipe_name = to_hidden_recipe_name(recipe_name, mod_data.module_effect_limits[recipe_name])
+    local limit_recipe = data.raw.recipe[limit_recipe_name]
+    limit_recipe.localised_name[1] = "recipe-name.parallel-module-num-parallels-limit"
 end
