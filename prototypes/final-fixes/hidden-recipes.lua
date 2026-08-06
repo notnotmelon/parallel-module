@@ -135,7 +135,7 @@ local function get_possible_parallels_for_recipe(recipe)
             for _, quality in pairs(data.raw.quality) do
                 if not quality.hidden then
                     local bonus = quality.crafting_machine_module_slots_bonus or quality.level
-                    num_module_slots = math.max(num_module_slots, bonus)
+                    num_module_slots = math.max(num_module_slots, (machine.module_slots or 0) + bonus)
                 end
             end
         end
