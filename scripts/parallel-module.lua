@@ -112,6 +112,12 @@ local function update_machine_info(machine, recipe_name, current_parallel_amount
                 limit,
                 utils.parallel_tooltip(limit - 1),
             }
+        elseif current_parallel_amount < 0 then
+            tooltip.value = {
+                "mod-tooltip-value.parallel-module-num-parallels-negative-limit",
+                num_parallels,
+                utils.parallel_tooltip(0),
+            }
         end
 
         machine.set_tooltip_field(tooltip)
