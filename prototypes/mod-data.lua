@@ -10,5 +10,6 @@ data:extend {{
         parallel_value_cache = {},
         spoilable_modules = {},
         entity_to_base_parallel = {},
+        module_effect_limits = {},
     },
 }}

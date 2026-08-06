@@ -1,6 +1,7 @@
 local utils = require "lib.utils"
 
 local PROTOTYPE_LIMIT = 64000
+local num_recipes = table_size(data.raw.recipe)
 
 local function get_recipe_main_product(recipe)
     local main_product_name = recipe.main_product
@@ -161,11 +162,14 @@ local function get_possible_parallels_for_recipe(recipe)
         ::continue::
     end
 
-    local set = {}
-    for v in pairs(possible_parallels) do
-        table.insert(set, v)
+    local array = {}
+    for num_parallels in pairs(possible_parallels) do
+        if num_parallels >= 2 then
+            table.insert(array, num_parallels)
+        end
     end
-    return set
+    table.sort(array)
+    return array
 end
 
 -------------------------------------------------------------------------------
@@ -177,18 +181,11 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
 
     mod_data.recipe_table[recipe_name] = {[1] = recipe_name}
     mod_data.recipe_table_inverse[recipe_name] = recipe_name
+    mod_data.module_effect_limits[recipe_name] = 1
 
     for _, num_parallels in pairs(get_possible_parallels_for_recipe(base_recipe)) do
-        if num_parallels <= 1 then goto continue end -- 1x parallel is the same as the base recipe
-
-        if table_size(data.raw.recipe) >= PROTOTYPE_LIMIT then goto continue end
-
-        local new_recipe_name = string.format("%s__parallel-module__%d", recipe_name, tostring(num_parallels))
-        mod_data.recipe_table[recipe_name][num_parallels] = new_recipe_name
-        mod_data.recipe_table_inverse[new_recipe_name] = recipe_name
-
         local new_recipe = table.deepcopy(base_recipe)
-        new_recipe.name = new_recipe_name
+        new_recipe.name = string.format("%s__parallel-module__%d", recipe_name, tostring(num_parallels))
         new_recipe.localised_name = {
             "recipe-name.parallel-module-num-parallels",
             get_recipe_localised_name(base_recipe),
@@ -197,8 +194,6 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
         new_recipe.localised_description = get_recipe_localised_description(base_recipe)
         new_recipe.factoriopedia_alternative = base_recipe.factoriopedia_alternative or recipe_name
         new_recipe.hidden = true
-        -- new_recipe.hidden_in_factoriopedia = true
-        -- new_recipe.hide_from_stats = true
         new_recipe.hide_from_player_crafting = true
         new_recipe.allow_as_intermediate = false
         new_recipe.hide_from_bonus_gui = true
@@ -209,6 +204,7 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
         new_recipe.auto_recycle = false
         new_recipe.request_paste_multiplier = math.ceil((new_recipe.request_paste_multiplier or 1) / num_parallels)
 
+        local any_over_65535 = false
         for _, products in pairs {new_recipe.ingredients or {}, new_recipe.results or {}} do
             for _, product in pairs(products) do
                 if product.amount then
@@ -241,11 +237,23 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
                         end
                     end
                 end
+
+                if product.amount and product.amount > 65535 then any_over_65535 = true end
+                if product.ignored_by_stats and product.ignored_by_stats > 65535 then any_over_65535 = true end
+                if product.amount_min and product.amount_min > 65535 then any_over_65535 = true end
+                if product.amount_max and product.amount_max > 65535 then any_over_65535 = true end
             end
         end
 
-        data:extend {new_recipe}
-
-        ::continue::
+        if any_over_65535 then
+            break
+        else
+            if num_recipes >= PROTOTYPE_LIMIT then return end
+            mod_data.recipe_table[recipe_name][num_parallels] = new_recipe.name
+            mod_data.recipe_table_inverse[new_recipe.name] = recipe_name
+            data:extend {new_recipe}
+            num_recipes = num_recipes + 1
+            mod_data.module_effect_limits[recipe_name] = math.max(num_parallels, mod_data.module_effect_limits[recipe_name])
+        end
     end
 end

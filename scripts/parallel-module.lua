@@ -36,11 +36,16 @@ local function get_previous_tick_info(unit_number)
     return latest[1], latest[2]
 end
 
-local function get_parallel_recipe(recipe_name, parallel)
+local function get_parallel_recipe(recipe_name, current_parallel_amount)
     local base_recipe_name = mod_data.recipe_table_inverse[recipe_name]
     if not base_recipe_name then return recipe_name end
 
-    if parallel == 0 then
+    local num_parallels = current_parallel_amount + 1
+    if mod_data.module_effect_limits[base_recipe_name] then
+        num_parallels = math.min(num_parallels, mod_data.module_effect_limits[base_recipe_name])
+    end
+
+    if num_parallels <= 1 then
         return base_recipe_name
     end
 
@@ -49,7 +54,7 @@ local function get_parallel_recipe(recipe_name, parallel)
         return base_recipe_name
     end
 
-    return parallel_recipes[cached_tostring(parallel + 1)] or base_recipe_name
+    return parallel_recipes[cached_tostring(num_parallels)] or base_recipe_name
 end
 
 local function set_parallel_recipe(entity, recipe, quality, current_recipe)
@@ -85,16 +90,31 @@ local function update_machine_info(machine, recipe_name, current_parallel_amount
 
     local _, previous_parallel_amount = get_previous_tick_info(machine.unit_number)
     if previous_parallel_amount ~= current_parallel_amount then
-        machine.set_tooltip_field {
+        local num_parallels = math.max(1, utils.round_parallel(current_parallel_amount) + 1)
+
+
+        local tooltip = {
             id = TOOLTIP_ID,
             name = {"mod-tooltip-name.parallel-module-parallel"},
             value = {
                 "mod-tooltip-value.parallel-module-num-parallels",
-                math.max(1, utils.round_parallel(current_parallel_amount) + 1),
+                num_parallels,
                 utils.parallel_tooltip(current_parallel_amount),
             },
             order = 90,
         }
+
+        local base_recipe_name = mod_data.recipe_table_inverse[recipe_name] or recipe_name
+        local limit = mod_data.module_effect_limits[base_recipe_name]
+        if limit and num_parallels >= limit then
+            tooltip.value = {
+                "mod-tooltip-value.parallel-module-num-parallels-limit",
+                limit,
+                utils.parallel_tooltip(limit - 1),
+            }
+        end
+
+        machine.set_tooltip_field(tooltip)
     end
 
     storage.previous_tick_info[machine.unit_number] = {recipe_name, current_parallel_amount}
