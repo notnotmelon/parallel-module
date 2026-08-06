@@ -98,6 +98,7 @@ local function can_recipe_be_parallelized(recipe)
     if recipe.allow_speed == false then return false end
     if recipe.allow_parallel == false then return false end
     if recipe.name:match("%-barrel$") then return false end
+    if recipe.raise_on_crafted then return false end
 
     if not parallel.has_parallel_module_category(recipe) then
         return false
