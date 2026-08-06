@@ -23,6 +23,8 @@ local effects = {
     },
 }
 
+local letters = {"a", "b", "c", "d", "e", "f"}
+
 for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S"} do
     local base_module = data.raw.module["speed-module" .. suffix]
     local base_recipe = data.raw.recipe["speed-module" .. suffix]
@@ -45,7 +47,7 @@ for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S"} do
         subgroup = "module",
         category = "parallel",
         tier = base_module.tier,
-        order = "e[parallel]-a[parallel-module" .. suffix .. "]",
+        order = "e[parallel]-" .. letters[base_module.tier] .. "-[parallel-module" .. suffix .. "]",
         inventory_move_sound = item_sounds.module_inventory_move,
         pick_sound = item_sounds.module_inventory_pickup,
         drop_sound = item_sounds.module_inventory_move,
