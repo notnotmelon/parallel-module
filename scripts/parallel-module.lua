@@ -36,11 +36,10 @@ local function get_previous_tick_info(unit_number)
     return latest[1], latest[2]
 end
 
-local function get_parallel_recipe(recipe_name, current_parallel_amount)
+local function get_parallel_recipe(recipe_name, num_parallels)
     local base_recipe_name = mod_data.recipe_table_inverse[recipe_name]
     if not base_recipe_name then return recipe_name end
 
-    local num_parallels = current_parallel_amount + 1
     if mod_data.module_effect_limits[base_recipe_name] then
         num_parallels = math.min(num_parallels, mod_data.module_effect_limits[base_recipe_name])
     end
@@ -77,6 +76,10 @@ local function set_parallel_recipe(entity, recipe, quality, current_recipe)
     end
 end
 
+local function get_num_parallels_from_module_effect(current_parallel_amount)
+    return math.max(1, utils.round_parallel(current_parallel_amount + 1))
+end
+
 local function update_machine_info(machine, recipe_name, current_parallel_amount)
     if not machine or not machine.valid then
         return
@@ -90,7 +93,7 @@ local function update_machine_info(machine, recipe_name, current_parallel_amount
 
     local _, previous_parallel_amount = get_previous_tick_info(machine.unit_number)
     if previous_parallel_amount ~= current_parallel_amount then
-        local num_parallels = math.max(1, utils.round_parallel(current_parallel_amount) + 1)
+        local num_parallels = get_num_parallels_from_module_effect(current_parallel_amount)
 
 
         local tooltip = {
@@ -173,7 +176,7 @@ function parallel.update_machine(machine, just_built)
     if was_changed or just_built then
         set_parallel_recipe(
             machine,
-            get_parallel_recipe(recipe_name, utils.round_parallel(current_parallel_amount)),
+            get_parallel_recipe(recipe_name, get_num_parallels_from_module_effect(current_parallel_amount)),
             quality,
             (recipe and recipe.name) or nil
         )
