@@ -11,5 +11,6 @@ data:extend {{
         spoilable_modules = {},
         entity_to_base_parallel = {},
         module_effect_limits = {},
+        rocket_part_recipes = {},
     },
 }}

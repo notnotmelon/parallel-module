@@ -7,6 +7,7 @@ require "scripts.warnings"
 require "scripts.parallel-module"
 require "scripts.change-detection"
 require "scripts.blueprints"
+require "scripts.rocket-silo"
 
 remote.add_interface("parallel-module", {
     get_machine_parallel = parallel.get_machine_parallel,
