@@ -173,15 +173,15 @@ for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S", "-5", "-6", "-7", "-8", "-
         localised_description = {"item-description.parallel-module"},
         icon = get_icon(suffix, base_module.tier),
         icon_size = 64,
-        subgroup = "module",
+        subgroup = mods["space-exploration"] and "module-parallel" or "module",
         category = "parallel",
         tier = base_module.tier,
         order = "e[parallel]-" .. letters[base_module.tier] .. "-[parallel-module" .. suffix .. "]",
         inventory_move_sound = item_sounds.module_inventory_move,
         pick_sound = item_sounds.module_inventory_pickup,
         drop_sound = item_sounds.module_inventory_move,
-        stack_size = 50,
-        weight = 20 * kg,
+        stack_size = base_module.stack_size,
+        weight = base_module.weight or (20 * kg),
         effect = effects[base_module.tier],
         speed_quality_multiplier = 3.0,
         pollution_quality_multiplier = 4.0,
@@ -303,5 +303,14 @@ if data.raw.module["parallel-module-3"] then
         order = "a[progress]-h[crafting-tier-3-module]-f[parallel]",
         icon = "__parallel-module__/graphics/achievement/crafting-with-parallel.png",
         icon_size = 128,
+    }}
+end
+
+if mods["space-exploration"] then
+    data:extend {{
+        type = "item-subgroup",
+        name = "module-parallel",
+        order = "z-m-b",
+        group = "production",
     }}
 end
