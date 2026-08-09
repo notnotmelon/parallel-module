@@ -50,27 +50,26 @@ local effects = {
 }
 
 local use_space_exploration_graphics = not not (data.raw.module["speed-module-5"] or data.raw.module["bob-speed-module-5"])
+local create_dedicated_subgroup = not not (mods["space-exploration"] or mods.bobmodules or mods.khaosmodulesgroup)
 
-local function get_icon(suffix, tier)
+local function get_icon(suffix)
     if use_space_exploration_graphics then
         return "__parallel-module__/graphics/icons/space-exploration/parallel-module" .. suffix .. ".png"
     end
 
     return "__parallel-module__/graphics/icons/parallel-module" .. suffix .. ".png"
 end
-local function get_technology_icon(suffix, tier)
+local function get_technology_icon(suffix)
     if use_space_exploration_graphics then
         return "__parallel-module__/graphics/technology/space-exploration/parallel-module" .. suffix .. ".png"
     end
 
     return "__parallel-module__/graphics/technology/parallel-module" .. suffix .. ".png"
 end
-local function get_technology_icon_size(tier)
+local function get_technology_icon_size()
     if use_space_exploration_graphics then return 128 end
     return 256
 end
-
-local create_dedicated_subgroup = not not (mods["space-exploration"] or mods.bobmodules or mods.khaosmodulesgroup)
 
 for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S", "-5", "-6", "-7", "-8", "-9"} do
     local base_module = data.raw.module["speed-module" .. suffix] or data.raw.module["bob-speed-module" .. suffix]
@@ -90,7 +89,7 @@ for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S", "-5", "-6", "-7", "-8", "-
         type = "module",
         name = "parallel-module" .. suffix,
         localised_description = {"item-description.parallel-module"},
-        icon = get_icon(suffix, base_module.tier),
+        icon = get_icon(suffix),
         icon_size = 64,
         subgroup = create_dedicated_subgroup and "parallel-module" or "module",
         category = "parallel",
@@ -158,8 +157,8 @@ for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S", "-5", "-6", "-7", "-8", "-
         new_technology.name = "parallel-module" .. suffix
         new_technology.localised_name = {"item-name.parallel-module" .. suffix}
         new_technology.localised_description = {"technology-description.parallel-module"}
-        new_technology.icon = get_technology_icon(suffix, base_module.tier)
-        new_technology.icon_size = get_technology_icon_size(base_module.tier)
+        new_technology.icon = get_technology_icon(suffix)
+        new_technology.icon_size = get_technology_icon_size()
         new_technology.icons = nil
 
         new_technology.effects = {
