@@ -49,30 +49,33 @@ local effects = {
     },
 }
 
+local use_space_exploration_graphics = not not (data.raw.module["speed-module-5"] or data.raw.module["bob-speed-module-5"])
 
 local function get_icon(suffix, tier)
-    if mods["space-exploration"] or tier >= 5 then
+    if use_space_exploration_graphics then
         return "__parallel-module__/graphics/icons/space-exploration/parallel-module" .. suffix .. ".png"
     end
 
     return "__parallel-module__/graphics/icons/parallel-module" .. suffix .. ".png"
 end
 local function get_technology_icon(suffix, tier)
-    if mods["space-exploration"] or tier >= 5 then
+    if use_space_exploration_graphics then
         return "__parallel-module__/graphics/technology/space-exploration/parallel-module" .. suffix .. ".png"
     end
 
     return "__parallel-module__/graphics/technology/parallel-module" .. suffix .. ".png"
 end
 local function get_technology_icon_size(tier)
-    if mods["space-exploration"] or tier >= 5 then return 128 end
+    if use_space_exploration_graphics then return 128 end
     return 256
 end
 
+local create_dedicated_subgroup = not not (mods["space-exploration"] or mods.bobmodules)
+
 for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S", "-5", "-6", "-7", "-8", "-9"} do
-    local base_module = data.raw.module["speed-module" .. suffix]
-    local base_recipe = data.raw.recipe["speed-module" .. suffix]
-    local base_technology = data.raw.technology["speed-module" .. suffix]
+    local base_module = data.raw.module["speed-module" .. suffix] or data.raw.module["bob-speed-module" .. suffix]
+    local base_recipe = data.raw.recipe["speed-module" .. suffix] or data.raw.recipe["bob-speed-module" .. suffix]
+    local base_technology = data.raw.technology["speed-module" .. suffix] or data.raw.technology["bob-speed-module" .. suffix]
 
     if not base_module then goto continue end
     if not base_recipe then goto continue end
@@ -89,7 +92,7 @@ for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S", "-5", "-6", "-7", "-8", "-
         localised_description = {"item-description.parallel-module"},
         icon = get_icon(suffix, base_module.tier),
         icon_size = 64,
-        subgroup = mods["space-exploration"] and "module-parallel" or "module",
+        subgroup = create_dedicated_subgroup and "parallel-module" or "module",
         category = "parallel",
         tier = base_module.tier,
         order = "e[parallel]-" .. letters[base_module.tier] .. "-[parallel-module" .. suffix .. "]",
@@ -133,6 +136,10 @@ for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S", "-5", "-6", "-7", "-8", "-
                     ingredient.name = "parallel-module-4"
                 elseif ingredient.name:sub(1, 12) == "speed-module" then
                     ingredient.name = ingredient.name:gsub("^speed%-module", "parallel-module")
+                elseif ingredient.name:sub(1, 16) == "bob-speed-module" then
+                    ingredient.name = ingredient.name:gsub("^bob%-speed%-module", "parallel-module")
+                elseif ingredient.name:sub(1, 19) == "bob-speed-processor" then
+                    ingredient.name = ingredient.name:gsub("^bob%-speed%-processor", "bob-module-processor-board")
                 elseif ingredient.name == "tungsten-carbide" and data.raw.item["lithium-plate"] then
                     ingredient.name = "lithium-plate"
                 elseif ingredient.name == "tungsten-plate" and data.raw.item["promethium-asteroid-chunk"] then
@@ -171,6 +178,8 @@ for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S", "-5", "-6", "-7", "-8", "-
                     new_technology.prerequisites[i] = "parallel-module-4"
                 elseif prerequisite:sub(1, 12) == "speed-module" then
                     new_technology.prerequisites[i] = prerequisite:gsub("^speed%-module", "parallel-module")
+                elseif prerequisite:sub(1, 16) == "bob-speed-module" then
+                    new_technology.prerequisites[i] = prerequisite:gsub("^bob%-speed%-module", "parallel-module")
                 end
             end
         end
@@ -222,11 +231,11 @@ if data.raw.module["parallel-module-3"] then
     }}
 end
 
-if mods["space-exploration"] then
+if create_dedicated_subgroup then
     data:extend {{
         type = "item-subgroup",
-        name = "module-parallel",
-        order = "z-m-b",
-        group = "production",
+        name = "parallel-module",
+        order = mods.bobmodules and "f-9-2" or "z-m-b",
+        group = mods.bobmodules and "bobmodules" or "production",
     }}
 end
