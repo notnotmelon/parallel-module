@@ -8,12 +8,13 @@
     "factorio_version": "2.1",
     "dependencies": [
         "base",
-        "? space-age",
         "bplib >= 2.1",
         "item-request-proxy-events >= 0.3.5",
         "module-category-defaults >= 2.2.0",
+        "? space-age",
         "? modules-t4",
         "? pypostprocessing",
+        "? space-exploration",
         "(?) rigor-module",
         "(?) secretas",
         "(?) planetaris-hyarion"
