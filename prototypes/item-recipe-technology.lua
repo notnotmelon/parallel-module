@@ -70,7 +70,7 @@ local function get_technology_icon_size(tier)
     return 256
 end
 
-local create_dedicated_subgroup = not not (mods["space-exploration"] or mods.bobmodules)
+local create_dedicated_subgroup = not not (mods["space-exploration"] or mods.bobmodules or mods.khaosmodulesgroup)
 
 for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S", "-5", "-6", "-7", "-8", "-9"} do
     local base_module = data.raw.module["speed-module" .. suffix] or data.raw.module["bob-speed-module" .. suffix]
@@ -235,7 +235,7 @@ if create_dedicated_subgroup then
     data:extend {{
         type = "item-subgroup",
         name = "parallel-module",
-        order = mods.bobmodules and "f-9-2" or "z-m-b",
-        group = mods.bobmodules and "bobmodules" or "production",
+        order = mods.khaosmodulesgroup and "e[parallel-module]" or (mods.bobmodules and "f-9-2" or "z-m-b"),
+        group = mods.khaosmodulesgroup and "modules" or (mods.bobmodules and "bobmodules" or "production"),
     }}
 end
