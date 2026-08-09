@@ -90,7 +90,7 @@ local function space_exploration_ingredients(tier)
         },
         {
             {type = "item", name = "parallel-module-4",   amount = 2},
-            {type = "item", name = "se-naquium-ingot",    amount = 50},
+            {type = "item", name = "se-naquium-ingot",    amount = 30},
             {type = "item", name = "se-significant-data", amount = 2},
         },
         {
@@ -101,7 +101,7 @@ local function space_exploration_ingredients(tier)
         {
             {type = "item", name = "parallel-module-6",    amount = 2},
             {type = "item", name = "se-deep-catalogue-2",  amount = 4},
-            {type = "item", name = "se-naquium-tessaract", amount = 60},
+            {type = "item", name = "se-naquium-tessaract", amount = 30},
         },
         {
             {type = "item",  name = "parallel-module-7",    amount = 2},
@@ -112,7 +112,7 @@ local function space_exploration_ingredients(tier)
         {
             {type = "item",  name = "parallel-module-8",   amount = 2},
             {type = "item",  name = "se-deep-catalogue-4", amount = 10},
-            {type = "item",  name = "se-void-probe",       amount = 1},
+            {type = "item",  name = "se-void-probe",       amount = 10},
             {type = "fluid", name = "se-particle-stream",  amount = 1000},
         },
     }
