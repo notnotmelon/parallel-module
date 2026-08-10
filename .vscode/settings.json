@@ -42,5 +42,7 @@
         "space_around_table_field_list": "false",
         "space_before_function_call_single_arg": "true",
     },
-    "editor.detectIndentation": false
+    "editor.detectIndentation": false,
+    "chat.disableAIFeatures": true,
+    "editor.formatOnSave": true,
 }
