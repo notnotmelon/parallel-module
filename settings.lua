@@ -2,7 +2,7 @@ data:extend {{
     type = "bool-setting",
     name = "parallel-module-allow-in-furnaces",
     setting_type = "startup",
-    default_value = false,
+    default_value = not not mods.pyalienlife,
     order = "a",
 }}
 
