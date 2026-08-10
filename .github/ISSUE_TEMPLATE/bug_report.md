@@ -1,0 +1,33 @@
+---
+name: Bug report
+about: Create a report to help us improve
+title: ''
+labels: bug
+assignees: ''
+
+---
+
+**Factorio & Mod version number**
+Please post both the Factorio and Mod version numbers here.
+
+**Describe the bug**
+A clear and concise description of what the bug is.
+
+**To Reproduce**
+Steps to reproduce the behavior from a new save:
+
+**Expected behavior**
+A clear and concise description of what you expected to happen.
+
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
+
+**Additional context**
+Add any other context about the problem here.
+
+**Save file & log**
+Attach your save file and `factorio-current.log` file.
+
+**Help wanted?**
+- [ ] I am familiar with programming and will submit a pull request to resolve this issue. (Note: Please do not use AI coding tools.)
+- [X] I need someone else to solve this issue please.
