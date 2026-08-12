@@ -180,6 +180,11 @@ local function to_hidden_recipe_name(recipe_name, num_parallels)
     return string.format("%s__parallel-module__%d", recipe_name, tostring(num_parallels))
 end
 
+local recipe_effects = {}
+if PlanetsLib and PlanetsLib.constants and PlanetsLib.constants.recipe_effects then
+    recipe_effects = PlanetsLib.constants.recipe_effects
+end
+
 for recipe_name in pairs(mod_data.allowed_recipes) do
     local base_recipe = data.raw.recipe[recipe_name]
 
@@ -207,9 +212,14 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
         new_recipe.hide_from_signal_gui = true
         new_recipe.auto_recycle = false
         new_recipe.request_paste_multiplier = math.ceil((new_recipe.request_paste_multiplier or 1) / num_parallels)
+        
+        local new_recipe_effects = {}
+        if recipe_effects[base_recipe.name] then
+            new_recipe_effects = table.deepcopy(recipe_effects[base_recipe.name])
+        end
 
         local any_product_over_limit = false
-        for _, products in pairs {new_recipe.ingredients or {}, new_recipe.results or {}} do
+        for _, products in pairs {new_recipe.ingredients or {}, new_recipe.results or {}, new_recipe_effects.returned_ingredients or {}} do
             for _, product in pairs(products) do
                 if product.amount then
                     product.amount = product.amount * num_parallels
@@ -225,6 +235,12 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
                 end
                 if product.amount_max then
                     product.amount_max = product.amount_max * num_parallels
+                end
+                if product.add_to_stats then --PlanetsLib property for returned_ingredients field
+                    product.add_to_stats = product.add_to_stats * num_parallels
+                end
+                if product.amount_minus_ignored_by_productivity then --PlanetsLib property for returned_ingredients field
+                    product.amount_minus_ignored_by_productivity = product.amount_minus_ignored_by_productivity * num_parallels
                 end
                 if product.extra_count_fraction and product.extra_count_fraction > 0 then
                     product.extra_count_fraction = product.extra_count_fraction * num_parallels
@@ -250,6 +266,15 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
                     if product.amount_max and product.amount_max > limit then any_product_over_limit = true end
                 end
             end
+        end
+        
+        if new_recipe_effects.returned_ingredients then
+            for _,tooltip in pairs(new_recipe.custom_tooltip_fields) do
+                if tooltip.name and tooltip.name[1] == "tooltip.returned-ingredients" then
+                    tooltip.value[#tooltip.value] = tostring(tonumber(tooltip.value[#tooltip.value]) * num_parallels)
+                end
+            end
+            PlanetsLib.constants.recipe_effects[new_recipe.name] = new_recipe_effects
         end
 
         if any_product_over_limit then
