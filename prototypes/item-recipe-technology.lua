@@ -148,6 +148,11 @@ for _, suffix in pairs {"", "-2", "-3", "-4", "-4-S", "-5", "-6", "-7", "-8", "-
         end
 
         data:extend {new_recipe}
+
+        if mods.recycler then
+            local recycling = require("__recycler__.recycling")
+            recycling.generate_recycling_recipe(new_recipe)
+        end
     end
 
     do
