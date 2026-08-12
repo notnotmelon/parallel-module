@@ -239,6 +239,9 @@ for recipe_name in pairs(mod_data.allowed_recipes) do
                 if product.add_to_stats then --PlanetsLib property for returned_ingredients field
                     product.add_to_stats = product.add_to_stats * num_parallels
                 end
+                if product.amount_minus_ignored_by_productivity then --PlanetsLib property for returned_ingredients field
+                    product.amount_minus_ignored_by_productivity = product.amount_minus_ignored_by_productivity * num_parallels
+                end
                 if product.extra_count_fraction and product.extra_count_fraction > 0 then
                     product.extra_count_fraction = product.extra_count_fraction * num_parallels
                     while product.extra_count_fraction > 1 do
