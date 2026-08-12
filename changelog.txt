@@ -1,8 +1,10 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.1
 Date: 2026-08-12
-  Changes:
-    - Update info.json
+  Graphics:
+    - Added mod screenshots.
+  Compatibility:
+    - Added support for PlanetsLib returned_ingredients field
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.0
 Date: 2026-08-10
